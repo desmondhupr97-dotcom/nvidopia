@@ -17,6 +17,7 @@
 | DOC-03 | API 使用手册（基于 OpenAPI 自动生成） | P1 | Not Started |
 | DOC-04 | 验收报告模板 | P1 | Not Started |
 | DOC-05 | 变更日志（CHANGELOG） | P1 | Not Started |
+| DOC-06 | 更新架构文档 `docs/architecture.md`：新增字段容错、数据快照、自定义 KPI 章节 | P0 | Not Started |
 
 ## 开发任务清单
 
@@ -26,6 +27,9 @@
 | 编写本地开发指南 | Not Started |
 | 创建验收报告模板 | Not Started |
 | 初始化 CHANGELOG | Not Started |
+| 在 architecture.md 中补充字段容错（strict: false + extra）设计说明 | Not Started |
+| 在 architecture.md 中补充数据快照（VehicleDynamicsSnapshot）架构说明 | Not Started |
+| 在 architecture.md 中补充自定义 KPI（KpiDefinition + math.js 公式引擎）架构说明 | Not Started |
 
 ## 测试策略与验收标准
 
@@ -42,3 +46,4 @@
 | 日期 | 责任人 | 变更内容 | 关联 Commit |
 |------|--------|----------|-------------|
 | 2026-02-22 | System | 初始化子模块计划 | - |
+| 2026-02-23 | System | 追加 DOC-06：架构文档更新（字段容错、数据快照、自定义 KPI） | - |

@@ -24,6 +24,10 @@ MongoDB 数据模型层。集中定义所有业务集合的 Schema（Mongoose/JS
 | DM-10 | vehicles 集合 Schema（实时状态缓存） | P1 | Not Started |
 | DM-11 | 追溯用 $graphLookup 聚合管道模板 | P0 | Not Started |
 | DM-12 | 开发环境种子数据脚本 | P1 | Not Started |
+| DM-13 | 四模型 `strict: false` + `extra` 字段改造（Project/Task/Run/Issue） | P0 | Not Started |
+| DM-14 | IVehicleDynamicsSnapshot 子 Schema 定义 | P0 | Not Started |
+| DM-15 | IssueTimeSeries 集合 Schema 与索引 | P0 | Not Started |
+| DM-16 | KpiDefinition 集合 Schema 与索引 | P0 | Not Started |
 
 ## 数据与接口契约
 
@@ -41,14 +45,24 @@ MongoDB 数据模型层。集中定义所有业务集合的 Schema（Mongoose/JS
 | 实现 $graphLookup 聚合管道模板 | Not Started |
 | 编写种子数据脚本 | Not Started |
 | 编写数据迁移框架 | Not Started |
+| 改造 Project/Task/Run/Issue 四模型为 `strict: false` + `extra` 字段 | Not Started |
+| 创建 IVehicleDynamicsSnapshot 子 Schema | Not Started |
+| 创建 IssueTimeSeries 集合 Schema | Not Started |
+| 创建 KpiDefinition 集合 Schema | Not Started |
+| 更新索引策略（含新集合索引） | Not Started |
+| 更新种子数据脚本（覆盖新集合） | Not Started |
 
 ## 测试策略与验收标准
 
 - 单元测试：Schema 验证规则、聚合管道输出。
+- 字段容错验证：四模型 `strict: false` 模式下未知字段写入/读取兼容性测试。
+- 新 Schema 验证测试：IVehicleDynamicsSnapshot、IssueTimeSeries、KpiDefinition 结构与约束验证。
 - 验收标准：
   - 所有集合 Schema 通过 Mongoose 验证。
   - 索引在 MongoDB 中可正确创建。
   - 种子数据可一键导入。
+  - 四模型 `extra` 字段可正确存储与读取任意附加数据。
+  - IssueTimeSeries 与 KpiDefinition 索引可正确创建。
 
 ## 风险与依赖
 
@@ -60,3 +74,4 @@ MongoDB 数据模型层。集中定义所有业务集合的 Schema（Mongoose/JS
 | 日期 | 责任人 | 变更内容 | 关联 Commit |
 |------|--------|----------|-------------|
 | 2026-02-22 | System | 初始化子模块计划 | - |
+| 2026-02-23 | System | 追加 DM-13~DM-16：字段容错改造、动态快照子 Schema、时序与自定义 KPI 集合 | - |
