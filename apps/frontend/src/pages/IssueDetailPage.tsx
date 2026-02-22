@@ -1,17 +1,73 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useParams, Link } from 'react-router-dom';
 import {
   Card, Tag, Descriptions, Timeline, Button, Input, Form, Modal,
-  Space, Row, Col, Alert, Divider, Tooltip,
+  Space, Row, Col, Alert, Divider, Tooltip, Tabs, Empty,
 } from 'antd';
 import {
   ArrowLeftOutlined, EnvironmentOutlined, LinkOutlined, ClockCircleOutlined,
 } from '@ant-design/icons';
 import { AlertTriangle } from 'lucide-react';
-import { getIssue, transitionIssue, triageIssue, getIssueTransitions } from '../api/client';
+import {
+  LineChart, Line, XAxis, YAxis, CartesianGrid,
+  Tooltip as RechartsTooltip, ResponsiveContainer, Legend,
+} from 'recharts';
+import {
+  getIssue, transitionIssue, triageIssue, getIssueTransitions,
+  getIssueSnapshot, getIssueTimeSeries,
+} from '../api/client';
+import type { IssueTimeSeriesChannel } from '../api/client';
 import { statusColor as STATUS_COLOR, severityColor as SEVERITY_COLOR, transitionColor as TRANSITION_COLOR } from '../constants/colors';
 import { FullPageSpinner, GlassCardTitle } from '../components/shared';
+
+const TS_LINE_COLORS = ['#818cf8', '#34d399', '#f472b6', '#fbbf24', '#60a5fa', '#f87171', '#a78bfa', '#22d3ee'];
+
+function TimeSeriesChart({ channel }: { channel: IssueTimeSeriesChannel }) {
+  const { chartData, valueKeys } = useMemo(() => {
+    const keys = new Set<string>();
+    const data = channel.data_points.map((pt) => {
+      const row: Record<string, number> = { t: pt.t / 1000 };
+      for (const [k, v] of Object.entries(pt.values)) {
+        if (typeof v === 'number') {
+          row[k] = v;
+          keys.add(k);
+        }
+      }
+      return row;
+    });
+    return { chartData: data, valueKeys: Array.from(keys) };
+  }, [channel.data_points]);
+
+  if (valueKeys.length === 0) {
+    return <Empty description="No numeric data" image={Empty.PRESENTED_IMAGE_SIMPLE} />;
+  }
+
+  return (
+    <ResponsiveContainer width="100%" height={250}>
+      <LineChart data={chartData}>
+        <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.06)" />
+        <XAxis dataKey="t" tick={{ fill: '#64748b', fontSize: 11 }} unit="s" />
+        <YAxis tick={{ fill: '#64748b', fontSize: 11 }} />
+        <RechartsTooltip
+          contentStyle={{ background: 'rgba(15,23,42,0.9)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 8 }}
+          labelStyle={{ color: '#94a3b8' }}
+        />
+        <Legend />
+        {valueKeys.map((key, i) => (
+          <Line
+            key={key}
+            type="monotone"
+            dataKey={key}
+            stroke={TS_LINE_COLORS[i % TS_LINE_COLORS.length]}
+            dot={false}
+            strokeWidth={1.5}
+          />
+        ))}
+      </LineChart>
+    </ResponsiveContainer>
+  );
+}
 
 type IssueStatus = 'New' | 'Triage' | 'Assigned' | 'InProgress' | 'Fixed' | 'RegressionTracking' | 'Closed' | 'Reopened' | 'Rejected';
 
@@ -66,6 +122,28 @@ export default function IssueDetailPage() {
       triageForm.resetFields();
     },
   });
+
+  const { data: snapshot } = useQuery({
+    queryKey: ['issue-snapshot', id],
+    queryFn: () => getIssueSnapshot(id!),
+    enabled: !!id,
+  });
+
+  const { data: timeSeriesChannels } = useQuery({
+    queryKey: ['issue-timeseries', id],
+    queryFn: () => getIssueTimeSeries(id!),
+    enabled: !!id,
+  });
+
+  const channelsByType = useMemo(() => {
+    if (!timeSeriesChannels) return {};
+    const grouped: Record<string, IssueTimeSeriesChannel[]> = {};
+    for (const ch of timeSeriesChannels) {
+      const type = ch.channel_type || 'other';
+      (grouped[type] ??= []).push(ch);
+    }
+    return grouped;
+  }, [timeSeriesChannels]);
 
   if (isLoading) {
     return <FullPageSpinner />;
@@ -264,6 +342,78 @@ export default function IssueDetailPage() {
           </Card>
         </Col>
       </Row>
+
+      <Card
+        title={<GlassCardTitle>Vehicle Dynamics Snapshot</GlassCardTitle>}
+        className="glass-panel"
+        style={{ marginTop: 24 }}
+      >
+        {snapshot ? (
+          <Descriptions column={{ xs: 1, sm: 2, lg: 4 }} size="small" colon={false}>
+            <Descriptions.Item label="Speed (m/s)">
+              {snapshot.speed_mps?.toFixed(2) ?? '—'}
+            </Descriptions.Item>
+            <Descriptions.Item label="Acceleration (m/s²)">
+              {snapshot.acceleration_mps2?.toFixed(3) ?? '—'}
+            </Descriptions.Item>
+            <Descriptions.Item label="Lateral Accel (m/s²)">
+              {snapshot.lateral_acceleration_mps2?.toFixed(3) ?? '—'}
+            </Descriptions.Item>
+            <Descriptions.Item label="Yaw Rate (°/s)">
+              {snapshot.yaw_rate_dps?.toFixed(2) ?? '—'}
+            </Descriptions.Item>
+            <Descriptions.Item label="Heading (°)">
+              {snapshot.heading_deg?.toFixed(2) ?? '—'}
+            </Descriptions.Item>
+            <Descriptions.Item label="Steering Angle (°)">
+              {snapshot.steering_angle_deg?.toFixed(2) ?? '—'}
+            </Descriptions.Item>
+            <Descriptions.Item label="Throttle (%)">
+              {snapshot.throttle_pct?.toFixed(1) ?? '—'}
+            </Descriptions.Item>
+            <Descriptions.Item label="Brake (bar)">
+              {snapshot.brake_pressure_bar?.toFixed(2) ?? '—'}
+            </Descriptions.Item>
+            <Descriptions.Item label="Gear">
+              {snapshot.gear ?? '—'}
+            </Descriptions.Item>
+            <Descriptions.Item label="Quaternion">
+              {snapshot.quaternion
+                ? `${snapshot.quaternion.w.toFixed(4)}, ${snapshot.quaternion.x.toFixed(4)}, ${snapshot.quaternion.y.toFixed(4)}, ${snapshot.quaternion.z.toFixed(4)}`
+                : '—'}
+            </Descriptions.Item>
+          </Descriptions>
+        ) : (
+          <Empty description="No snapshot data" image={Empty.PRESENTED_IMAGE_SIMPLE} />
+        )}
+      </Card>
+
+      {timeSeriesChannels && timeSeriesChannels.length > 0 && (
+        <Card
+          title={<GlassCardTitle>Time-Series Data</GlassCardTitle>}
+          className="glass-panel"
+          style={{ marginTop: 24 }}
+        >
+          <Tabs
+            items={Object.entries(channelsByType).map(([type, channels]) => ({
+              key: type,
+              label: <Tag>{type}</Tag>,
+              children: (
+                <Space direction="vertical" size={16} style={{ width: '100%' }}>
+                  {channels.map((ch) => (
+                    <div key={ch.channel}>
+                      <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-secondary)', marginBottom: 8 }}>
+                        {ch.channel}
+                      </div>
+                      <TimeSeriesChart channel={ch} />
+                    </div>
+                  ))}
+                </Space>
+              ),
+            }))}
+          />
+        </Card>
+      )}
 
       <Modal
         title="Triage Assignment"
