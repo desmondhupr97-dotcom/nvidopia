@@ -1,5 +1,6 @@
-import { Router } from 'express';
-import { createProxyMiddleware, Options } from 'http-proxy-middleware';
+import { Router, type Request } from 'express';
+import { createProxyMiddleware, type Options } from 'http-proxy-middleware';
+import type { ClientRequest } from 'node:http';
 
 const router = Router();
 
@@ -11,12 +12,23 @@ function serviceUrl(urlEnv: string, portEnv: string, fallbackPort: number): stri
   return process.env[urlEnv] ?? `http://localhost:${envPort(portEnv, fallbackPort)}`;
 }
 
+function reattachBody(proxyReq: ClientRequest, req: Request): void {
+  const body = (req as Request & { body?: unknown }).body;
+  if (body && typeof body === 'object' && Object.keys(body).length > 0) {
+    const data = JSON.stringify(body);
+    proxyReq.setHeader('Content-Type', 'application/json');
+    proxyReq.setHeader('Content-Length', Buffer.byteLength(data));
+    proxyReq.write(data);
+  }
+}
+
 function proxyOpts(target: string, upstreamBasePath: string): Options {
   return {
     target,
     changeOrigin: true,
     pathRewrite: (path) => `${upstreamBasePath}${path}`,
     on: {
+      proxyReq: reattachBody as (...args: unknown[]) => void,
       error(err, _req, res) {
         console.error(`[proxy] ${target} error:`, err.message);
         if ('writeHead' in res && typeof res.writeHead === 'function') {

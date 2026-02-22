@@ -1,11 +1,11 @@
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Link } from 'react-router-dom';
-import { Table, Tag, Button, Input, Empty, Space, Select } from 'antd';
+import { Table, Tag, Button, Input, Empty, Space, Select, Modal, Form, InputNumber, message } from 'antd';
 import { PlusOutlined, SearchOutlined } from '@ant-design/icons';
 import { ListChecks } from 'lucide-react';
 import { useState } from 'react';
-import { getTasks } from '../api/client';
-import type { Task } from '../api/client';
+import { getTasks, getProjects, createTask } from '../api/client';
+import type { Task, Project } from '../api/client';
 import type { ColumnsType } from 'antd/es/table';
 
 const stageColor: Record<string, string> = {
@@ -35,9 +35,42 @@ const priorityColor: Record<string, string> = {
 export default function TasksPage() {
   const [search, setSearch] = useState('');
   const [stageFilter, setStageFilter] = useState<string>();
+  const [createOpen, setCreateOpen] = useState(false);
+  const [form] = Form.useForm();
+  const queryClient = useQueryClient();
+
   const { data: tasks, isLoading } = useQuery({
     queryKey: ['tasks'],
     queryFn: () => getTasks(),
+  });
+
+  const { data: projects } = useQuery<Project[]>({
+    queryKey: ['projects'],
+    queryFn: () => getProjects(),
+  });
+
+  const createMutation = useMutation({
+    mutationFn: (values: Record<string, unknown>) => {
+      const taskId = `TASK-${crypto.randomUUID().slice(0, 6).toUpperCase()}`;
+      return createTask({
+        task_id: taskId,
+        project_id: values.project_id as string,
+        name: values.name as string,
+        task_type: values.task_type as string,
+        priority: (values.priority as string) ?? 'Medium',
+        execution_region: values.execution_region as string | undefined,
+        target_vehicle_count: values.target_vehicle_count as number | undefined,
+      } as Record<string, unknown> as Partial<Task>);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['tasks'] });
+      setCreateOpen(false);
+      form.resetFields();
+      message.success('Task created');
+    },
+    onError: (err: Error) => {
+      message.error(err.message || 'Failed to create task');
+    },
   });
 
   const filtered = tasks?.filter((t) => {
@@ -98,7 +131,7 @@ export default function TasksPage() {
           <h1 className="page-title">Tasks</h1>
           <p className="page-subtitle">Track test campaign tasks through their lifecycle</p>
         </div>
-        <Button type="primary" icon={<PlusOutlined />} size="large">
+        <Button type="primary" icon={<PlusOutlined />} size="large" onClick={() => setCreateOpen(true)}>
           New Task
         </Button>
       </div>
@@ -147,6 +180,60 @@ export default function TasksPage() {
           />
         </div>
       </Space>
+
+      <Modal
+        title="New Task"
+        open={createOpen}
+        onCancel={() => setCreateOpen(false)}
+        onOk={() => form.submit()}
+        confirmLoading={createMutation.isPending}
+        okText="Create"
+        width={560}
+      >
+        <Form form={form} layout="vertical" onFinish={(v) => createMutation.mutate(v)}>
+          <Form.Item name="project_id" label="Project" rules={[{ required: true, message: 'Please select a project' }]}>
+            <Select
+              placeholder="Select project"
+              showSearch
+              optionFilterProp="label"
+              options={(projects ?? []).map((p) => ({ value: p.id, label: p.name }))}
+            />
+          </Form.Item>
+          <Form.Item name="name" label="Task Name" rules={[{ required: true, message: 'Please enter task name' }]}>
+            <Input placeholder="e.g. Highway Daily Mileage" />
+          </Form.Item>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
+            <Form.Item name="task_type" label="Task Type" rules={[{ required: true, message: 'Please select type' }]}>
+              <Select
+                placeholder="Select type"
+                options={[
+                  { value: 'Daily', label: 'Daily' },
+                  { value: 'Smoke', label: 'Smoke' },
+                  { value: 'Gray', label: 'Gray' },
+                  { value: 'Freeze', label: 'Freeze' },
+                  { value: 'Retest', label: 'Retest' },
+                ]}
+              />
+            </Form.Item>
+            <Form.Item name="priority" label="Priority" initialValue="Medium">
+              <Select options={[
+                { value: 'Low', label: 'Low' },
+                { value: 'Medium', label: 'Medium' },
+                { value: 'High', label: 'High' },
+                { value: 'Critical', label: 'Critical' },
+              ]} />
+            </Form.Item>
+          </div>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
+            <Form.Item name="execution_region" label="Execution Region">
+              <Input placeholder="e.g. Shanghai Lingang" />
+            </Form.Item>
+            <Form.Item name="target_vehicle_count" label="Target Vehicle Count">
+              <InputNumber min={1} style={{ width: '100%' }} placeholder="Optional" />
+            </Form.Item>
+          </div>
+        </Form>
+      </Modal>
     </div>
   );
 }

@@ -1,10 +1,10 @@
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Link } from 'react-router-dom';
-import { Table, Tag, Button, Input, Empty, Space } from 'antd';
+import { Table, Tag, Button, Input, Empty, Space, Modal, Form, DatePicker, InputNumber, Select, message } from 'antd';
 import { PlusOutlined, SearchOutlined } from '@ant-design/icons';
 import { FolderKanban } from 'lucide-react';
 import { useState } from 'react';
-import { getProjects } from '../api/client';
+import { getProjects, createProject } from '../api/client';
 import type { Project } from '../api/client';
 import type { ColumnsType } from 'antd/es/table';
 
@@ -17,9 +17,39 @@ const statusColor: Record<string, string> = {
 
 export default function ProjectsPage() {
   const [search, setSearch] = useState('');
+  const [createOpen, setCreateOpen] = useState(false);
+  const [form] = Form.useForm();
+  const queryClient = useQueryClient();
+
   const { data: projects, isLoading } = useQuery<Project[]>({
     queryKey: ['projects'],
     queryFn: () => getProjects(),
+  });
+
+  const createMutation = useMutation({
+    mutationFn: (values: Record<string, unknown>) => {
+      const projectId = `PROJ-${crypto.randomUUID().slice(0, 6).toUpperCase()}`;
+      return createProject({
+        project_id: projectId,
+        name: values.name as string,
+        vehicle_platform: values.vehicle_platform as string,
+        soc_architecture: values.soc_architecture as string,
+        sensor_suite_version: values.sensor_suite_version as string,
+        software_baseline_version: values.software_baseline_version as string,
+        start_date: (values.start_date as { toISOString: () => string })?.toISOString(),
+        target_mileage_km: values.target_mileage_km as number | undefined,
+        status: (values.status as string) ?? 'Planning',
+      } as Record<string, unknown> as Partial<Project>);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['projects'] });
+      setCreateOpen(false);
+      form.resetFields();
+      message.success('Project created');
+    },
+    onError: (err: Error) => {
+      message.error(err.message || 'Failed to create project');
+    },
   });
 
   const filtered = projects?.filter(
@@ -69,7 +99,7 @@ export default function ProjectsPage() {
           <h1 className="page-title">Projects</h1>
           <p className="page-subtitle">Manage autonomous driving test projects</p>
         </div>
-        <Button type="primary" icon={<PlusOutlined />} size="large">
+        <Button type="primary" icon={<PlusOutlined />} size="large" onClick={() => setCreateOpen(true)}>
           New Project
         </Button>
       </div>
@@ -102,6 +132,52 @@ export default function ProjectsPage() {
           />
         </div>
       </Space>
+
+      <Modal
+        title="New Project"
+        open={createOpen}
+        onCancel={() => setCreateOpen(false)}
+        onOk={() => form.submit()}
+        confirmLoading={createMutation.isPending}
+        okText="Create"
+        width={600}
+      >
+        <Form form={form} layout="vertical" onFinish={(v) => createMutation.mutate(v)}>
+          <Form.Item name="name" label="Project Name" rules={[{ required: true, message: 'Please enter project name' }]}>
+            <Input placeholder="e.g. V2.0 Urban Pilot" />
+          </Form.Item>
+          <Form.Item name="vehicle_platform" label="Vehicle Platform" rules={[{ required: true }]}>
+            <Input placeholder="e.g. EP40" />
+          </Form.Item>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
+            <Form.Item name="soc_architecture" label="SoC Architecture" rules={[{ required: true }]}>
+              <Input placeholder="e.g. Orin-X Dual" />
+            </Form.Item>
+            <Form.Item name="sensor_suite_version" label="Sensor Suite Version" rules={[{ required: true }]}>
+              <Input placeholder="e.g. SS-4.0" />
+            </Form.Item>
+          </div>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
+            <Form.Item name="software_baseline_version" label="SW Baseline Version" rules={[{ required: true }]}>
+              <Input placeholder="e.g. v3.1.0-rc1" />
+            </Form.Item>
+            <Form.Item name="start_date" label="Start Date" rules={[{ required: true }]}>
+              <DatePicker style={{ width: '100%' }} />
+            </Form.Item>
+          </div>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
+            <Form.Item name="target_mileage_km" label="Target Mileage (km)">
+              <InputNumber min={0} style={{ width: '100%' }} placeholder="Optional" />
+            </Form.Item>
+            <Form.Item name="status" label="Initial Status" initialValue="Planning">
+              <Select options={[
+                { value: 'Planning', label: 'Planning' },
+                { value: 'Active', label: 'Active' },
+              ]} />
+            </Form.Item>
+          </div>
+        </Form>
+      </Modal>
     </div>
   );
 }
