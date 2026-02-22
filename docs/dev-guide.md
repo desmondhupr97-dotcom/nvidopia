@@ -24,7 +24,7 @@ cd nvidopia
 ### 2.2 Start infrastructure (Kafka + MongoDB)
 
 ```bash
-docker-compose -f infra/docker-compose.yml up -d
+docker compose -f infra/docker-compose.yml up -d
 ```
 
 This starts:
@@ -98,7 +98,7 @@ All backend services use `tsx watch` for hot-reload. The frontend uses Vite HMR.
 To build and run the entire platform in containers:
 
 ```bash
-docker-compose -f infra/docker-compose.full.yml up --build
+docker compose -f infra/docker-compose.full.yml up --build
 ```
 
 > **Note:** `docker-compose.full.yml` extends the base infrastructure compose file with service containers. This file will be created as the services mature.

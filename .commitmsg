@@ -1,8 +1,5 @@
-docs: add Chinese README/TESTME, exclude internal planning docs from git
+docs: add Windows/macOS instructions, replace docker-compose with docker compose V2
 
-- Add README_zh.md: Chinese project overview, architecture, deployment guide
-- Add TESTME_zh.md: Chinese local testing guide with step-by-step curl examples
-- Remove INIT_PRD.md, PLAN.md, and all SUB_MODULE_PLAN.md from git tracking
-- Add planning doc patterns to .gitignore to prevent future commits
-- Update README.md and dev-guide.md to remove references to excluded docs
-- Planning docs remain on local disk for internal use only
+- README_zh.md: add platform-specific install/run instructions for Windows (PowerShell) and macOS
+- TESTME_zh.md: add Windows PowerShell curl.exe notes, Git Bash/WSL guidance for bash scripts
+- Replace all docker-compose with docker compose (V2 plugin syntax) across all docs and package.json scripts

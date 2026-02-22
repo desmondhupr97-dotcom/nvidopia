@@ -1,25 +1,48 @@
 # TESTME - 本地测试指南
 
-本文档指导你如何在本地环境下验证 Nvidopia 各模块功能的正确性。
+本文档指导你如何在本地环境下验证 Nvidopia 各模块功能的正确性，同时覆盖 Windows 与 macOS 两种平台。
 
 ---
 
 ## 前置条件
 
-| 工具 | 版本要求 | 检查命令 |
-|------|----------|----------|
-| Node.js | >= 20 | `node -v` |
-| Docker | >= 24 | `docker -v` |
-| Docker Compose | >= 2.20 | `docker compose version` |
-| curl | 任意 | `curl --version` |
-| bash | 任意（Windows 可用 Git Bash） | `bash --version` |
+| 工具 | 版本要求 | Windows 检查 | macOS 检查 |
+|------|----------|-------------|------------|
+| Node.js | >= 20 | `node -v` | `node -v` |
+| Docker Desktop | >= 24（含 Compose V2） | `docker compose version` | `docker compose version` |
+| curl | 任意 | PowerShell 内置 `curl`（即 `Invoke-WebRequest`），或安装 [curl for Windows](https://curl.se/windows/) | 系统自带 |
+| bash | 任意 | Git Bash（随 Git for Windows 安装） 或 WSL | 系统自带 |
+
+> Windows 用户：下文中 `curl` 命令需在 **Git Bash** 或 **WSL** 中执行。如果在 PowerShell 中使用，请将 `curl` 替换为 `curl.exe`，否则会调用 PowerShell 内置的 `Invoke-WebRequest` 别名。
 
 ---
 
 ## 第一步：启动基础设施
 
+### 方式 A：Docker 全栈一键启动（Windows / macOS 通用）
+
+最简单的方式，所有服务一键拉起，无需本地安装 Node.js：
+
 ```bash
-docker-compose -f infra/docker-compose.yml up -d
+git clone https://github.com/desmondhupr97-dotcom/nvidopia.git
+cd nvidopia
+docker compose -f infra/docker-compose.full.yml up --build
+```
+
+等待所有容器启动完成后（约 1-2 分钟），即可跳到**第三步**开始导入种子数据和测试。
+
+停止全栈：
+
+```bash
+docker compose -f infra/docker-compose.full.yml down
+```
+
+### 方式 B：仅启动基础设施（本地开发模式）
+
+如果你需要修改代码并实时调试，只启动 Kafka 和 MongoDB：
+
+```bash
+docker compose -f infra/docker-compose.yml up -d
 ```
 
 验证基础设施是否就绪：
@@ -35,39 +58,57 @@ docker exec nvidopia-kafka kafka-topics --bootstrap-server localhost:9092 --list
 
 ---
 
-## 第二步：安装依赖并启动服务
+## 第二步：安装依赖并启动服务（仅方式 B 需要）
+
+> 如果你使用了方式 A（Docker 全栈），跳过此步。
+
+### macOS / Linux
 
 ```bash
-# 安装所有依赖
 npm install
-
-# 复制环境变量
 cp infra/.env.example .env
 
-# 构建平台库
 npm run build -w platform/data-models
 npm run build -w platform/eventing
 npm run build -w platform/observability
 
-# 在不同终端中启动各服务
-npm run dev -w apps/bff-gateway        # 终端 1
-npm run dev -w services/release-manager # 终端 2
-npm run dev -w services/fleet-manager   # 终端 3
-npm run dev -w services/issue-workflow  # 终端 4
-npm run dev -w services/traceability    # 终端 5
-npm run dev -w services/kpi-engine      # 终端 6
-npm run dev -w apps/frontend            # 终端 7
+# 在不同终端窗口中启动
+npm run dev -w apps/bff-gateway        # 终端 1 — 网关 :3000
+npm run dev -w services/release-manager # 终端 2 — 发布管理 :3001
+npm run dev -w services/fleet-manager   # 终端 3 — 车队调度 :3002
+npm run dev -w services/issue-workflow  # 终端 4 — Issue工作流 :3003
+npm run dev -w services/traceability    # 终端 5 — 追溯 :3004
+npm run dev -w services/kpi-engine      # 终端 6 — KPI :3005
+npm run dev -w apps/frontend            # 终端 7 — 前端 :5173
 ```
 
-或者使用 Docker 全栈模式：
+### Windows (PowerShell)
 
-```bash
-docker-compose -f infra/docker-compose.full.yml up --build
+```powershell
+npm install
+copy infra\.env.example .env
+
+npm run build -w platform/data-models
+npm run build -w platform/eventing
+npm run build -w platform/observability
+
+# 在不同 PowerShell 窗口中启动
+npm run dev -w apps/bff-gateway        # 窗口 1 — 网关 :3000
+npm run dev -w services/release-manager # 窗口 2 — 发布管理 :3001
+npm run dev -w services/fleet-manager   # 窗口 3 — 车队调度 :3002
+npm run dev -w services/issue-workflow  # 窗口 4 — Issue工作流 :3003
+npm run dev -w services/traceability    # 窗口 5 — 追溯 :3004
+npm run dev -w services/kpi-engine      # 窗口 6 — KPI :3005
+npm run dev -w apps/frontend            # 窗口 7 — 前端 :5173
 ```
+
+> Windows 上 `npm run dev` 在 PowerShell 和 CMD 中均可正常工作。
 
 ---
 
 ## 第三步：导入测试种子数据
+
+> 方式 A 用户需在**另一个终端窗口**执行此命令（容器保持运行）。
 
 ```bash
 npx tsx platform/data-models/src/seed.ts
@@ -75,30 +116,32 @@ npx tsx platform/data-models/src/seed.ts
 
 成功后会输出插入的实体数量：2 个项目、6 个任务、10 次 Run、20 个 Issue 等。
 
+> Windows 如果未安装 Node.js（全栈 Docker 模式），可通过 `docker exec` 在容器内执行种子脚本，或先本地安装 Node.js。
+
 ---
 
 ## 第四步：服务健康检查
 
-逐个检查所有微服务的健康状态：
+### macOS / Linux / Git Bash
 
 ```bash
-# 网关
-curl http://localhost:3000/health
+curl http://localhost:3000/health    # 网关
+curl http://localhost:3001/health    # 发布管理
+curl http://localhost:3002/health    # 车队调度
+curl http://localhost:3003/health    # Issue 工作流
+curl http://localhost:3004/health    # 追溯服务
+curl http://localhost:3005/health    # KPI 引擎
+```
 
-# 发布管理
-curl http://localhost:3001/health
+### Windows (PowerShell)
 
-# 车队调度
-curl http://localhost:3002/health
-
-# Issue 工作流
-curl http://localhost:3003/health
-
-# 追溯服务
-curl http://localhost:3004/health
-
-# KPI 引擎
-curl http://localhost:3005/health
+```powershell
+curl.exe http://localhost:3000/health    # 网关
+curl.exe http://localhost:3001/health    # 发布管理
+curl.exe http://localhost:3002/health    # 车队调度
+curl.exe http://localhost:3003/health    # Issue 工作流
+curl.exe http://localhost:3004/health    # 追溯服务
+curl.exe http://localhost:3005/health    # KPI 引擎
 ```
 
 每个端点应返回类似 `{"status":"ok","service":"xxx"}` 的 JSON。
@@ -107,11 +150,27 @@ curl http://localhost:3005/health
 
 ## 第五步：运行 E2E 冒烟测试脚本
 
-项目提供了一个自动化 E2E 脚本，覆盖完整的业务链路：
+### macOS / Linux
 
 ```bash
 bash scripts/e2e-smoke.sh
 ```
+
+### Windows
+
+在 **Git Bash** 中运行：
+
+```bash
+bash scripts/e2e-smoke.sh
+```
+
+或在 **WSL** 中运行：
+
+```bash
+bash scripts/e2e-smoke.sh
+```
+
+> E2E 脚本使用 bash 语法，不支持在 PowerShell/CMD 中直接运行。
 
 ### 脚本测试的 10 个步骤
 
@@ -134,7 +193,7 @@ bash scripts/e2e-smoke.sh
 
 ## 第六步：手动 API 测试
 
-以下是关键业务流程的 curl 示例，你可以逐个执行来验证各服务。
+以下 curl 示例在 macOS / Linux / Git Bash 中可直接使用。Windows PowerShell 用户请将 `curl` 替换为 `curl.exe`，并将单引号 `'...'` 替换为双引号 `"..."`（内部双引号用反引号 `` ` `` 转义）。
 
 ### 6.1 创建 Project
 
@@ -265,35 +324,19 @@ curl http://localhost:3003/issues/ISS-001/transitions
 ### 6.8 查询 KPI
 
 ```bash
-# 平均接管里程
 curl "http://localhost:3005/kpi/mpi?project_id=TEST-001"
-
-# 平均修复时间
 curl "http://localhost:3005/kpi/mttr?project_id=TEST-001"
-
-# 回归测试通过率
 curl "http://localhost:3005/kpi/regression-pass-rate?project_id=TEST-001"
-
-# 车队利用率
 curl "http://localhost:3005/kpi/fleet-utilization?project_id=TEST-001"
-
-# 缺陷收敛趋势
 curl "http://localhost:3005/kpi/issue-convergence?project_id=TEST-001"
 ```
 
 ### 6.9 追溯查询
 
 ```bash
-# 反向追溯（Issue -> 需求）
 curl http://localhost:3004/trace/backward/ISS-001
-
-# 正向追溯（需求 -> 验证结果）
 curl http://localhost:3004/trace/forward/REQ-001
-
-# 影响范围扩散
 curl http://localhost:3004/trace/impact/ISS-001
-
-# 需求覆盖率
 curl http://localhost:3004/trace/coverage
 ```
 
@@ -357,17 +400,32 @@ MONGO_URI=mongodb://nvidopia:nvidopia_dev@localhost:27017/nvidopia?authSource=ad
 
 确认网关服务（端口 3000）正在运行，前端的 Vite 代理配置会将 `/api` 请求转发至 `http://localhost:3000`。
 
+### Windows 上 curl 命令输出乱码
+
+PowerShell 默认的 `curl` 是 `Invoke-WebRequest` 的别名。请改用 `curl.exe`：
+
+```powershell
+curl.exe http://localhost:3000/health
+```
+
+### Windows 上无法运行 bash 脚本
+
+E2E 冒烟测试脚本需要 bash 环境。请通过以下方式之一运行：
+- **Git Bash**（安装 Git for Windows 时自带）
+- **WSL**（Windows Subsystem for Linux）
+- **Docker 内运行**：`docker exec -it nvidopia-bff-gateway sh`
+
 ---
 
 ## 停止所有服务
 
 ```bash
 # 停止基础设施容器
-docker-compose -f infra/docker-compose.yml down
+docker compose -f infra/docker-compose.yml down
 
-# 或停止全栈容器
-docker-compose -f infra/docker-compose.full.yml down
+# 停止全栈容器
+docker compose -f infra/docker-compose.full.yml down
 
-# 如需清除 MongoDB 数据卷
-docker-compose -f infra/docker-compose.yml down -v
+# 清除 MongoDB 数据卷（会删除所有数据）
+docker compose -f infra/docker-compose.yml down -v
 ```

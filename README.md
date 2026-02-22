@@ -15,7 +15,7 @@ A microservice-based middleware system for managing autonomous driving road-test
 ### 1. Start infrastructure
 
 ```bash
-docker-compose -f infra/docker-compose.yml up -d
+docker compose -f infra/docker-compose.yml up -d
 ```
 
 ### 2. Install dependencies & build platform libraries
@@ -46,7 +46,7 @@ npm run dev -w apps/frontend
 ### Or run everything in Docker
 
 ```bash
-docker-compose -f infra/docker-compose.full.yml up --build
+docker compose -f infra/docker-compose.full.yml up --build
 ```
 
 ---

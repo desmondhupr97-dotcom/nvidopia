@@ -13,7 +13,7 @@
 | 微服务 | Node.js + Express + Mongoose + kafkajs (TypeScript) |
 | 数据库 | MongoDB 7.0（文档存储 + `$graphLookup` 图查询） |
 | 消息队列 | Apache Kafka（Confluent 7.6） |
-| 容器化 | Docker + Docker Compose |
+| 容器化 | Docker + Docker Compose V2 |
 | 包管理 | npm workspaces（monorepo） |
 
 ---
@@ -49,15 +49,54 @@
 
 ---
 
+## 前置要求
+
+| 工具 | 版本 | Windows 安装方式 | macOS 安装方式 |
+|------|------|------------------|----------------|
+| Node.js | >= 20 LTS | [nodejs.org](https://nodejs.org) 下载 .msi 安装包，或 `winget install OpenJS.NodeJS.LTS` | `brew install node@20` |
+| Docker Desktop | >= 24 | [Docker Desktop for Windows](https://docs.docker.com/desktop/install/windows-install/)（需开启 WSL2 或 Hyper-V） | `brew install --cask docker` 或从 [Docker Desktop for Mac](https://docs.docker.com/desktop/install/mac-install/) 下载 |
+| Git | >= 2.40 | [git-scm.com](https://git-scm.com/download/win) | `brew install git` |
+
+> Docker Desktop 自带 `docker compose` V2 插件，无需额外安装。
+
+---
+
 ## 快速开始
 
-### 前置要求
+### 方式一：Docker 全栈一键启动（推荐新手）
 
-- **Node.js** >= 20（LTS）
-- **Docker** >= 24 + **Docker Compose** >= 2.20
-- **Git** >= 2.40
+适用于 Windows 和 macOS，只需安装好 Docker Desktop 即可。
 
-### 方式一：本地开发模式
+```bash
+# 1. 克隆仓库
+git clone https://github.com/desmondhupr97-dotcom/nvidopia.git
+cd nvidopia
+
+# 2. 一键启动所有基础设施 + 微服务 + 前端
+docker compose -f infra/docker-compose.full.yml up --build
+```
+
+启动后可访问：
+
+| 服务 | 地址 |
+|------|------|
+| 前端界面 | http://localhost:5173 |
+| API 网关 | http://localhost:3000 |
+| MongoDB 管理界面 | http://localhost:8081 |
+
+停止所有容器：
+
+```bash
+docker compose -f infra/docker-compose.full.yml down
+```
+
+---
+
+### 方式二：本地开发模式
+
+适合需要修改代码并实时调试的场景。以下分别给出 macOS 和 Windows 的操作步骤。
+
+#### macOS / Linux
 
 ```bash
 # 1. 克隆仓库
@@ -65,7 +104,7 @@ git clone https://github.com/desmondhupr97-dotcom/nvidopia.git
 cd nvidopia
 
 # 2. 启动基础设施（Kafka + MongoDB）
-docker-compose -f infra/docker-compose.yml up -d
+docker compose -f infra/docker-compose.yml up -d
 
 # 3. 安装依赖
 npm install
@@ -73,12 +112,12 @@ npm install
 # 4. 复制环境变量
 cp infra/.env.example .env
 
-# 5. 构建平台公共库（微服务依赖）
+# 5. 构建平台公共库
 npm run build -w platform/data-models
 npm run build -w platform/eventing
 npm run build -w platform/observability
 
-# 6. 分别启动各服务（各自开一个终端）
+# 6. 分别启动各服务（各自开一个终端窗口）
 npm run dev -w apps/bff-gateway        # 网关 :3000
 npm run dev -w services/release-manager # 发布管理 :3001
 npm run dev -w services/fleet-manager   # 车队调度 :3002
@@ -88,15 +127,56 @@ npm run dev -w services/kpi-engine      # KPI引擎 :3005
 npm run dev -w apps/frontend            # 前端 :5173
 ```
 
-所有后端服务使用 `tsx watch` 热重载，前端使用 Vite HMR。
+#### Windows (PowerShell)
 
-### 方式二：Docker 全栈一键启动
+```powershell
+# 1. 克隆仓库
+git clone https://github.com/desmondhupr97-dotcom/nvidopia.git
+cd nvidopia
 
-```bash
-docker-compose -f infra/docker-compose.full.yml up --build
+# 2. 启动基础设施（Kafka + MongoDB）
+docker compose -f infra/docker-compose.yml up -d
+
+# 3. 安装依赖
+npm install
+
+# 4. 复制环境变量
+copy infra\.env.example .env
+
+# 5. 构建平台公共库
+npm run build -w platform/data-models
+npm run build -w platform/eventing
+npm run build -w platform/observability
+
+# 6. 分别启动各服务（各自开一个终端窗口）
+npm run dev -w apps/bff-gateway        # 网关 :3000
+npm run dev -w services/release-manager # 发布管理 :3001
+npm run dev -w services/fleet-manager   # 车队调度 :3002
+npm run dev -w services/issue-workflow  # Issue工作流 :3003
+npm run dev -w services/traceability    # 追溯服务 :3004
+npm run dev -w services/kpi-engine      # KPI引擎 :3005
+npm run dev -w apps/frontend            # 前端 :5173
 ```
 
-此命令会同时构建并启动所有基础设施和 7 个服务容器。
+> Windows 上 `npm run dev` 等命令在 PowerShell 和 CMD 中均可运行，无需 Git Bash。
+
+所有后端服务使用 `tsx watch` 热重载，前端使用 Vite HMR。
+
+---
+
+### 导入种子数据
+
+启动服务后，导入示例数据：
+
+```bash
+npx tsx platform/data-models/src/seed.ts
+```
+
+此脚本会向 MongoDB 注入示例数据：2 个项目、6 个任务、10 次测试过程、20 个 Issue、5 辆车、3 条需求、5 个代码提交、2 个构建版本。
+
+---
+
+## 容器列表
 
 | 容器 | 端口 | 说明 |
 |------|------|------|
@@ -111,14 +191,6 @@ docker-compose -f infra/docker-compose.full.yml up --build
 | nvidopia-traceability | 3004 | 追溯查询微服务 |
 | nvidopia-kpi-engine | 3005 | KPI 引擎微服务 |
 | nvidopia-frontend | 5173 | 前端 SPA（Nginx 托管） |
-
-### 导入种子数据
-
-```bash
-npx tsx platform/data-models/src/seed.ts
-```
-
-此脚本会向 MongoDB 注入示例数据：2 个项目、6 个任务、10 次测试过程、20 个 Issue、5 辆车、3 条需求、5 个代码提交、2 个构建版本。
 
 ---
 
@@ -186,6 +258,21 @@ New → Triage → Assigned → InProgress → Fixed → RegressionTracking → 
 |------|----------|----------|
 | 自动 Triage | 桩接口（返回 501） | 对接规则引擎或 ML 分类模型 |
 | 仿真测试 | 预留字段 `simulation_ref` / `simulation_status` | 对接仿真执行器，写回结果至 Kafka 管道 |
+
+---
+
+## 停止与清理
+
+```bash
+# 停止基础设施容器
+docker compose -f infra/docker-compose.yml down
+
+# 停止全栈容器
+docker compose -f infra/docker-compose.full.yml down
+
+# 清除 MongoDB 数据卷（会删除所有数据）
+docker compose -f infra/docker-compose.yml down -v
+```
 
 ---
 
