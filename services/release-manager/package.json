@@ -2,6 +2,7 @@
   "name": "@nvidopia/release-manager",
   "version": "0.1.0",
   "private": true,
+  "type": "module",
   "description": "Release management microservice for the nvidopia platform",
   "main": "dist/index.js",
   "scripts": {
@@ -10,9 +11,10 @@
     "start": "node dist/index.js"
   },
   "dependencies": {
+    "@nvidopia/data-models": "*",
+    "@nvidopia/service-toolkit": "*",
     "express": "^4.21.0",
     "cors": "^2.8.5",
-    "mongoose": "^8.10.0",
     "dotenv": "^16.4.0"
   },
   "devDependencies": {
