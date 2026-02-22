@@ -5,52 +5,50 @@ import { getProducer } from '../kafka.js';
 const router = Router();
 router.use(express.json({ limit: '1mb' }));
 
-router.post('/api/ingest/telemetry', async (req: Request, res: Response) => {
-  const { vehicle_id, ...rest } = req.body ?? {};
+function createIngestHandler(
+  topic: string,
+  keyExtractor: (body: Record<string, unknown>) => string | null,
+  validator: (body: Record<string, unknown>) => string | null,
+) {
+  return async (req: Request, res: Response) => {
+    const body = req.body ?? {};
 
-  if (!vehicle_id) {
-    res.status(400).json({ error: 'vehicle_id is required' });
-    return;
-  }
+    const validationError = validator(body);
+    if (validationError) {
+      res.status(400).json({ error: validationError });
+      return;
+    }
 
-  await getProducer().send({
-    topic: 'ad.telemetry.mileage.realtime',
-    messages: [{ key: String(vehicle_id), value: JSON.stringify({ vehicle_id, ...rest, ingested_at: Date.now() }) }],
-  });
+    const key = keyExtractor(body);
 
-  res.status(202).json({ accepted: true, topic: 'ad.telemetry.mileage.realtime' });
-});
+    await getProducer().send({
+      topic,
+      messages: [{
+        key: key ? String(key) : undefined,
+        value: JSON.stringify({ ...body, ingested_at: Date.now() }),
+      }],
+    });
 
-router.post('/api/ingest/status', async (req: Request, res: Response) => {
-  const { vehicle_id, ...rest } = req.body ?? {};
+    res.status(202).json({ accepted: true, topic });
+  };
+}
 
-  if (!vehicle_id) {
-    res.status(400).json({ error: 'vehicle_id is required' });
-    return;
-  }
+router.post('/api/ingest/telemetry', createIngestHandler(
+  'ad.telemetry.mileage.realtime',
+  (body) => String(body.vehicle_id ?? ''),
+  (body) => body.vehicle_id ? null : 'vehicle_id is required',
+));
 
-  await getProducer().send({
-    topic: 'ad.vehicle.status.tracking',
-    messages: [{ key: String(vehicle_id), value: JSON.stringify({ vehicle_id, ...rest, ingested_at: Date.now() }) }],
-  });
+router.post('/api/ingest/status', createIngestHandler(
+  'ad.vehicle.status.tracking',
+  (body) => String(body.vehicle_id ?? ''),
+  (body) => body.vehicle_id ? null : 'vehicle_id is required',
+));
 
-  res.status(202).json({ accepted: true, topic: 'ad.vehicle.status.tracking' });
-});
-
-router.post('/api/ingest/issue', async (req: Request, res: Response) => {
-  const body = req.body ?? {};
-
-  if (!body.title && !body.description) {
-    res.status(400).json({ error: 'title or description is required' });
-    return;
-  }
-
-  await getProducer().send({
-    topic: 'ad.testing.issue.reports',
-    messages: [{ value: JSON.stringify({ ...body, ingested_at: Date.now() }) }],
-  });
-
-  res.status(202).json({ accepted: true, topic: 'ad.testing.issue.reports' });
-});
+router.post('/api/ingest/issue', createIngestHandler(
+  'ad.testing.issue.reports',
+  () => null,
+  (body) => (body.title || body.description) ? null : 'title or description is required',
+));
 
 export default router;

@@ -14,3 +14,5 @@ Thumbs.db
 apps/frontend/tsconfig.tsbuildinfo
 screenshots/
 FRONTEND_VERIFICATION_REPORT.md
+apps/frontend/vite.config.d.ts
+apps/frontend/vite.config.js
