@@ -1,10 +1,5 @@
-feat(phase4): add E2E integration, Dockerfiles, seed data, CI pipeline, and documentation
+docs(plan): update PLAN.md with completed milestone status and module progress
 
-- Full-stack Docker Compose with all services and infrastructure
-- Dockerfiles for all 7 services (multi-stage for frontend with nginx)
-- MongoDB seed data script with realistic test entities
-- E2E smoke test script covering full Issue lifecycle flow
-- GitHub Actions CI pipeline (lint/test/build)
-- Architecture documentation with Mermaid diagrams
-- Developer guide with quick start and project structure
-- Root README with module overview and links
+- Mark all 13 sub-modules as Done in status board
+- Check off all M1-M4 acceptance criteria
+- Add .commitmsg to .gitignore

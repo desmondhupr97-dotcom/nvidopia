@@ -23,19 +23,19 @@
 
 | 模块 | 路径 | 状态 | 负责人 |
 |------|------|------|--------|
-| 前端应用 | [apps/frontend/SUB_MODULE_PLAN.md](apps/frontend/SUB_MODULE_PLAN.md) | Not Started | - |
-| BFF 网关 | [apps/bff-gateway/SUB_MODULE_PLAN.md](apps/bff-gateway/SUB_MODULE_PLAN.md) | Not Started | - |
-| 发布管理服务 | [services/release-manager/SUB_MODULE_PLAN.md](services/release-manager/SUB_MODULE_PLAN.md) | Not Started | - |
-| 车队调度服务 | [services/fleet-manager/SUB_MODULE_PLAN.md](services/fleet-manager/SUB_MODULE_PLAN.md) | Not Started | - |
-| Issue 工作流服务 | [services/issue-workflow/SUB_MODULE_PLAN.md](services/issue-workflow/SUB_MODULE_PLAN.md) | Not Started | - |
-| 追溯服务 | [services/traceability/SUB_MODULE_PLAN.md](services/traceability/SUB_MODULE_PLAN.md) | Not Started | - |
-| KPI 引擎 | [services/kpi-engine/SUB_MODULE_PLAN.md](services/kpi-engine/SUB_MODULE_PLAN.md) | Not Started | - |
-| 事件平台 | [platform/eventing/SUB_MODULE_PLAN.md](platform/eventing/SUB_MODULE_PLAN.md) | Not Started | - |
-| 数据模型 | [platform/data-models/SUB_MODULE_PLAN.md](platform/data-models/SUB_MODULE_PLAN.md) | Not Started | - |
-| 可观测性 | [platform/observability/SUB_MODULE_PLAN.md](platform/observability/SUB_MODULE_PLAN.md) | Not Started | - |
-| 契约管理 | [contracts/SUB_MODULE_PLAN.md](contracts/SUB_MODULE_PLAN.md) | Not Started | - |
-| 基础设施 | [infra/SUB_MODULE_PLAN.md](infra/SUB_MODULE_PLAN.md) | Not Started | - |
-| 文档中心 | [docs/SUB_MODULE_PLAN.md](docs/SUB_MODULE_PLAN.md) | Not Started | - |
+| 前端应用 | [apps/frontend/SUB_MODULE_PLAN.md](apps/frontend/SUB_MODULE_PLAN.md) | Done | - |
+| BFF 网关 | [apps/bff-gateway/SUB_MODULE_PLAN.md](apps/bff-gateway/SUB_MODULE_PLAN.md) | Done | - |
+| 发布管理服务 | [services/release-manager/SUB_MODULE_PLAN.md](services/release-manager/SUB_MODULE_PLAN.md) | Done | - |
+| 车队调度服务 | [services/fleet-manager/SUB_MODULE_PLAN.md](services/fleet-manager/SUB_MODULE_PLAN.md) | Done | - |
+| Issue 工作流服务 | [services/issue-workflow/SUB_MODULE_PLAN.md](services/issue-workflow/SUB_MODULE_PLAN.md) | Done | - |
+| 追溯服务 | [services/traceability/SUB_MODULE_PLAN.md](services/traceability/SUB_MODULE_PLAN.md) | Done | - |
+| KPI 引擎 | [services/kpi-engine/SUB_MODULE_PLAN.md](services/kpi-engine/SUB_MODULE_PLAN.md) | Done | - |
+| 事件平台 | [platform/eventing/SUB_MODULE_PLAN.md](platform/eventing/SUB_MODULE_PLAN.md) | Done | - |
+| 数据模型 | [platform/data-models/SUB_MODULE_PLAN.md](platform/data-models/SUB_MODULE_PLAN.md) | Done | - |
+| 可观测性 | [platform/observability/SUB_MODULE_PLAN.md](platform/observability/SUB_MODULE_PLAN.md) | Done | - |
+| 契约管理 | [contracts/SUB_MODULE_PLAN.md](contracts/SUB_MODULE_PLAN.md) | Done | - |
+| 基础设施 | [infra/SUB_MODULE_PLAN.md](infra/SUB_MODULE_PLAN.md) | Done | - |
+| 文档中心 | [docs/SUB_MODULE_PLAN.md](docs/SUB_MODULE_PLAN.md) | Done | - |
 
 ## 4. 跨模块接口冻结点与联调窗口
 
@@ -50,25 +50,25 @@
 ## 5. 全局测试验收门禁
 
 ### M1 验收
-- [ ] 所有模块目录存在且 SUB_MODULE_PLAN.md 已初始化
-- [ ] Docker Compose 可一键启动 Kafka + MongoDB
-- [ ] 契约初版通过 spectral lint
+- [x] 所有模块目录存在且 SUB_MODULE_PLAN.md 已初始化
+- [x] Docker Compose 可一键启动 Kafka + MongoDB
+- [x] 契约初版通过 spectral lint
 
 ### M2 验收
-- [ ] 6 个微服务可独立启动并通过健康检查
-- [ ] Issue 状态机完整流转（New -> Closed 全路径）
-- [ ] 追溯 API 可完成正反向查询
-- [ ] Kafka 消费者含 DLQ 机制
+- [x] 6 个微服务可独立启动并通过健康检查
+- [x] Issue 状态机完整流转（New -> Closed 全路径）
+- [x] 追溯 API 可完成正反向查询
+- [x] Kafka 消费者含 DLQ 机制
 
 ### M3 验收
-- [ ] 前端所有 P0 页面可访问
-- [ ] Dashboard-as-Code 渲染器可根据 JSON 动态生成图表
-- [ ] AutoTriage/Simulation 占位页可导航
+- [x] 前端所有 P0 页面可访问
+- [x] Dashboard-as-Code 渲染器可根据 JSON 动态生成图表
+- [x] AutoTriage/Simulation 占位页可导航
 
 ### M4 验收
-- [ ] 模拟车端消息 -> Issue 生成 -> 流转 -> 闭环 -> KPI 展示 E2E 可跑通
-- [ ] 可观测性看板可显示服务状态
-- [ ] 各任务类型（Smoke/Gray/Freeze/Retest）最小路径可验证
+- [x] 模拟车端消息 -> Issue 生成 -> 流转 -> 闭环 -> KPI 展示 E2E 可跑通
+- [x] 可观测性看板可显示服务状态
+- [x] 各任务类型（Smoke/Gray/Freeze/Retest）最小路径可验证
 
 ## 6. Git 提交与推送策略
 
