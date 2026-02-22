@@ -1,5 +1,5 @@
 import { Kafka, Consumer, EachMessagePayload } from 'kafkajs';
-import { KpiSnapshot } from '../models/kpi-snapshot.model.js';
+import { KpiSnapshot } from '@nvidopia/data-models';
 
 const TOPIC = 'ad.testing.kpi.metrics';
 const GROUP_ID = 'kpi-engine-metrics';

@@ -1,6 +1,5 @@
 import crypto from 'node:crypto';
-import { Issue, type IssueStatus, type IssueDocument } from './models/index.js';
-import { IssueStateTransition } from './models/index.js';
+import { Issue, IssueStateTransition, type IssueStatus, type IssueDocument } from '@nvidopia/data-models';
 
 const VALID_TRANSITIONS = new Map<IssueStatus, IssueStatus[]>([
   ['New',                ['Triage', 'Rejected']],
@@ -23,22 +22,11 @@ export function validateTransition(
   toStatus: IssueStatus,
 ): { valid: boolean; error?: string } {
   const allowed = VALID_TRANSITIONS.get(fromStatus);
-
-  if (!allowed) {
-    return { valid: false, error: `Unknown status: "${fromStatus}"` };
-  }
-
-  if (allowed.length === 0) {
-    return { valid: false, error: `"${fromStatus}" is a terminal state — no transitions allowed` };
-  }
-
+  if (!allowed) return { valid: false, error: `Unknown status: "${fromStatus}"` };
+  if (allowed.length === 0) return { valid: false, error: `"${fromStatus}" is a terminal state — no transitions allowed` };
   if (!allowed.includes(toStatus)) {
-    return {
-      valid: false,
-      error: `Transition from "${fromStatus}" to "${toStatus}" is not allowed. Valid targets: [${allowed.join(', ')}]`,
-    };
+    return { valid: false, error: `Transition from "${fromStatus}" to "${toStatus}" is not allowed. Valid targets: [${allowed.join(', ')}]` };
   }
-
   return { valid: true };
 }
 
@@ -50,9 +38,7 @@ export async function executeTransition(
   metadata?: Record<string, unknown>,
 ): Promise<IssueDocument> {
   const issue = await Issue.findOne({ issue_id: issueId });
-  if (!issue) {
-    throw new Error(`Issue "${issueId}" not found`);
-  }
+  if (!issue) throw new Error(`Issue "${issueId}" not found`);
 
   const fromStatus = issue.status as IssueStatus;
   const result = validateTransition(fromStatus, toStatus);

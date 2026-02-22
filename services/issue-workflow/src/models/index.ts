@@ -1,2 +1,0 @@
-export { Issue, type IIssue, type IssueDocument, ISSUE_CATEGORY, type IssueCategory, ISSUE_SEVERITY, type IssueSeverity, TAKEOVER_TYPE, type TakeoverType, ISSUE_STATUS, type IssueStatus, TRIAGE_MODE, type TriageMode, type IGpsCoordinates } from './issue.model.js';
-export { IssueStateTransition, type IIssueStateTransition, type IssueStateTransitionDocument } from './issue-state-transition.model.js';
