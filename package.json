@@ -1,0 +1,23 @@
+{
+  "name": "nvidopia",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Autonomous Driving Software Iteration Optimization Platform",
+  "workspaces": [
+    "apps/*",
+    "services/*",
+    "platform/*",
+    "contracts"
+  ],
+  "scripts": {
+    "infra:up": "docker-compose -f infra/docker-compose.yml up -d",
+    "infra:down": "docker-compose -f infra/docker-compose.yml down",
+    "infra:logs": "docker-compose -f infra/docker-compose.yml logs -f",
+    "lint": "npm run lint --workspaces --if-present",
+    "test": "npm run test --workspaces --if-present",
+    "build": "npm run build --workspaces --if-present"
+  },
+  "engines": {
+    "node": ">=20.0.0"
+  }
+}

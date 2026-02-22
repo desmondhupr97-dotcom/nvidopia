@@ -1,0 +1,12 @@
+node_modules/
+dist/
+build/
+.env
+.env.local
+*.log
+contracts/generated/
+coverage/
+.nyc_output/
+.DS_Store
+Thumbs.db
+*.tgz

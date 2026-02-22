@@ -1,0 +1,7 @@
+chore(phase0): scaffold modular directory structure with SUB_MODULE_PLAN and PLAN.md
+
+- Create 13 module directories (apps, services, platform, contracts, infra, docs)
+- Add tailored SUB_MODULE_PLAN.md for each module
+- Add root PLAN.md as project master control plan
+- Add Docker Compose for local dev (Kafka, MongoDB, Zookeeper)
+- Add .gitignore, .env.example, root package.json (npm workspaces)
