@@ -11,3 +11,8 @@ coverage/
 Thumbs.db
 *.tgz
 .commitmsg
+
+# Internal planning documents - not for public git
+INIT_PRD.md
+PLAN.md
+**/SUB_MODULE_PLAN.md

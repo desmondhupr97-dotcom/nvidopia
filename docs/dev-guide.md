@@ -165,11 +165,10 @@ nvidopia/
 │   └── .env.example          # Environment variable template
 ├── docs/
 │   ├── architecture.md       # Architecture document
-│   ├── dev-guide.md          # This file
-│   └── SUB_MODULE_PLAN.md    # Docs module plan
+│   └── dev-guide.md          # This file
 ├── scripts/                  # Utility & E2E scripts
-├── PLAN.md                   # Master project plan
-├── INIT_PRD.md               # Product requirements document
+├── README_zh.md              # Chinese project guide
+├── TESTME_zh.md              # Chinese testing guide
 └── package.json              # Workspace root (npm workspaces)
 ```
 

@@ -1,5 +1,8 @@
-docs(plan): update PLAN.md with completed milestone status and module progress
+docs: add Chinese README/TESTME, exclude internal planning docs from git
 
-- Mark all 13 sub-modules as Done in status board
-- Check off all M1-M4 acceptance criteria
-- Add .commitmsg to .gitignore
+- Add README_zh.md: Chinese project overview, architecture, deployment guide
+- Add TESTME_zh.md: Chinese local testing guide with step-by-step curl examples
+- Remove INIT_PRD.md, PLAN.md, and all SUB_MODULE_PLAN.md from git tracking
+- Add planning doc patterns to .gitignore to prevent future commits
+- Update README.md and dev-guide.md to remove references to excluded docs
+- Planning docs remain on local disk for internal use only

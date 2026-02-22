@@ -86,10 +86,10 @@ Vehicle Fleet → API Gateway → Kafka Topics → Microservices → MongoDB
 
 | Document | Description |
 |----------|-------------|
-| [`PLAN.md`](PLAN.md) | Master project plan — milestones, sub-module status, acceptance criteria |
 | [`docs/architecture.md`](docs/architecture.md) | System architecture, data model, state machines, Kafka topics, API overview |
 | [`docs/dev-guide.md`](docs/dev-guide.md) | Local setup, project structure, adding services, commit conventions |
-| [`INIT_PRD.md`](INIT_PRD.md) | Original product requirements document |
+| [`README_zh.md`](README_zh.md) | Chinese README with project details and deployment guide |
+| [`TESTME_zh.md`](TESTME_zh.md) | Chinese local testing guide |
 
 ---
 
