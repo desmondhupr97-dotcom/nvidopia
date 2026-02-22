@@ -5,6 +5,7 @@ import ProjectDetailPage from './pages/ProjectDetailPage';
 import TasksPage from './pages/TasksPage';
 import TaskDetailPage from './pages/TaskDetailPage';
 import RunsPage from './pages/RunsPage';
+import RunDetailPage from './pages/RunDetailPage';
 import IssuesPage from './pages/IssuesPage';
 import IssueDetailPage from './pages/IssueDetailPage';
 import KpiDashboardPage from './pages/KpiDashboardPage';
@@ -22,6 +23,7 @@ export default function App() {
         <Route path="tasks" element={<TasksPage />} />
         <Route path="tasks/:id" element={<TaskDetailPage />} />
         <Route path="runs" element={<RunsPage />} />
+        <Route path="runs/:id" element={<RunDetailPage />} />
         <Route path="issues" element={<IssuesPage />} />
         <Route path="issues/:id" element={<IssueDetailPage />} />
         <Route path="kpi" element={<KpiDashboardPage />} />

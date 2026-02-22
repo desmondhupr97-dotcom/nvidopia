@@ -59,7 +59,7 @@ export default function TaskDetailPage() {
                 <tbody>
                   {runs.map((r) => (
                     <tr key={r.id}>
-                      <td><Link to={`/runs`}>{r.id.slice(0, 8)}</Link></td>
+                      <td><Link to={`/runs/${r.id}`}>{r.id.slice(0, 8)}</Link></td>
                       <td><span className="badge badge-blue">{r.status}</span></td>
                       <td>{r.result ?? '—'}</td>
                       <td>{r.startedAt ? new Date(r.startedAt).toLocaleString() : '—'}</td>

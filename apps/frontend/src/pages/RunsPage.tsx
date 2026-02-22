@@ -1,4 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
+import { Link } from 'react-router-dom';
 import { Play } from 'lucide-react';
 import { getRuns } from '../api/client';
 
@@ -67,8 +68,16 @@ export default function RunsPage() {
             <tbody>
               {runs.map((r) => (
                 <tr key={r.id}>
-                  <td><span style={{ fontFamily: 'monospace' }}>{(r.id ?? '').slice(0, 8)}</span></td>
-                  <td><span style={{ fontFamily: 'monospace' }}>{(r.taskId ?? '').slice(0, 8)}</span></td>
+                  <td>
+                    <Link to={`/runs/${r.id}`} style={{ fontFamily: 'monospace' }}>
+                      {(r.id ?? '').slice(0, 8)}
+                    </Link>
+                  </td>
+                  <td>
+                    {r.taskId
+                      ? <Link to={`/tasks/${r.taskId}`} style={{ fontFamily: 'monospace' }}>{r.taskId.slice(0, 8)}</Link>
+                      : '—'}
+                  </td>
                   <td><span className={`badge ${statusBadge[r.status] ?? 'badge-gray'}`}>{r.status}</span></td>
                   <td>{r.result ?? '—'}</td>
                   <td>{r.vehicleIds?.length ?? 0}</td>
