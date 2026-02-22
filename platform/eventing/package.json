@@ -1,0 +1,18 @@
+{
+  "name": "@nvidopia/eventing",
+  "version": "1.0.0",
+  "description": "Kafka eventing primitives for the Nvidopia autonomous driving test platform",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "tsc",
+    "setup-topics": "ts-node src/setup-topics.ts"
+  },
+  "dependencies": {
+    "kafkajs": "^2.2.4",
+    "typescript": "^5.4.5"
+  },
+  "devDependencies": {
+    "ts-node": "^10.9.2"
+  }
+}

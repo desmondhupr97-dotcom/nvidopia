@@ -1,0 +1,24 @@
+{
+  "name": "@nvidopia/data-models",
+  "version": "0.1.0",
+  "description": "Shared Mongoose data models for the nvidopia autonomous driving test platform",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsc",
+    "clean": "rimraf dist",
+    "prepublishOnly": "npm run build"
+  },
+  "dependencies": {
+    "mongoose": "^8.10.0"
+  },
+  "devDependencies": {
+    "typescript": "^5.7.0",
+    "rimraf": "^6.0.0"
+  },
+  "license": "UNLICENSED",
+  "private": true
+}

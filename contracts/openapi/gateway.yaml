@@ -1,0 +1,769 @@
+openapi: 3.0.3
+info:
+  title: Nvidopia API Gateway
+  description: >
+    Central API gateway for the Nvidopia autonomous driving test management
+    platform. Routes requests to downstream microservices and accepts telemetry
+    ingestion payloads destined for Kafka.
+  version: 1.0.0
+  contact:
+    name: Nvidopia Platform Team
+
+servers:
+  - url: /api
+    description: Gateway base path
+
+security:
+  - BearerAuth: []
+
+tags:
+  - name: release-manager
+    description: Project & task management (proxied to release-manager)
+  - name: fleet-manager
+    description: Vehicle & run management (proxied to fleet-manager)
+  - name: issue-workflow
+    description: Issue lifecycle (proxied to issue-workflow)
+  - name: traceability
+    description: Requirement-to-issue traceability (proxied to traceability)
+  - name: kpi-engine
+    description: KPI metrics (proxied to kpi-engine)
+  - name: ingestion
+    description: Telemetry & event ingestion (Kafka produce)
+
+paths:
+  # ── release-manager proxies ──────────────────────────────────────────
+  /projects:
+    get:
+      operationId: listProjects
+      tags: [release-manager]
+      summary: List projects
+      parameters:
+        - $ref: "#/components/parameters/PageParam"
+        - $ref: "#/components/parameters/SizeParam"
+      responses:
+        "200":
+          description: Paginated project list
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+    post:
+      operationId: createProject
+      tags: [release-manager]
+      summary: Create a project
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ProjectInput"
+      responses:
+        "201":
+          description: Project created
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+
+  /projects/{id}:
+    get:
+      operationId: getProject
+      tags: [release-manager]
+      summary: Get project by ID
+      parameters:
+        - $ref: "#/components/parameters/ResourceId"
+      responses:
+        "200":
+          description: Project details
+        "404":
+          $ref: "#/components/responses/NotFound"
+    put:
+      operationId: updateProject
+      tags: [release-manager]
+      summary: Update a project
+      parameters:
+        - $ref: "#/components/parameters/ResourceId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ProjectInput"
+      responses:
+        "200":
+          description: Project updated
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+  /tasks:
+    get:
+      operationId: listTasks
+      tags: [release-manager]
+      summary: List tasks
+      parameters:
+        - $ref: "#/components/parameters/PageParam"
+        - $ref: "#/components/parameters/SizeParam"
+      responses:
+        "200":
+          description: Paginated task list
+    post:
+      operationId: createTask
+      tags: [release-manager]
+      summary: Create a task
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/TaskInput"
+      responses:
+        "201":
+          description: Task created
+
+  /tasks/{id}:
+    get:
+      operationId: getTask
+      tags: [release-manager]
+      summary: Get task by ID
+      parameters:
+        - $ref: "#/components/parameters/ResourceId"
+      responses:
+        "200":
+          description: Task details
+        "404":
+          $ref: "#/components/responses/NotFound"
+    put:
+      operationId: updateTask
+      tags: [release-manager]
+      summary: Update a task
+      parameters:
+        - $ref: "#/components/parameters/ResourceId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/TaskInput"
+      responses:
+        "200":
+          description: Task updated
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+  /tasks/{id}/advance-stage:
+    put:
+      operationId: advanceTaskStage
+      tags: [release-manager]
+      summary: Advance release gate stage
+      parameters:
+        - $ref: "#/components/parameters/ResourceId"
+      responses:
+        "200":
+          description: Stage advanced
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "409":
+          description: Gate conditions not met
+
+  # ── fleet-manager proxies ────────────────────────────────────────────
+  /vehicles:
+    get:
+      operationId: listVehicles
+      tags: [fleet-manager]
+      summary: List vehicles
+      parameters:
+        - $ref: "#/components/parameters/PageParam"
+        - $ref: "#/components/parameters/SizeParam"
+      responses:
+        "200":
+          description: Vehicle list
+
+  /vehicles/{vin}:
+    get:
+      operationId: getVehicle
+      tags: [fleet-manager]
+      summary: Get vehicle by VIN
+      parameters:
+        - name: vin
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Vehicle details
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+  /runs:
+    get:
+      operationId: listRuns
+      tags: [fleet-manager]
+      summary: List runs
+      parameters:
+        - $ref: "#/components/parameters/PageParam"
+        - $ref: "#/components/parameters/SizeParam"
+      responses:
+        "200":
+          description: Run list
+    post:
+      operationId: createRun
+      tags: [fleet-manager]
+      summary: Create a run
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RunInput"
+      responses:
+        "201":
+          description: Run created
+
+  /runs/{id}:
+    get:
+      operationId: getRun
+      tags: [fleet-manager]
+      summary: Get run by ID
+      parameters:
+        - $ref: "#/components/parameters/ResourceId"
+      responses:
+        "200":
+          description: Run details
+        "404":
+          $ref: "#/components/responses/NotFound"
+    put:
+      operationId: updateRun
+      tags: [fleet-manager]
+      summary: Update a run
+      parameters:
+        - $ref: "#/components/parameters/ResourceId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RunInput"
+      responses:
+        "200":
+          description: Run updated
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+  /tasks/{id}/assign-vehicles:
+    post:
+      operationId: assignVehiclesToTask
+      tags: [fleet-manager]
+      summary: Match vehicles to a task
+      parameters:
+        - $ref: "#/components/parameters/ResourceId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AssignVehiclesInput"
+      responses:
+        "200":
+          description: Vehicles assigned
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+  # ── issue-workflow proxies ───────────────────────────────────────────
+  /issues:
+    get:
+      operationId: listIssues
+      tags: [issue-workflow]
+      summary: List issues
+      parameters:
+        - $ref: "#/components/parameters/PageParam"
+        - $ref: "#/components/parameters/SizeParam"
+      responses:
+        "200":
+          description: Issue list
+    post:
+      operationId: createIssue
+      tags: [issue-workflow]
+      summary: Create an issue
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/IssueInput"
+      responses:
+        "201":
+          description: Issue created
+
+  /issues/{id}:
+    get:
+      operationId: getIssue
+      tags: [issue-workflow]
+      summary: Get issue by ID
+      parameters:
+        - $ref: "#/components/parameters/ResourceId"
+      responses:
+        "200":
+          description: Issue details
+        "404":
+          $ref: "#/components/responses/NotFound"
+    put:
+      operationId: updateIssue
+      tags: [issue-workflow]
+      summary: Update an issue
+      parameters:
+        - $ref: "#/components/parameters/ResourceId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/IssueInput"
+      responses:
+        "200":
+          description: Issue updated
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+  /issues/{id}/transition:
+    put:
+      operationId: transitionIssue
+      tags: [issue-workflow]
+      summary: Trigger issue state transition
+      parameters:
+        - $ref: "#/components/parameters/ResourceId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/IssueTransitionInput"
+      responses:
+        "200":
+          description: Transition applied
+        "409":
+          description: Invalid transition
+
+  /issues/{id}/transitions:
+    get:
+      operationId: getIssueTransitions
+      tags: [issue-workflow]
+      summary: Get issue transition audit log
+      parameters:
+        - $ref: "#/components/parameters/ResourceId"
+      responses:
+        "200":
+          description: Transition history
+
+  /issues/{id}/triage:
+    post:
+      operationId: triageIssue
+      tags: [issue-workflow]
+      summary: Manually triage an issue
+      parameters:
+        - $ref: "#/components/parameters/ResourceId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/TriageInput"
+      responses:
+        "200":
+          description: Triage applied
+
+  # ── traceability proxies ─────────────────────────────────────────────
+  /traceability/trace/forward/{req_id}:
+    get:
+      operationId: traceForward
+      tags: [traceability]
+      summary: "Forward trace: requirement -> code -> build -> project -> task -> run -> issue"
+      parameters:
+        - name: req_id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Forward trace result
+
+  /traceability/trace/backward/{issue_id}:
+    get:
+      operationId: traceBackward
+      tags: [traceability]
+      summary: "Backward trace: issue -> run -> task -> project -> commit -> requirement"
+      parameters:
+        - name: issue_id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Backward trace result
+
+  /traceability/trace/impact/{issue_id}:
+    get:
+      operationId: traceImpact
+      tags: [traceability]
+      summary: "Impact analysis: issue -> commit -> requirement -> affected tasks"
+      parameters:
+        - name: issue_id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Impact analysis result
+
+  /traceability/trace/coverage:
+    get:
+      operationId: traceCoverage
+      tags: [traceability]
+      summary: Requirement verification coverage statistics
+      responses:
+        "200":
+          description: Coverage report
+
+  # ── kpi-engine proxies ───────────────────────────────────────────────
+  /kpi/mpi:
+    get:
+      operationId: getKpiMpi
+      tags: [kpi-engine]
+      summary: Miles Per Intervention
+      parameters:
+        - $ref: "#/components/parameters/ProjectIdQuery"
+        - $ref: "#/components/parameters/TaskTypeQuery"
+        - $ref: "#/components/parameters/TimeRangeQuery"
+      responses:
+        "200":
+          description: MPI metric
+
+  /kpi/mttr:
+    get:
+      operationId: getKpiMttr
+      tags: [kpi-engine]
+      summary: Mean Time To Resolution
+      parameters:
+        - $ref: "#/components/parameters/ProjectIdQuery"
+        - $ref: "#/components/parameters/TimeRangeQuery"
+      responses:
+        "200":
+          description: MTTR metric
+
+  /kpi/regression-pass-rate:
+    get:
+      operationId: getKpiRegressionPassRate
+      tags: [kpi-engine]
+      summary: Regression pass rate
+      parameters:
+        - $ref: "#/components/parameters/ProjectIdQuery"
+        - name: task_id
+          in: query
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Regression pass rate metric
+
+  /kpi/fleet-utilization:
+    get:
+      operationId: getKpiFleetUtilization
+      tags: [kpi-engine]
+      summary: Fleet utilization
+      parameters:
+        - $ref: "#/components/parameters/ProjectIdQuery"
+        - $ref: "#/components/parameters/TimeRangeQuery"
+      responses:
+        "200":
+          description: Fleet utilization metric
+
+  /kpi/issue-convergence:
+    get:
+      operationId: getKpiIssueConvergence
+      tags: [kpi-engine]
+      summary: Issue convergence time series
+      parameters:
+        - $ref: "#/components/parameters/ProjectIdQuery"
+        - $ref: "#/components/parameters/TimeRangeQuery"
+      responses:
+        "200":
+          description: Issue convergence time series
+
+  # ── ingestion endpoints ──────────────────────────────────────────────
+  /ingest/telemetry:
+    post:
+      operationId: ingestTelemetry
+      tags: [ingestion]
+      summary: Produce vehicle telemetry to Kafka
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/VehicleTelemetryInput"
+      responses:
+        "202":
+          description: Accepted for async processing
+        "400":
+          $ref: "#/components/responses/BadRequest"
+
+  /ingest/status:
+    post:
+      operationId: ingestStatus
+      tags: [ingestion]
+      summary: Produce vehicle status to Kafka
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/VehicleStatusInput"
+      responses:
+        "202":
+          description: Accepted for async processing
+        "400":
+          $ref: "#/components/responses/BadRequest"
+
+  /ingest/issue:
+    post:
+      operationId: ingestIssue
+      tags: [ingestion]
+      summary: Produce issue report to Kafka
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/IssueReportInput"
+      responses:
+        "202":
+          description: Accepted for async processing
+        "400":
+          $ref: "#/components/responses/BadRequest"
+
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  parameters:
+    ResourceId:
+      name: id
+      in: path
+      required: true
+      schema:
+        type: string
+
+    PageParam:
+      name: page
+      in: query
+      schema:
+        type: integer
+        minimum: 1
+        default: 1
+
+    SizeParam:
+      name: size
+      in: query
+      schema:
+        type: integer
+        minimum: 1
+        maximum: 100
+        default: 20
+
+    ProjectIdQuery:
+      name: project_id
+      in: query
+      required: true
+      schema:
+        type: string
+
+    TaskTypeQuery:
+      name: task_type
+      in: query
+      schema:
+        type: string
+        enum: [Smoke, Gray, FreezeValidation, Retest]
+
+    TimeRangeQuery:
+      name: time_range
+      in: query
+      description: "ISO-8601 interval, e.g. 2026-01-01/2026-02-01"
+      schema:
+        type: string
+
+  schemas:
+    ProjectInput:
+      type: object
+      properties:
+        name:
+          type: string
+        description:
+          type: string
+        software_version:
+          type: string
+        vehicle_model:
+          type: string
+      required: [name, software_version, vehicle_model]
+
+    TaskInput:
+      type: object
+      properties:
+        project_id:
+          type: string
+        name:
+          type: string
+        task_type:
+          type: string
+          enum: [Smoke, Gray, FreezeValidation, Retest]
+        target_mileage_km:
+          type: number
+      required: [project_id, name, task_type]
+
+    RunInput:
+      type: object
+      properties:
+        task_id:
+          type: string
+        vehicle_id:
+          type: string
+        planned_route:
+          type: string
+      required: [task_id, vehicle_id]
+
+    AssignVehiclesInput:
+      type: object
+      properties:
+        vehicle_ids:
+          type: array
+          items:
+            type: string
+      required: [vehicle_ids]
+
+    IssueInput:
+      type: object
+      properties:
+        project_id:
+          type: string
+        task_id:
+          type: string
+        run_id:
+          type: string
+        category:
+          type: string
+        severity:
+          type: string
+          enum: [Critical, Major, Minor, Trivial]
+        description:
+          type: string
+      required: [project_id, category, severity]
+
+    IssueTransitionInput:
+      type: object
+      properties:
+        to_status:
+          type: string
+          enum: [New, Triage, Assigned, InProgress, Fixed, RegressionTracking, Closed, Reopened, Rejected]
+        triggered_by:
+          type: string
+        reason:
+          type: string
+      required: [to_status, triggered_by]
+
+    TriageInput:
+      type: object
+      properties:
+        assignee:
+          type: string
+        module:
+          type: string
+      required: [assignee, module]
+
+    VehicleTelemetryInput:
+      type: object
+      properties:
+        vehicle_id:
+          type: string
+        timestamp:
+          type: string
+          format: date-time
+        lat:
+          type: number
+        lng:
+          type: number
+        speed_kmh:
+          type: number
+        mileage_increment_km:
+          type: number
+        run_id:
+          type: string
+      required: [vehicle_id, timestamp, lat, lng, speed_kmh, mileage_increment_km, run_id]
+
+    VehicleStatusInput:
+      type: object
+      properties:
+        vehicle_id:
+          type: string
+        timestamp:
+          type: string
+          format: date-time
+        status:
+          type: string
+          enum: [Online, Offline, Active]
+        software_version:
+          type: string
+        hardware_version:
+          type: string
+        fuel_or_battery_level:
+          type: number
+        driving_mode:
+          type: string
+        lat:
+          type: number
+        lng:
+          type: number
+      required: [vehicle_id, timestamp, status]
+
+    IssueReportInput:
+      type: object
+      properties:
+        project_id:
+          type: string
+        task_id:
+          type: string
+        run_id:
+          type: string
+        trigger_timestamp:
+          type: string
+          format: date-time
+        gps_lat:
+          type: number
+        gps_lng:
+          type: number
+        category:
+          type: string
+        severity:
+          type: string
+          enum: [Critical, Major, Minor, Trivial]
+        takeover_type:
+          type: string
+        fault_codes:
+          type: array
+          items:
+            type: string
+        data_snapshot_uri:
+          type: string
+        environment_tags:
+          type: array
+          items:
+            type: string
+      required: [project_id, task_id, run_id, trigger_timestamp, category, severity]
+
+  responses:
+    Unauthorized:
+      description: Missing or invalid JWT token
+    NotFound:
+      description: Resource not found
+    BadRequest:
+      description: Invalid request payload

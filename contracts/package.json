@@ -1,0 +1,25 @@
+{
+  "name": "@nvidopia/contracts",
+  "version": "1.0.0",
+  "description": "API contracts for the Nvidopia autonomous driving test management platform. Contains OpenAPI, AsyncAPI, and JSON Schema definitions.",
+  "private": true,
+  "scripts": {
+    "generate": "openapi-generator-cli batch openapi/*.yaml --output generated/",
+    "generate:ts": "openapi-generator-cli generate -g typescript-axios -i openapi/gateway.yaml -o generated/ts-client",
+    "generate:release-manager": "openapi-generator-cli generate -g typescript-axios -i openapi/release-manager.yaml -o generated/ts-release-manager",
+    "generate:fleet-manager": "openapi-generator-cli generate -g typescript-axios -i openapi/fleet-manager.yaml -o generated/ts-fleet-manager",
+    "generate:issue-workflow": "openapi-generator-cli generate -g typescript-axios -i openapi/issue-workflow.yaml -o generated/ts-issue-workflow",
+    "generate:traceability": "openapi-generator-cli generate -g typescript-axios -i openapi/traceability.yaml -o generated/ts-traceability",
+    "generate:kpi-engine": "openapi-generator-cli generate -g typescript-axios -i openapi/kpi-engine.yaml -o generated/ts-kpi-engine",
+    "generate:all": "npm run generate:ts && npm run generate:release-manager && npm run generate:fleet-manager && npm run generate:issue-workflow && npm run generate:traceability && npm run generate:kpi-engine",
+    "lint": "npx @stoplight/spectral-cli lint openapi/*.yaml",
+    "lint:asyncapi": "npx @asyncapi/cli validate asyncapi/events.yaml"
+  },
+  "dependencies": {
+    "@openapitools/openapi-generator-cli": "^2.15.3"
+  },
+  "devDependencies": {
+    "@stoplight/spectral-cli": "^6.14.2",
+    "@asyncapi/cli": "^2.12.0"
+  }
+}

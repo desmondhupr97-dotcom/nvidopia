@@ -1,0 +1,441 @@
+openapi: 3.0.3
+info:
+  title: Nvidopia Release Manager Service
+  description: >
+    Manages projects (software versions under test) and tasks (test campaigns
+    such as Smoke, Gray, FreezeValidation, Retest). Enforces release gate
+    stage transitions.
+  version: 1.0.0
+
+servers:
+  - url: /api
+    description: Service base path
+
+security:
+  - BearerAuth: []
+
+tags:
+  - name: projects
+    description: Software version test projects
+  - name: tasks
+    description: Test campaign tasks with release gates
+
+paths:
+  /projects:
+    get:
+      operationId: listProjects
+      tags: [projects]
+      summary: List all projects
+      parameters:
+        - $ref: "#/components/parameters/PageParam"
+        - $ref: "#/components/parameters/SizeParam"
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [Active, Completed, Archived]
+      responses:
+        "200":
+          description: Paginated project list
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProjectPage"
+
+    post:
+      operationId: createProject
+      tags: [projects]
+      summary: Create a new project
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ProjectCreate"
+      responses:
+        "201":
+          description: Project created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Project"
+        "400":
+          description: Validation error
+
+  /projects/{id}:
+    parameters:
+      - $ref: "#/components/parameters/ResourceId"
+
+    get:
+      operationId: getProject
+      tags: [projects]
+      summary: Get project by ID
+      responses:
+        "200":
+          description: Project details
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Project"
+        "404":
+          description: Project not found
+
+    put:
+      operationId: updateProject
+      tags: [projects]
+      summary: Update a project
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ProjectUpdate"
+      responses:
+        "200":
+          description: Project updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Project"
+        "404":
+          description: Project not found
+
+  /tasks:
+    get:
+      operationId: listTasks
+      tags: [tasks]
+      summary: List tasks
+      parameters:
+        - $ref: "#/components/parameters/PageParam"
+        - $ref: "#/components/parameters/SizeParam"
+        - name: project_id
+          in: query
+          schema:
+            type: string
+        - name: task_type
+          in: query
+          schema:
+            $ref: "#/components/schemas/TaskType"
+        - name: stage
+          in: query
+          schema:
+            $ref: "#/components/schemas/ReleaseStage"
+      responses:
+        "200":
+          description: Paginated task list
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TaskPage"
+
+    post:
+      operationId: createTask
+      tags: [tasks]
+      summary: Create a new task
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/TaskCreate"
+      responses:
+        "201":
+          description: Task created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Task"
+        "400":
+          description: Validation error
+
+  /tasks/{id}:
+    parameters:
+      - $ref: "#/components/parameters/ResourceId"
+
+    get:
+      operationId: getTask
+      tags: [tasks]
+      summary: Get task by ID
+      responses:
+        "200":
+          description: Task details
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Task"
+        "404":
+          description: Task not found
+
+    put:
+      operationId: updateTask
+      tags: [tasks]
+      summary: Update a task
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/TaskUpdate"
+      responses:
+        "200":
+          description: Task updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Task"
+        "404":
+          description: Task not found
+
+  /tasks/{id}/advance-stage:
+    parameters:
+      - $ref: "#/components/parameters/ResourceId"
+
+    put:
+      operationId: advanceTaskStage
+      tags: [tasks]
+      summary: Advance the task through its release gate
+      description: >
+        Evaluates gate conditions for the current stage and advances the task
+        to the next stage if all conditions are met. Returns 409 if gate
+        conditions are not satisfied.
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                force:
+                  type: boolean
+                  default: false
+                  description: Force advance even if gate conditions are not fully met (requires admin role)
+                comment:
+                  type: string
+      responses:
+        "200":
+          description: Stage successfully advanced
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Task"
+        "404":
+          description: Task not found
+        "409":
+          description: Gate conditions not met
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GateFailure"
+
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  parameters:
+    ResourceId:
+      name: id
+      in: path
+      required: true
+      schema:
+        type: string
+
+    PageParam:
+      name: page
+      in: query
+      schema:
+        type: integer
+        minimum: 1
+        default: 1
+
+    SizeParam:
+      name: size
+      in: query
+      schema:
+        type: integer
+        minimum: 1
+        maximum: 100
+        default: 20
+
+  schemas:
+    TaskType:
+      type: string
+      enum: [Smoke, Gray, FreezeValidation, Retest]
+
+    ReleaseStage:
+      type: string
+      enum: [Planning, VehicleAssignment, Running, DataValidation, GateReview, Completed, Aborted]
+
+    ProjectStatus:
+      type: string
+      enum: [Active, Completed, Archived]
+
+    # ── Project ────────────────────────────────────────────────────────
+    Project:
+      type: object
+      properties:
+        id:
+          type: string
+          readOnly: true
+        name:
+          type: string
+        description:
+          type: string
+        software_version:
+          type: string
+        vehicle_model:
+          type: string
+        status:
+          $ref: "#/components/schemas/ProjectStatus"
+        owner:
+          type: string
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        updated_at:
+          type: string
+          format: date-time
+          readOnly: true
+      required: [id, name, software_version, vehicle_model, status]
+
+    ProjectCreate:
+      type: object
+      properties:
+        name:
+          type: string
+        description:
+          type: string
+        software_version:
+          type: string
+        vehicle_model:
+          type: string
+        owner:
+          type: string
+      required: [name, software_version, vehicle_model]
+
+    ProjectUpdate:
+      type: object
+      properties:
+        name:
+          type: string
+        description:
+          type: string
+        software_version:
+          type: string
+        vehicle_model:
+          type: string
+        status:
+          $ref: "#/components/schemas/ProjectStatus"
+        owner:
+          type: string
+
+    ProjectPage:
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/Project"
+        total:
+          type: integer
+        page:
+          type: integer
+        size:
+          type: integer
+
+    # ── Task ───────────────────────────────────────────────────────────
+    Task:
+      type: object
+      properties:
+        id:
+          type: string
+          readOnly: true
+        project_id:
+          type: string
+        name:
+          type: string
+        task_type:
+          $ref: "#/components/schemas/TaskType"
+        stage:
+          $ref: "#/components/schemas/ReleaseStage"
+        target_mileage_km:
+          type: number
+        accumulated_mileage_km:
+          type: number
+          readOnly: true
+        assigned_vehicle_ids:
+          type: array
+          items:
+            type: string
+          readOnly: true
+        gate_conditions:
+          type: object
+          additionalProperties: true
+          readOnly: true
+          description: Current gate evaluation snapshot
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        updated_at:
+          type: string
+          format: date-time
+          readOnly: true
+      required: [id, project_id, name, task_type, stage]
+
+    TaskCreate:
+      type: object
+      properties:
+        project_id:
+          type: string
+        name:
+          type: string
+        task_type:
+          $ref: "#/components/schemas/TaskType"
+        target_mileage_km:
+          type: number
+      required: [project_id, name, task_type]
+
+    TaskUpdate:
+      type: object
+      properties:
+        name:
+          type: string
+        task_type:
+          $ref: "#/components/schemas/TaskType"
+        target_mileage_km:
+          type: number
+
+    TaskPage:
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/Task"
+        total:
+          type: integer
+        page:
+          type: integer
+        size:
+          type: integer
+
+    GateFailure:
+      type: object
+      properties:
+        current_stage:
+          $ref: "#/components/schemas/ReleaseStage"
+        unmet_conditions:
+          type: array
+          items:
+            type: object
+            properties:
+              condition:
+                type: string
+              expected:
+                type: string
+              actual:
+                type: string

@@ -1,0 +1,307 @@
+openapi: 3.0.3
+info:
+  title: Nvidopia Traceability Service
+  description: >
+    Provides bidirectional traceability across the full autonomous driving
+    development chain: requirement <-> code <-> build <-> project <-> task
+    <-> run <-> issue. Supports ASPICE and ISO 26262 compliance auditing.
+  version: 1.0.0
+
+servers:
+  - url: /api
+    description: Service base path
+
+security:
+  - BearerAuth: []
+
+tags:
+  - name: trace
+    description: Traceability queries
+  - name: coverage
+    description: Requirement verification coverage
+
+paths:
+  /trace/forward/{req_id}:
+    parameters:
+      - name: req_id
+        in: path
+        required: true
+        schema:
+          type: string
+        description: Requirement ID to trace forward from
+
+    get:
+      operationId: traceForward
+      tags: [trace]
+      summary: "Forward trace: requirement -> code -> build -> project -> task -> run -> issue"
+      description: >
+        Starting from a requirement, traces forward through the development
+        and test chain to find all related code commits, builds, projects,
+        tasks, runs, and issues.
+      parameters:
+        - name: depth
+          in: query
+          description: Maximum trace depth (number of hops)
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 10
+            default: 7
+      responses:
+        "200":
+          description: Forward trace result
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TracePath"
+        "404":
+          description: Requirement not found
+
+  /trace/backward/{issue_id}:
+    parameters:
+      - name: issue_id
+        in: path
+        required: true
+        schema:
+          type: string
+        description: Issue ID to trace backward from
+
+    get:
+      operationId: traceBackward
+      tags: [trace]
+      summary: "Backward trace: issue -> run -> task -> project -> commit -> requirement"
+      description: >
+        Starting from an issue, traces backward through the test and
+        development chain to find the originating requirements.
+      parameters:
+        - name: depth
+          in: query
+          description: Maximum trace depth (number of hops)
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 10
+            default: 6
+      responses:
+        "200":
+          description: Backward trace result
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TracePath"
+        "404":
+          description: Issue not found
+
+  /trace/impact/{issue_id}:
+    parameters:
+      - name: issue_id
+        in: path
+        required: true
+        schema:
+          type: string
+        description: Issue ID to analyze impact for
+
+    get:
+      operationId: traceImpact
+      tags: [trace]
+      summary: "Impact analysis: issue -> commit -> requirement -> affected tasks"
+      description: >
+        Performs impact analysis starting from an issue. Identifies the
+        commits that caused the issue, the requirements those commits relate
+        to, and expands to find all other tasks that may be affected.
+      responses:
+        "200":
+          description: Impact analysis result
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ImpactReport"
+        "404":
+          description: Issue not found
+
+  /trace/coverage:
+    get:
+      operationId: getCoverage
+      tags: [coverage]
+      summary: Requirement verification coverage statistics
+      description: >
+        Returns aggregated statistics on how many requirements have been
+        verified through test runs, including breakdown by verification
+        status and project.
+      parameters:
+        - name: project_id
+          in: query
+          schema:
+            type: string
+        - name: requirement_group
+          in: query
+          description: Filter by requirement group/category
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Coverage report
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CoverageReport"
+
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  schemas:
+    TraceNodeType:
+      type: string
+      enum: [requirement, commit, build, project, task, run, issue]
+
+    VerificationStatus:
+      type: string
+      enum: [Verified, PartiallyVerified, NotVerified, Failed]
+
+    # ── TraceLink ──────────────────────────────────────────────────────
+    TraceLink:
+      type: object
+      description: A single edge in the traceability graph
+      properties:
+        source_type:
+          $ref: "#/components/schemas/TraceNodeType"
+        source_id:
+          type: string
+        target_type:
+          $ref: "#/components/schemas/TraceNodeType"
+        target_id:
+          type: string
+        relationship:
+          type: string
+          description: >
+            Relationship label, e.g. "implements", "tested_by",
+            "produced_in", "detected_in"
+        metadata:
+          type: object
+          additionalProperties: true
+          description: Optional context (commit message, build number, etc.)
+      required: [source_type, source_id, target_type, target_id, relationship]
+
+    # ── TracePath ──────────────────────────────────────────────────────
+    TracePath:
+      type: object
+      description: An ordered chain of trace links forming a path
+      properties:
+        origin_type:
+          $ref: "#/components/schemas/TraceNodeType"
+        origin_id:
+          type: string
+        direction:
+          type: string
+          enum: [forward, backward]
+        links:
+          type: array
+          items:
+            $ref: "#/components/schemas/TraceLink"
+        nodes:
+          type: array
+          items:
+            $ref: "#/components/schemas/TraceNode"
+          description: Resolved node details for each entity in the path
+      required: [origin_type, origin_id, direction, links]
+
+    TraceNode:
+      type: object
+      properties:
+        type:
+          $ref: "#/components/schemas/TraceNodeType"
+        id:
+          type: string
+        label:
+          type: string
+          description: Human-readable name or title
+        url:
+          type: string
+          description: Deep-link to the entity in the UI
+
+    # ── Impact Report ──────────────────────────────────────────────────
+    ImpactReport:
+      type: object
+      properties:
+        issue_id:
+          type: string
+        related_commits:
+          type: array
+          items:
+            type: string
+        affected_requirements:
+          type: array
+          items:
+            type: string
+        affected_tasks:
+          type: array
+          items:
+            $ref: "#/components/schemas/AffectedTask"
+        risk_level:
+          type: string
+          enum: [Low, Medium, High, Critical]
+      required: [issue_id, related_commits, affected_requirements, affected_tasks]
+
+    AffectedTask:
+      type: object
+      properties:
+        task_id:
+          type: string
+        task_name:
+          type: string
+        project_id:
+          type: string
+        stage:
+          type: string
+        impact_reason:
+          type: string
+          description: Why this task is considered affected
+
+    # ── Coverage Report ────────────────────────────────────────────────
+    CoverageReport:
+      type: object
+      properties:
+        total_requirements:
+          type: integer
+        verified:
+          type: integer
+        partially_verified:
+          type: integer
+        not_verified:
+          type: integer
+        failed:
+          type: integer
+        coverage_percent:
+          type: number
+          format: double
+        breakdown:
+          type: array
+          items:
+            $ref: "#/components/schemas/CoverageBreakdownItem"
+        generated_at:
+          type: string
+          format: date-time
+      required: [total_requirements, verified, not_verified, coverage_percent]
+
+    CoverageBreakdownItem:
+      type: object
+      properties:
+        requirement_id:
+          type: string
+        requirement_title:
+          type: string
+        group:
+          type: string
+        status:
+          $ref: "#/components/schemas/VerificationStatus"
+        verified_by_runs:
+          type: array
+          items:
+            type: string
+        last_verified_at:
+          type: string
+          format: date-time

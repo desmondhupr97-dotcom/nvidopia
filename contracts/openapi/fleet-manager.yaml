@@ -1,0 +1,391 @@
+openapi: 3.0.3
+info:
+  title: Nvidopia Fleet Manager Service
+  description: >
+    Manages the autonomous driving vehicle fleet and test runs. Handles vehicle
+    registration, status tracking, and vehicle-to-task assignment for test
+    campaigns.
+  version: 1.0.0
+
+servers:
+  - url: /api
+    description: Service base path
+
+security:
+  - BearerAuth: []
+
+tags:
+  - name: vehicles
+    description: Fleet vehicle inventory and status
+  - name: runs
+    description: Individual test runs
+  - name: assignment
+    description: Vehicle-to-task assignment
+
+paths:
+  /vehicles:
+    get:
+      operationId: listVehicles
+      tags: [vehicles]
+      summary: List fleet vehicles
+      parameters:
+        - $ref: "#/components/parameters/PageParam"
+        - $ref: "#/components/parameters/SizeParam"
+        - name: status
+          in: query
+          schema:
+            $ref: "#/components/schemas/VehicleStatus"
+        - name: vehicle_model
+          in: query
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Paginated vehicle list
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/VehiclePage"
+
+  /vehicles/{vin}:
+    parameters:
+      - name: vin
+        in: path
+        required: true
+        schema:
+          type: string
+        description: Vehicle Identification Number
+
+    get:
+      operationId: getVehicle
+      tags: [vehicles]
+      summary: Get vehicle by VIN
+      responses:
+        "200":
+          description: Vehicle details
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Vehicle"
+        "404":
+          description: Vehicle not found
+
+  /runs:
+    get:
+      operationId: listRuns
+      tags: [runs]
+      summary: List test runs
+      parameters:
+        - $ref: "#/components/parameters/PageParam"
+        - $ref: "#/components/parameters/SizeParam"
+        - name: task_id
+          in: query
+          schema:
+            type: string
+        - name: vehicle_id
+          in: query
+          schema:
+            type: string
+        - name: status
+          in: query
+          schema:
+            $ref: "#/components/schemas/RunStatus"
+      responses:
+        "200":
+          description: Paginated run list
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RunPage"
+
+    post:
+      operationId: createRun
+      tags: [runs]
+      summary: Create a new test run
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RunCreate"
+      responses:
+        "201":
+          description: Run created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Run"
+        "400":
+          description: Validation error
+
+  /runs/{id}:
+    parameters:
+      - $ref: "#/components/parameters/ResourceId"
+
+    get:
+      operationId: getRun
+      tags: [runs]
+      summary: Get run by ID
+      responses:
+        "200":
+          description: Run details
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Run"
+        "404":
+          description: Run not found
+
+    put:
+      operationId: updateRun
+      tags: [runs]
+      summary: Update a run
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RunUpdate"
+      responses:
+        "200":
+          description: Run updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Run"
+        "404":
+          description: Run not found
+
+  /tasks/{id}/assign-vehicles:
+    parameters:
+      - $ref: "#/components/parameters/ResourceId"
+
+    post:
+      operationId: assignVehiclesToTask
+      tags: [assignment]
+      summary: Assign vehicles to a task
+      description: >
+        Matches a set of vehicles to a task based on eligibility criteria
+        (vehicle model, status, availability). Returns the assignment result
+        including any vehicles that could not be assigned.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AssignVehiclesRequest"
+      responses:
+        "200":
+          description: Assignment result
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AssignVehiclesResponse"
+        "404":
+          description: Task not found
+
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  parameters:
+    ResourceId:
+      name: id
+      in: path
+      required: true
+      schema:
+        type: string
+
+    PageParam:
+      name: page
+      in: query
+      schema:
+        type: integer
+        minimum: 1
+        default: 1
+
+    SizeParam:
+      name: size
+      in: query
+      schema:
+        type: integer
+        minimum: 1
+        maximum: 100
+        default: 20
+
+  schemas:
+    VehicleStatus:
+      type: string
+      enum: [Online, Offline, Active]
+
+    RunStatus:
+      type: string
+      enum: [Pending, InProgress, Completed, Aborted, Failed]
+
+    # ── Vehicle ────────────────────────────────────────────────────────
+    Vehicle:
+      type: object
+      properties:
+        vin:
+          type: string
+          description: Vehicle Identification Number (primary key)
+        vehicle_model:
+          type: string
+        hardware_version:
+          type: string
+        software_version:
+          type: string
+        status:
+          $ref: "#/components/schemas/VehicleStatus"
+        fuel_or_battery_level:
+          type: number
+          minimum: 0
+          maximum: 100
+        driving_mode:
+          type: string
+        current_lat:
+          type: number
+        current_lng:
+          type: number
+        total_mileage_km:
+          type: number
+        last_heartbeat:
+          type: string
+          format: date-time
+        tags:
+          type: array
+          items:
+            type: string
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        updated_at:
+          type: string
+          format: date-time
+          readOnly: true
+      required: [vin, vehicle_model, status]
+
+    VehiclePage:
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/Vehicle"
+        total:
+          type: integer
+        page:
+          type: integer
+        size:
+          type: integer
+
+    # ── Run ────────────────────────────────────────────────────────────
+    Run:
+      type: object
+      properties:
+        id:
+          type: string
+          readOnly: true
+        task_id:
+          type: string
+        vehicle_id:
+          type: string
+        status:
+          $ref: "#/components/schemas/RunStatus"
+        planned_route:
+          type: string
+        start_time:
+          type: string
+          format: date-time
+        end_time:
+          type: string
+          format: date-time
+        mileage_km:
+          type: number
+        issue_count:
+          type: integer
+          readOnly: true
+        takeover_count:
+          type: integer
+          readOnly: true
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        updated_at:
+          type: string
+          format: date-time
+          readOnly: true
+      required: [id, task_id, vehicle_id, status]
+
+    RunCreate:
+      type: object
+      properties:
+        task_id:
+          type: string
+        vehicle_id:
+          type: string
+        planned_route:
+          type: string
+      required: [task_id, vehicle_id]
+
+    RunUpdate:
+      type: object
+      properties:
+        status:
+          $ref: "#/components/schemas/RunStatus"
+        end_time:
+          type: string
+          format: date-time
+        mileage_km:
+          type: number
+
+    RunPage:
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/Run"
+        total:
+          type: integer
+        page:
+          type: integer
+        size:
+          type: integer
+
+    # ── Assignment ─────────────────────────────────────────────────────
+    AssignVehiclesRequest:
+      type: object
+      properties:
+        vehicle_ids:
+          type: array
+          items:
+            type: string
+          description: List of VINs to assign
+      required: [vehicle_ids]
+
+    AssignVehiclesResponse:
+      type: object
+      properties:
+        task_id:
+          type: string
+        assigned:
+          type: array
+          items:
+            type: string
+          description: VINs successfully assigned
+        rejected:
+          type: array
+          items:
+            type: object
+            properties:
+              vin:
+                type: string
+              reason:
+                type: string
+          description: VINs that could not be assigned with reasons

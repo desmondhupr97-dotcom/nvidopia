@@ -1,0 +1,235 @@
+openapi: 3.0.3
+info:
+  title: Nvidopia KPI Engine Service
+  description: >
+    Computes and serves key performance indicators for autonomous driving
+    test campaigns: MPI (Miles Per Intervention), MTTR (Mean Time To
+    Resolution), regression pass rate, fleet utilization, and issue
+    convergence trends.
+  version: 1.0.0
+
+servers:
+  - url: /api
+    description: Service base path
+
+security:
+  - BearerAuth: []
+
+tags:
+  - name: kpi
+    description: KPI metric endpoints
+
+paths:
+  /kpi/mpi:
+    get:
+      operationId: getMpi
+      tags: [kpi]
+      summary: Miles Per Intervention
+      description: >
+        Calculates the average distance driven between takeover events
+        (interventions). Higher values indicate better autonomous driving
+        performance.
+      parameters:
+        - $ref: "#/components/parameters/ProjectIdRequired"
+        - $ref: "#/components/parameters/TaskType"
+        - $ref: "#/components/parameters/TimeRange"
+      responses:
+        "200":
+          description: MPI metric result
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/KpiResult"
+
+  /kpi/mttr:
+    get:
+      operationId: getMttr
+      tags: [kpi]
+      summary: Mean Time To Resolution
+      description: >
+        Average elapsed time from issue creation to Closed status. Broken
+        down by severity if requested.
+      parameters:
+        - $ref: "#/components/parameters/ProjectIdRequired"
+        - $ref: "#/components/parameters/TimeRange"
+        - name: severity
+          in: query
+          schema:
+            type: string
+            enum: [Critical, Major, Minor, Trivial]
+      responses:
+        "200":
+          description: MTTR metric result
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/KpiResult"
+
+  /kpi/regression-pass-rate:
+    get:
+      operationId: getRegressionPassRate
+      tags: [kpi]
+      summary: Regression pass rate
+      description: >
+        Percentage of regression test runs that passed without new issues
+        of severity >= Major.
+      parameters:
+        - $ref: "#/components/parameters/ProjectIdRequired"
+        - name: task_id
+          in: query
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Regression pass rate metric
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/KpiResult"
+
+  /kpi/fleet-utilization:
+    get:
+      operationId: getFleetUtilization
+      tags: [kpi]
+      summary: Fleet utilization
+      description: >
+        Ratio of active driving hours to total available fleet hours within
+        the specified time range.
+      parameters:
+        - $ref: "#/components/parameters/ProjectIdRequired"
+        - $ref: "#/components/parameters/TimeRange"
+      responses:
+        "200":
+          description: Fleet utilization metric
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/KpiResult"
+
+  /kpi/issue-convergence:
+    get:
+      operationId: getIssueConvergence
+      tags: [kpi]
+      summary: Issue convergence time series
+      description: >
+        Returns a time series tracking the cumulative open vs. closed issue
+        counts over time. Used to visualize whether the project is
+        converging toward zero open issues.
+      parameters:
+        - $ref: "#/components/parameters/ProjectIdRequired"
+        - $ref: "#/components/parameters/TimeRange"
+        - name: granularity
+          in: query
+          description: Time bucket granularity
+          schema:
+            type: string
+            enum: [hourly, daily, weekly]
+            default: daily
+      responses:
+        "200":
+          description: Issue convergence time series
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TimeSeriesResult"
+
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  parameters:
+    ProjectIdRequired:
+      name: project_id
+      in: query
+      required: true
+      schema:
+        type: string
+
+    TaskType:
+      name: task_type
+      in: query
+      schema:
+        type: string
+        enum: [Smoke, Gray, FreezeValidation, Retest]
+
+    TimeRange:
+      name: time_range
+      in: query
+      description: "ISO-8601 interval, e.g. 2026-01-01/2026-02-01"
+      schema:
+        type: string
+
+  schemas:
+    # ── KpiResult ──────────────────────────────────────────────────────
+    KpiResult:
+      type: object
+      properties:
+        metric_name:
+          type: string
+          description: Canonical metric identifier (mpi, mttr, regression_pass_rate, fleet_utilization)
+        project_id:
+          type: string
+        value:
+          type: number
+          format: double
+        unit:
+          type: string
+          description: "Unit of measure, e.g. km, hours, percent"
+        dimensions:
+          type: object
+          additionalProperties:
+            type: string
+          description: Filter dimensions used to compute the value
+        window_start:
+          type: string
+          format: date-time
+        window_end:
+          type: string
+          format: date-time
+        computed_at:
+          type: string
+          format: date-time
+          readOnly: true
+      required: [metric_name, project_id, value, unit]
+
+    # ── Time Series ────────────────────────────────────────────────────
+    TimeSeriesResult:
+      type: object
+      properties:
+        metric_name:
+          type: string
+        project_id:
+          type: string
+        granularity:
+          type: string
+          enum: [hourly, daily, weekly]
+        points:
+          type: array
+          items:
+            $ref: "#/components/schemas/TimeSeriesPoint"
+        window_start:
+          type: string
+          format: date-time
+        window_end:
+          type: string
+          format: date-time
+      required: [metric_name, project_id, points]
+
+    TimeSeriesPoint:
+      type: object
+      properties:
+        timestamp:
+          type: string
+          format: date-time
+        value:
+          type: number
+          format: double
+        dimensions:
+          type: object
+          additionalProperties:
+            type: string
+          description: Additional breakdown dimensions at this point (e.g. open_count, closed_count)
+      required: [timestamp, value]

@@ -1,0 +1,463 @@
+openapi: 3.0.3
+info:
+  title: Nvidopia Issue Workflow Service
+  description: >
+    Manages the full lifecycle of issues detected during autonomous driving
+    tests. Implements a state machine for issue status transitions and
+    maintains a complete audit trail.
+  version: 1.0.0
+
+servers:
+  - url: /api
+    description: Service base path
+
+security:
+  - BearerAuth: []
+
+tags:
+  - name: issues
+    description: Issue CRUD operations
+  - name: transitions
+    description: State machine transitions and audit log
+  - name: triage
+    description: Manual triage assignment
+
+paths:
+  /issues:
+    get:
+      operationId: listIssues
+      tags: [issues]
+      summary: List issues
+      parameters:
+        - $ref: "#/components/parameters/PageParam"
+        - $ref: "#/components/parameters/SizeParam"
+        - name: project_id
+          in: query
+          schema:
+            type: string
+        - name: task_id
+          in: query
+          schema:
+            type: string
+        - name: status
+          in: query
+          schema:
+            $ref: "#/components/schemas/IssueStatus"
+        - name: severity
+          in: query
+          schema:
+            $ref: "#/components/schemas/Severity"
+        - name: assignee
+          in: query
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Paginated issue list
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/IssuePage"
+
+    post:
+      operationId: createIssue
+      tags: [issues]
+      summary: Create a new issue
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/IssueCreate"
+      responses:
+        "201":
+          description: Issue created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Issue"
+        "400":
+          description: Validation error
+
+  /issues/{id}:
+    parameters:
+      - $ref: "#/components/parameters/ResourceId"
+
+    get:
+      operationId: getIssue
+      tags: [issues]
+      summary: Get issue by ID
+      responses:
+        "200":
+          description: Issue details
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Issue"
+        "404":
+          description: Issue not found
+
+    put:
+      operationId: updateIssue
+      tags: [issues]
+      summary: Update an issue
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/IssueUpdate"
+      responses:
+        "200":
+          description: Issue updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Issue"
+        "404":
+          description: Issue not found
+
+  /issues/{id}/transition:
+    parameters:
+      - $ref: "#/components/parameters/ResourceId"
+
+    put:
+      operationId: transitionIssue
+      tags: [transitions]
+      summary: Trigger a state machine transition
+      description: >
+        Validates the transition against the issue state machine and applies
+        it if legal. Creates an audit log entry for the transition.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/IssueTransitionRequest"
+      responses:
+        "200":
+          description: Transition applied
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Issue"
+        "404":
+          description: Issue not found
+        "409":
+          description: Invalid state transition
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TransitionError"
+
+  /issues/{id}/transitions:
+    parameters:
+      - $ref: "#/components/parameters/ResourceId"
+
+    get:
+      operationId: getIssueTransitions
+      tags: [transitions]
+      summary: Get the transition audit log for an issue
+      parameters:
+        - $ref: "#/components/parameters/PageParam"
+        - $ref: "#/components/parameters/SizeParam"
+      responses:
+        "200":
+          description: Transition audit log
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/IssueStateTransitionPage"
+        "404":
+          description: Issue not found
+
+  /issues/{id}/triage:
+    parameters:
+      - $ref: "#/components/parameters/ResourceId"
+
+    post:
+      operationId: triageIssue
+      tags: [triage]
+      summary: Manually triage an issue
+      description: >
+        Assigns the issue to a person and a module. Automatically transitions
+        the issue from Triage to Assigned status.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/TriageRequest"
+      responses:
+        "200":
+          description: Triage applied
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Issue"
+        "404":
+          description: Issue not found
+        "409":
+          description: Issue is not in a triageable state
+
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  parameters:
+    ResourceId:
+      name: id
+      in: path
+      required: true
+      schema:
+        type: string
+
+    PageParam:
+      name: page
+      in: query
+      schema:
+        type: integer
+        minimum: 1
+        default: 1
+
+    SizeParam:
+      name: size
+      in: query
+      schema:
+        type: integer
+        minimum: 1
+        maximum: 100
+        default: 20
+
+  schemas:
+    IssueStatus:
+      type: string
+      enum:
+        - New
+        - Triage
+        - Assigned
+        - InProgress
+        - Fixed
+        - RegressionTracking
+        - Closed
+        - Reopened
+        - Rejected
+
+    Severity:
+      type: string
+      enum: [Critical, Major, Minor, Trivial]
+
+    # ── Issue ──────────────────────────────────────────────────────────
+    Issue:
+      type: object
+      properties:
+        id:
+          type: string
+          readOnly: true
+        project_id:
+          type: string
+        task_id:
+          type: string
+        run_id:
+          type: string
+        status:
+          $ref: "#/components/schemas/IssueStatus"
+        category:
+          type: string
+        severity:
+          $ref: "#/components/schemas/Severity"
+        description:
+          type: string
+        assignee:
+          type: string
+        module:
+          type: string
+        trigger_timestamp:
+          type: string
+          format: date-time
+        gps_lat:
+          type: number
+        gps_lng:
+          type: number
+        takeover_type:
+          type: string
+        fault_codes:
+          type: array
+          items:
+            type: string
+        data_snapshot_uri:
+          type: string
+        environment_tags:
+          type: array
+          items:
+            type: string
+        linked_commit_ids:
+          type: array
+          items:
+            type: string
+        linked_requirement_ids:
+          type: array
+          items:
+            type: string
+        simulation_ref:
+          type: string
+          description: Reserved for future simulation integration
+        simulation_status:
+          type: string
+          description: Reserved for future simulation integration
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        updated_at:
+          type: string
+          format: date-time
+          readOnly: true
+      required: [id, project_id, status, category, severity]
+
+    IssueCreate:
+      type: object
+      properties:
+        project_id:
+          type: string
+        task_id:
+          type: string
+        run_id:
+          type: string
+        category:
+          type: string
+        severity:
+          $ref: "#/components/schemas/Severity"
+        description:
+          type: string
+        trigger_timestamp:
+          type: string
+          format: date-time
+        gps_lat:
+          type: number
+        gps_lng:
+          type: number
+        takeover_type:
+          type: string
+        fault_codes:
+          type: array
+          items:
+            type: string
+        data_snapshot_uri:
+          type: string
+        environment_tags:
+          type: array
+          items:
+            type: string
+      required: [project_id, category, severity]
+
+    IssueUpdate:
+      type: object
+      properties:
+        category:
+          type: string
+        severity:
+          $ref: "#/components/schemas/Severity"
+        description:
+          type: string
+        linked_commit_ids:
+          type: array
+          items:
+            type: string
+        linked_requirement_ids:
+          type: array
+          items:
+            type: string
+
+    IssuePage:
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/Issue"
+        total:
+          type: integer
+        page:
+          type: integer
+        size:
+          type: integer
+
+    # ── Transition ─────────────────────────────────────────────────────
+    IssueTransitionRequest:
+      type: object
+      properties:
+        to_status:
+          $ref: "#/components/schemas/IssueStatus"
+        triggered_by:
+          type: string
+          description: User or system identifier that initiated the transition
+        reason:
+          type: string
+          description: Human-readable justification for the transition
+      required: [to_status, triggered_by]
+
+    IssueStateTransition:
+      type: object
+      properties:
+        id:
+          type: string
+          readOnly: true
+        issue_id:
+          type: string
+        from_status:
+          $ref: "#/components/schemas/IssueStatus"
+        to_status:
+          $ref: "#/components/schemas/IssueStatus"
+        triggered_by:
+          type: string
+        reason:
+          type: string
+        transitioned_at:
+          type: string
+          format: date-time
+          readOnly: true
+      required: [id, issue_id, from_status, to_status, triggered_by, transitioned_at]
+
+    IssueStateTransitionPage:
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/IssueStateTransition"
+        total:
+          type: integer
+        page:
+          type: integer
+        size:
+          type: integer
+
+    TransitionError:
+      type: object
+      properties:
+        current_status:
+          $ref: "#/components/schemas/IssueStatus"
+        requested_status:
+          $ref: "#/components/schemas/IssueStatus"
+        allowed_transitions:
+          type: array
+          items:
+            $ref: "#/components/schemas/IssueStatus"
+        message:
+          type: string
+
+    # ── Triage ─────────────────────────────────────────────────────────
+    TriageRequest:
+      type: object
+      properties:
+        assignee:
+          type: string
+          description: Person to assign the issue to
+        module:
+          type: string
+          description: Software module responsible for the issue
+      required: [assignee, module]

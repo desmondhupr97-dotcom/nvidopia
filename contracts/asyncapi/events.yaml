@@ -1,0 +1,289 @@
+asyncapi: 2.6.0
+info:
+  title: Nvidopia Event Bus
+  description: >
+    AsyncAPI specification for the Nvidopia autonomous driving test platform
+    Kafka event bus. Defines all channels used for real-time telemetry,
+    vehicle status tracking, issue reporting, and KPI metric streaming.
+  version: 1.0.0
+  contact:
+    name: Nvidopia Platform Team
+
+defaultContentType: application/json
+
+servers:
+  kafka-cluster:
+    url: kafka:9092
+    protocol: kafka
+    description: Nvidopia Kafka cluster
+
+channels:
+  ad.telemetry.mileage.realtime:
+    description: >
+      Real-time vehicle telemetry stream. Each message contains a single
+      GPS + mileage data point from an autonomous driving vehicle during
+      a test run.
+    bindings:
+      kafka:
+        partitions: 12
+        replicas: 3
+        topicConfiguration:
+          retention.ms: 604800000    # 7 days
+          cleanup.policy: [delete]
+    publish:
+      operationId: publishVehicleTelemetry
+      summary: Vehicle publishes telemetry data
+      bindings:
+        kafka:
+          key:
+            type: string
+            description: Partition key is vehicle_id
+      message:
+        $ref: "#/components/messages/VehicleTelemetry"
+
+  ad.vehicle.status.tracking:
+    description: >
+      Vehicle status tracking channel. Uses log compaction so the latest
+      status per vehicle is always retained. Consumers can rebuild the
+      full fleet status snapshot from this topic.
+    bindings:
+      kafka:
+        partitions: 6
+        replicas: 3
+        topicConfiguration:
+          cleanup.policy: [compact]
+          min.compaction.lag.ms: 60000
+    publish:
+      operationId: publishVehicleStatus
+      summary: Vehicle publishes status heartbeat
+      bindings:
+        kafka:
+          key:
+            type: string
+            description: Partition key is vehicle_id (used for log compaction)
+      message:
+        $ref: "#/components/messages/VehicleStatus"
+
+  ad.testing.issue.reports:
+    description: >
+      Issue reports generated during autonomous driving test runs. Includes
+      takeover events, fault detections, and other anomalies that require
+      investigation.
+    bindings:
+      kafka:
+        partitions: 6
+        replicas: 3
+        topicConfiguration:
+          retention.ms: 2592000000   # 30 days
+          cleanup.policy: [delete]
+    publish:
+      operationId: publishIssueReport
+      summary: System or vehicle publishes an issue report
+      message:
+        $ref: "#/components/messages/IssueReport"
+
+  ad.testing.kpi.metrics:
+    description: >
+      Pre-aggregated KPI metric events computed by the KPI engine. Consumed
+      by the dashboard service and alerting pipelines.
+    bindings:
+      kafka:
+        partitions: 3
+        replicas: 3
+        topicConfiguration:
+          retention.ms: 604800000    # 7 days
+          cleanup.policy: [delete]
+    publish:
+      operationId: publishKpiMetric
+      summary: KPI engine publishes computed metric
+      message:
+        $ref: "#/components/messages/KpiMetric"
+
+components:
+  messages:
+    VehicleTelemetry:
+      name: VehicleTelemetry
+      title: Vehicle Telemetry Data Point
+      contentType: application/json
+      payload:
+        $ref: "#/components/schemas/VehicleTelemetryPayload"
+
+    VehicleStatus:
+      name: VehicleStatus
+      title: Vehicle Status Heartbeat
+      contentType: application/json
+      payload:
+        $ref: "#/components/schemas/VehicleStatusPayload"
+
+    IssueReport:
+      name: IssueReport
+      title: Issue Report from Test Run
+      contentType: application/json
+      payload:
+        $ref: "#/components/schemas/IssueReportPayload"
+
+    KpiMetric:
+      name: KpiMetric
+      title: KPI Metric Event
+      contentType: application/json
+      payload:
+        $ref: "#/components/schemas/KpiMetricPayload"
+
+  schemas:
+    VehicleTelemetryPayload:
+      type: object
+      properties:
+        vehicle_id:
+          type: string
+          description: Vehicle Identification Number
+        timestamp:
+          type: string
+          format: date-time
+          description: UTC timestamp of the data point
+        lat:
+          type: number
+          format: double
+          description: GPS latitude
+        lng:
+          type: number
+          format: double
+          description: GPS longitude
+        speed_kmh:
+          type: number
+          format: double
+          description: Current speed in km/h
+        mileage_increment_km:
+          type: number
+          format: double
+          description: Distance driven since the last telemetry message
+        run_id:
+          type: string
+          description: ID of the active test run
+      required:
+        - vehicle_id
+        - timestamp
+        - lat
+        - lng
+        - speed_kmh
+        - mileage_increment_km
+        - run_id
+
+    VehicleStatusPayload:
+      type: object
+      properties:
+        vehicle_id:
+          type: string
+          description: Vehicle Identification Number (also the compaction key)
+        timestamp:
+          type: string
+          format: date-time
+        status:
+          type: string
+          enum: [Online, Offline, Active]
+        software_version:
+          type: string
+        hardware_version:
+          type: string
+        fuel_or_battery_level:
+          type: number
+          format: double
+          minimum: 0
+          maximum: 100
+        driving_mode:
+          type: string
+          description: "Current driving mode, e.g. Autonomous, Manual, Degraded"
+        lat:
+          type: number
+          format: double
+        lng:
+          type: number
+          format: double
+      required:
+        - vehicle_id
+        - timestamp
+        - status
+
+    IssueReportPayload:
+      type: object
+      properties:
+        project_id:
+          type: string
+        task_id:
+          type: string
+        run_id:
+          type: string
+        trigger_timestamp:
+          type: string
+          format: date-time
+          description: Exact time the issue was detected
+        gps_lat:
+          type: number
+          format: double
+        gps_lng:
+          type: number
+          format: double
+        category:
+          type: string
+          description: "Issue category, e.g. Perception, Planning, Control, Localization, HMI"
+        severity:
+          type: string
+          enum: [Critical, Major, Minor, Trivial]
+        takeover_type:
+          type: string
+          description: "Type of takeover if applicable, e.g. SystemInitiated, DriverInitiated, RemoteIntervention"
+        fault_codes:
+          type: array
+          items:
+            type: string
+          description: Diagnostic trouble codes associated with the event
+        data_snapshot_uri:
+          type: string
+          format: uri
+          description: URI to the full data snapshot (rosbag, log bundle, etc.)
+        environment_tags:
+          type: array
+          items:
+            type: string
+          description: "Contextual tags: weather, road type, traffic density, etc."
+      required:
+        - project_id
+        - task_id
+        - run_id
+        - trigger_timestamp
+        - category
+        - severity
+
+    KpiMetricPayload:
+      type: object
+      properties:
+        metric_name:
+          type: string
+          description: "Canonical metric key, e.g. mpi, mttr, regression_pass_rate, fleet_utilization, issue_convergence"
+        project_id:
+          type: string
+        task_id:
+          type: string
+        value:
+          type: number
+          format: double
+        unit:
+          type: string
+          description: "Unit of measure, e.g. km, hours, percent"
+        window_start:
+          type: string
+          format: date-time
+        window_end:
+          type: string
+          format: date-time
+        dimensions:
+          type: object
+          additionalProperties:
+            type: string
+          description: Additional segmentation dimensions
+      required:
+        - metric_name
+        - project_id
+        - value
+        - unit
+        - window_start
+        - window_end
