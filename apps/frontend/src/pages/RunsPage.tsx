@@ -1,23 +1,13 @@
 import { useQuery } from '@tanstack/react-query';
-import { Link } from 'react-router-dom';
 import { Table, Tag, Empty } from 'antd';
 import { Play } from 'lucide-react';
 import { getRuns } from '../api/client';
 import type { Run } from '../api/client';
 import type { ColumnsType } from 'antd/es/table';
-
-const statusColor: Record<string, string> = {
-  Scheduled: 'blue',
-  Active: 'gold',
-  Completed: 'green',
-  Aborted: 'red',
-  pending: 'default',
-  queued: 'blue',
-  running: 'gold',
-  passed: 'green',
-  failed: 'red',
-  cancelled: 'default',
-};
+import { statusColor } from '../constants/colors';
+import PageHeader from '../components/shared/PageHeader';
+import EntityLink from '../components/shared/EntityLink';
+import EmptyDash from '../components/shared/EmptyDash';
 
 export default function RunsPage() {
   const { data: runs, isLoading } = useQuery({
@@ -32,9 +22,9 @@ export default function RunsPage() {
       key: 'id',
       width: 120,
       render: (id: string) => (
-        <Link to={`/runs/${id}`} style={{ color: '#818cf8', fontWeight: 500, fontFamily: 'monospace' }}>
+        <EntityLink to={`/runs/${id}`} mono>
           {id.slice(0, 8)}
-        </Link>
+        </EntityLink>
       ),
     },
     {
@@ -44,11 +34,11 @@ export default function RunsPage() {
       width: 120,
       render: (taskId: string) =>
         taskId ? (
-          <Link to={`/tasks/${taskId}`} style={{ fontFamily: 'monospace', color: '#94a3b8' }}>
+          <EntityLink to={`/tasks/${taskId}`} mono>
             {taskId.slice(0, 8)}
-          </Link>
+          </EntityLink>
         ) : (
-          <span style={{ color: 'var(--text-muted)' }}>—</span>
+          <EmptyDash />
         ),
     },
     {
@@ -65,7 +55,7 @@ export default function RunsPage() {
       dataIndex: 'result',
       key: 'result',
       width: 100,
-      render: (v: string | undefined) => v ?? <span style={{ color: 'var(--text-muted)' }}>—</span>,
+      render: (v: string | undefined) => v ?? <EmptyDash />,
     },
     {
       title: 'Vehicles',
@@ -79,23 +69,20 @@ export default function RunsPage() {
       dataIndex: 'startedAt',
       key: 'startedAt',
       width: 160,
-      render: (d: string | undefined) => d ? new Date(d).toLocaleString() : <span style={{ color: 'var(--text-muted)' }}>—</span>,
+      render: (d: string | undefined) => d ? new Date(d).toLocaleString() : <EmptyDash />,
     },
     {
       title: 'Completed',
       dataIndex: 'completedAt',
       key: 'completedAt',
       width: 160,
-      render: (d: string | undefined) => d ? new Date(d).toLocaleString() : <span style={{ color: 'var(--text-muted)' }}>—</span>,
+      render: (d: string | undefined) => d ? new Date(d).toLocaleString() : <EmptyDash />,
     },
   ];
 
   return (
     <div>
-      <div style={{ marginBottom: 24 }}>
-        <h1 className="page-title">Test Runs</h1>
-        <p className="page-subtitle">Monitor and manage test execution runs</p>
-      </div>
+      <PageHeader title="Test Runs" subtitle="Monitor and manage test execution runs" />
 
       <div className="glass-panel" style={{ overflow: 'hidden' }}>
         <Table

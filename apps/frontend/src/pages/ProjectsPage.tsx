@@ -1,5 +1,4 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Link } from 'react-router-dom';
 import { Table, Tag, Button, Input, Empty, Space, Modal, Form, DatePicker, InputNumber, Select, message } from 'antd';
 import { PlusOutlined, SearchOutlined } from '@ant-design/icons';
 import { FolderKanban } from 'lucide-react';
@@ -7,13 +6,9 @@ import { useState } from 'react';
 import { getProjects, createProject } from '../api/client';
 import type { Project } from '../api/client';
 import type { ColumnsType } from 'antd/es/table';
-
-const statusColor: Record<string, string> = {
-  Planning: 'blue',
-  Active: 'purple',
-  Completed: 'green',
-  Archived: 'default',
-};
+import { statusColor } from '../constants/colors';
+import PageHeader from '../components/shared/PageHeader';
+import EntityLink from '../components/shared/EntityLink';
 
 export default function ProjectsPage() {
   const [search, setSearch] = useState('');
@@ -62,9 +57,7 @@ export default function ProjectsPage() {
       dataIndex: 'name',
       key: 'name',
       render: (name: string, record: Project) => (
-        <Link to={`/projects/${record.id}`} style={{ color: '#818cf8', fontWeight: 500 }}>
-          {name}
-        </Link>
+        <EntityLink to={`/projects/${record.id}`}>{name}</EntityLink>
       ),
     },
     {
@@ -94,15 +87,15 @@ export default function ProjectsPage() {
 
   return (
     <div>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 24 }}>
-        <div>
-          <h1 className="page-title">Projects</h1>
-          <p className="page-subtitle">Manage autonomous driving test projects</p>
-        </div>
-        <Button type="primary" icon={<PlusOutlined />} size="large" onClick={() => setCreateOpen(true)}>
-          New Project
-        </Button>
-      </div>
+      <PageHeader
+        title="Projects"
+        subtitle="Manage autonomous driving test projects"
+        action={
+          <Button type="primary" icon={<PlusOutlined />} size="large" onClick={() => setCreateOpen(true)}>
+            New Project
+          </Button>
+        }
+      />
 
       <Space direction="vertical" size={16} style={{ width: '100%' }}>
         <Input

@@ -1,5 +1,4 @@
 import { useQuery } from '@tanstack/react-query';
-import { Link } from 'react-router-dom';
 import { Table, Tag, Button, Input, Empty, Space, Select } from 'antd';
 import { PlusOutlined, SearchOutlined } from '@ant-design/icons';
 import { Bug } from 'lucide-react';
@@ -7,39 +6,10 @@ import { useState } from 'react';
 import { getIssues } from '../api/client';
 import type { Issue } from '../api/client';
 import type { ColumnsType } from 'antd/es/table';
-
-const statusColor: Record<string, string> = {
-  New: 'blue',
-  Triage: 'purple',
-  Assigned: 'geekblue',
-  InProgress: 'gold',
-  Fixed: 'green',
-  RegressionTracking: 'cyan',
-  Closed: 'default',
-  Reopened: 'orange',
-  Rejected: 'red',
-  open: 'blue',
-  triaged: 'purple',
-  'in-progress': 'gold',
-  fixed: 'green',
-  verified: 'cyan',
-  closed: 'default',
-  'wont-fix': 'red',
-  duplicate: 'default',
-};
-
-const severityColor: Record<string, string> = {
-  Blocker: 'red',
-  Critical: 'red',
-  High: 'orange',
-  Medium: 'gold',
-  Low: 'blue',
-  Trivial: 'green',
-  critical: 'red',
-  high: 'orange',
-  medium: 'gold',
-  low: 'blue',
-};
+import { statusColor, severityColor } from '../constants/colors';
+import PageHeader from '../components/shared/PageHeader';
+import EntityLink from '../components/shared/EntityLink';
+import EmptyDash from '../components/shared/EmptyDash';
 
 export default function IssuesPage() {
   const [search, setSearch] = useState('');
@@ -65,9 +35,7 @@ export default function IssuesPage() {
       key: 'title',
       ellipsis: true,
       render: (title: string, record: Issue) => (
-        <Link to={`/issues/${record.id}`} style={{ color: '#818cf8', fontWeight: 500 }}>
-          {title}
-        </Link>
+        <EntityLink to={`/issues/${record.id}`}>{title}</EntityLink>
       ),
     },
     {
@@ -93,7 +61,7 @@ export default function IssuesPage() {
       dataIndex: 'assignee',
       key: 'assignee',
       width: 140,
-      render: (v: string | undefined) => v ?? <span style={{ color: 'var(--text-muted)' }}>—</span>,
+      render: (v: string | undefined) => v ?? <EmptyDash />,
     },
     {
       title: 'Updated',
@@ -106,15 +74,15 @@ export default function IssuesPage() {
 
   return (
     <div>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 24 }}>
-        <div>
-          <h1 className="page-title">Issues</h1>
-          <p className="page-subtitle">Track defects and issues found during testing</p>
-        </div>
-        <Button type="primary" icon={<PlusOutlined />} size="large">
-          Report Issue
-        </Button>
-      </div>
+      <PageHeader
+        title="Issues"
+        subtitle="Track defects and issues found during testing"
+        action={
+          <Button type="primary" icon={<PlusOutlined />} size="large">
+            Report Issue
+          </Button>
+        }
+      />
 
       <Space direction="vertical" size={16} style={{ width: '100%' }}>
         <Space wrap>

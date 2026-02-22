@@ -1,5 +1,4 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Link } from 'react-router-dom';
 import { Table, Tag, Button, Input, Empty, Space, Select, Modal, Form, InputNumber, message } from 'antd';
 import { PlusOutlined, SearchOutlined } from '@ant-design/icons';
 import { ListChecks } from 'lucide-react';
@@ -7,30 +6,10 @@ import { useState } from 'react';
 import { getTasks, getProjects, createTask } from '../api/client';
 import type { Task, Project } from '../api/client';
 import type { ColumnsType } from 'antd/es/table';
-
-const stageColor: Record<string, string> = {
-  backlog: 'default',
-  ready: 'blue',
-  'in-progress': 'gold',
-  review: 'purple',
-  done: 'green',
-  Pending: 'default',
-  Smoke: 'cyan',
-  Gray: 'gold',
-  Freeze: 'orange',
-  GoLive: 'green',
-};
-
-const priorityColor: Record<string, string> = {
-  critical: 'red',
-  high: 'orange',
-  medium: 'gold',
-  low: 'blue',
-  Critical: 'red',
-  High: 'orange',
-  Medium: 'gold',
-  Low: 'blue',
-};
+import { stageColor, priorityColor } from '../constants/colors';
+import PageHeader from '../components/shared/PageHeader';
+import EntityLink from '../components/shared/EntityLink';
+import EmptyDash from '../components/shared/EmptyDash';
 
 export default function TasksPage() {
   const [search, setSearch] = useState('');
@@ -85,9 +64,7 @@ export default function TasksPage() {
       dataIndex: 'title',
       key: 'title',
       render: (title: string, record: Task) => (
-        <Link to={`/tasks/${record.id}`} style={{ color: '#818cf8', fontWeight: 500 }}>
-          {title}
-        </Link>
+        <EntityLink to={`/tasks/${record.id}`}>{title}</EntityLink>
       ),
     },
     {
@@ -113,7 +90,7 @@ export default function TasksPage() {
       dataIndex: 'assignee',
       key: 'assignee',
       width: 140,
-      render: (v: string | undefined) => v ?? <span style={{ color: 'var(--text-muted)' }}>—</span>,
+      render: (v: string | undefined) => v ?? <EmptyDash />,
     },
     {
       title: 'Updated',
@@ -126,15 +103,15 @@ export default function TasksPage() {
 
   return (
     <div>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 24 }}>
-        <div>
-          <h1 className="page-title">Tasks</h1>
-          <p className="page-subtitle">Track test campaign tasks through their lifecycle</p>
-        </div>
-        <Button type="primary" icon={<PlusOutlined />} size="large" onClick={() => setCreateOpen(true)}>
-          New Task
-        </Button>
-      </div>
+      <PageHeader
+        title="Tasks"
+        subtitle="Track test campaign tasks through their lifecycle"
+        action={
+          <Button type="primary" icon={<PlusOutlined />} size="large" onClick={() => setCreateOpen(true)}>
+            New Task
+          </Button>
+        }
+      />
 
       <Space direction="vertical" size={16} style={{ width: '100%' }}>
         <Space wrap>
