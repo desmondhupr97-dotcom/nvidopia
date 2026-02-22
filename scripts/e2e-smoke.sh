@@ -344,6 +344,61 @@ check_status "Traceability: Backward ($ISSUE_ID)" 200 "$HTTP_CODE" || true
 echo ""
 
 # ---------------------------------------------------------------------------
+# Step 11: Schema Registry, Issue Snapshots, Timeseries, Custom KPI
+# ---------------------------------------------------------------------------
+echo "--- Step 11: Schema Registry, Snapshots, Timeseries, Custom KPI ---"
+
+BASE="$BASE_URL"
+
+HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" "$BASE/api/schema/fields" 2>/dev/null || echo "000")
+check_status "Schema fields (all)" 200 "$HTTP_CODE" || true
+
+RES=$(curl -s "$BASE/api/schema/fields/issue" 2>/dev/null || echo "{}")
+if echo "$RES" | grep -q "vehicle_dynamics"; then
+  step_pass "Schema issue fields include vehicle_dynamics"
+else
+  step_fail "Schema issue fields include vehicle_dynamics" "vehicle_dynamics not in response"
+fi
+
+SNAPSHOT='{"speed_mps":15.5,"acceleration_mps2":-1.2,"gear":"D"}'
+HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" -X POST -H "Content-Type: application/json" -d "$SNAPSHOT" "$BASE/api/issues/$ISSUE_ID/snapshot" 2>/dev/null || echo "000")
+check_status "Upload snapshot" 200 "$HTTP_CODE" || true
+
+RES=$(curl -s "$BASE/api/issues/$ISSUE_ID/snapshot" 2>/dev/null || echo "{}")
+if echo "$RES" | grep -q "speed_mps"; then
+  step_pass "Snapshot query returns speed_mps"
+else
+  step_fail "Snapshot query returns speed_mps" "snapshot missing speed_mps"
+fi
+
+TS_DATA='{"channel":"lidar_test","channel_type":"sensor","time_range_ms":{"start":-1000,"end":1000},"data_points":[{"t":-1000,"values":{"count":100}},{"t":0,"values":{"count":120}},{"t":1000,"values":{"count":110}}]}'
+HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" -X POST -H "Content-Type: application/json" -d "$TS_DATA" "$BASE/api/issues/$ISSUE_ID/timeseries" 2>/dev/null || echo "000")
+check_status "Upload timeseries" 201 "$HTTP_CODE" || true
+
+HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" "$BASE/api/issues/$ISSUE_ID/timeseries/lidar_test" 2>/dev/null || echo "000")
+check_status "Query timeseries channel" 200 "$HTTP_CODE" || true
+
+KPI_DEF='{"name":"Test KPI","formula":"issue_count","data_source":"issue","variables":[{"name":"issue_count","source_entity":"issue","field":"issue_id","aggregation":"count"}],"visualization":{"chart_type":"stat"},"enabled":true}'
+RES=$(curl -s -X POST -H "Content-Type: application/json" -d "$KPI_DEF" "$BASE/api/kpi/definitions" 2>/dev/null || echo "{}")
+KPI_ID=$(echo "$RES" | grep -o '"kpi_id":"[^"]*"' | head -1 | cut -d'"' -f4)
+if echo "$RES" | grep -q "kpi_id"; then
+  step_pass "Create custom KPI (kpi_id=$KPI_ID)"
+else
+  step_fail "Create custom KPI" "KPI definition creation failed"
+fi
+
+HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" "$BASE/api/kpi/custom/$KPI_ID/evaluate" 2>/dev/null || echo "000")
+check_status "Evaluate custom KPI" 200 "$HTTP_CODE" || true
+
+HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" -X DELETE "$BASE/api/kpi/definitions/$KPI_ID" 2>/dev/null || echo "000")
+check_status "Delete custom KPI" 200 "$HTTP_CODE" || true
+
+HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" "$BASE/api/kpi/mpi?project_id=$PROJECT_ID" 2>/dev/null || echo "000")
+check_status "MPI regression" 200 "$HTTP_CODE" || true
+
+echo ""
+
+# ---------------------------------------------------------------------------
 # Summary
 # ---------------------------------------------------------------------------
 echo "=============================================="
