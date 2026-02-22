@@ -1,4 +1,7 @@
 import { Schema, model, Document, type Model } from 'mongoose';
+import { type IGpsCoordinates, GpsCoordinatesSchema } from './common.js';
+
+export type { IGpsCoordinates };
 
 export const ISSUE_CATEGORY = ['Perception', 'Prediction', 'Planning', 'Chassis', 'System', 'Other'] as const;
 export type IssueCategory = (typeof ISSUE_CATEGORY)[number];
@@ -17,11 +20,6 @@ export type IssueStatus = (typeof ISSUE_STATUS)[number];
 
 export const TRIAGE_MODE = ['manual', 'auto_reserved'] as const;
 export type TriageMode = (typeof TRIAGE_MODE)[number];
-
-export interface IGpsCoordinates {
-  lat: number;
-  lng: number;
-}
 
 export interface IIssue {
   issue_id: string;
@@ -51,14 +49,6 @@ export interface IIssue {
 }
 
 export type IssueDocument = IIssue & Document;
-
-const GpsCoordinatesSchema = new Schema<IGpsCoordinates>(
-  {
-    lat: { type: Number },
-    lng: { type: Number },
-  },
-  { _id: false },
-);
 
 const IssueSchema = new Schema<IssueDocument>(
   {
@@ -90,5 +80,7 @@ IssueSchema.index({ run_id: 1 });
 IssueSchema.index({ status: 1 });
 IssueSchema.index({ severity: 1 });
 IssueSchema.index({ category: 1 });
+IssueSchema.index({ run_id: 1, status: 1 });
+IssueSchema.index({ category: 1, severity: 1 });
 
 export const Issue: Model<IssueDocument> = model<IssueDocument>('Issue', IssueSchema);

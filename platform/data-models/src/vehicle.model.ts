@@ -1,15 +1,11 @@
 import { Schema, model, Document, type Model } from 'mongoose';
+import { type IGpsCoordinates, GpsCoordinatesSchema } from './common.js';
 
 export const VEHICLE_STATUS = ['Offline', 'Idle', 'Active', 'Maintenance'] as const;
 export type VehicleStatus = (typeof VEHICLE_STATUS)[number];
 
 export const DRIVING_MODE = ['Manual', 'Autonomous', 'Standby'] as const;
 export type DrivingMode = (typeof DRIVING_MODE)[number];
-
-export interface IGpsCoordinates {
-  lat: number;
-  lng: number;
-}
 
 export interface IVehicle {
   vin: string;
@@ -25,14 +21,6 @@ export interface IVehicle {
 }
 
 export type VehicleDocument = IVehicle & Document;
-
-const GpsCoordinatesSchema = new Schema<IGpsCoordinates>(
-  {
-    lat: { type: Number },
-    lng: { type: Number },
-  },
-  { _id: false },
-);
 
 const VehicleSchema = new Schema<VehicleDocument>(
   {

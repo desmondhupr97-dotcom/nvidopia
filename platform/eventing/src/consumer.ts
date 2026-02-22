@@ -78,6 +78,8 @@ export class KafkaConsumerService {
       timestamp: message.timestamp,
     };
 
+    if (parsed.value === null) return;
+
     for (let attempt = 1; attempt <= this.maxRetries; attempt++) {
       try {
         await handler(parsed);

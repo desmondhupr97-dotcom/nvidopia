@@ -38,6 +38,7 @@ const KpiSnapshotSchema = new Schema<KpiSnapshotDocument>(
 KpiSnapshotSchema.index({ metric_name: 1 });
 KpiSnapshotSchema.index({ project_id: 1 });
 KpiSnapshotSchema.index({ window_start: 1 });
+KpiSnapshotSchema.index({ metric_name: 1, project_id: 1, window_end: -1 });
 
 export const KpiSnapshot: Model<KpiSnapshotDocument> =
   model<KpiSnapshotDocument>('KpiSnapshot', KpiSnapshotSchema);

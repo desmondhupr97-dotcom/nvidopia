@@ -46,5 +46,7 @@ RunSchema.index({ run_id: 1 }, { unique: true });
 RunSchema.index({ task_id: 1 });
 RunSchema.index({ vehicle_vin: 1 });
 RunSchema.index({ status: 1 });
+RunSchema.index({ task_id: 1, status: 1 });
+RunSchema.index({ vehicle_vin: 1, status: 1 });
 
 export const Run: Model<RunDocument> = model<RunDocument>('Run', RunSchema);
