@@ -1,4 +1,6 @@
-import { NavLink } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
+import { Menu, Badge } from 'antd';
+import type { MenuProps } from 'antd';
 import {
   FolderKanban,
   ListChecks,
@@ -9,79 +11,85 @@ import {
   Sparkles,
   Monitor,
 } from 'lucide-react';
-import clsx from 'clsx';
 
-interface NavItem {
-  to: string;
-  label: string;
-  icon: React.ReactNode;
-  comingSoon?: boolean;
-}
+type MenuItem = Required<MenuProps>['items'][number];
 
-const mainNav: NavItem[] = [
-  { to: '/projects', label: 'Projects', icon: <FolderKanban size={18} /> },
-  { to: '/tasks', label: 'Tasks', icon: <ListChecks size={18} /> },
-  { to: '/runs', label: 'Runs', icon: <Play size={18} /> },
-  { to: '/issues', label: 'Issues', icon: <Bug size={18} /> },
-  { to: '/kpi', label: 'KPI Dashboard', icon: <BarChart3 size={18} /> },
-  { to: '/traceability', label: 'Traceability', icon: <GitGraph size={18} /> },
+const iconStyle = { width: 18, height: 18, strokeWidth: 1.8 };
+
+const mainItems: MenuItem[] = [
+  { key: '/projects', icon: <FolderKanban {...iconStyle} />, label: 'Projects' },
+  { key: '/tasks', icon: <ListChecks {...iconStyle} />, label: 'Tasks' },
+  { key: '/runs', icon: <Play {...iconStyle} />, label: 'Runs' },
+  { key: '/issues', icon: <Bug {...iconStyle} />, label: 'Issues' },
+  { key: '/kpi', icon: <BarChart3 {...iconStyle} />, label: 'KPI Dashboard' },
+  { key: '/traceability', icon: <GitGraph {...iconStyle} />, label: 'Traceability' },
 ];
 
-const secondaryNav: NavItem[] = [
-  { to: '/auto-triage', label: 'Auto-Triage', icon: <Sparkles size={18} />, comingSoon: true },
-  { to: '/simulation', label: 'Simulation', icon: <Monitor size={18} />, comingSoon: true },
+const secondaryItems: MenuItem[] = [
+  {
+    key: '/auto-triage',
+    icon: <Sparkles {...iconStyle} />,
+    label: (
+      <span style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+        Auto-Triage
+        <Badge count="Soon" style={{ backgroundColor: 'rgba(99,102,241,0.2)', color: '#818cf8', fontSize: 10, fontWeight: 600, boxShadow: 'none' }} />
+      </span>
+    ),
+  },
+  {
+    key: '/simulation',
+    icon: <Monitor {...iconStyle} />,
+    label: (
+      <span style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+        Simulation
+        <Badge count="Soon" style={{ backgroundColor: 'rgba(99,102,241,0.2)', color: '#818cf8', fontSize: 10, fontWeight: 600, boxShadow: 'none' }} />
+      </span>
+    ),
+  },
 ];
 
 export default function Sidebar() {
+  const location = useLocation();
+  const navigate = useNavigate();
+
+  const currentKey = '/' + location.pathname.split('/').filter(Boolean)[0];
+
+  const handleClick: MenuProps['onClick'] = ({ key }) => {
+    navigate(key);
+  };
+
   return (
-    <aside className="app-sidebar">
+    <div className="glass-sidebar" style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
       <div className="sidebar-brand">
-        <div className="sidebar-logo">N</div>
-        <span className="sidebar-title">Nvidopia</span>
+        <div className="sidebar-logo animate-pulse-glow">N</div>
+        <span className="sidebar-title">NVIDOPIA</span>
       </div>
 
-      <nav className="sidebar-nav">
-        <ul className="sidebar-nav-list">
-          {mainNav.map((item) => (
-            <li key={item.to}>
-              <NavLink
-                to={item.to}
-                className={({ isActive }) =>
-                  clsx('sidebar-nav-link', isActive && 'active')
-                }
-              >
-                {item.icon}
-                <span>{item.label}</span>
-              </NavLink>
-            </li>
-          ))}
-        </ul>
+      <div style={{ flex: 1, paddingTop: 8, overflow: 'auto' }}>
+        <Menu
+          mode="inline"
+          theme="dark"
+          selectedKeys={[currentKey]}
+          onClick={handleClick}
+          items={mainItems}
+          style={{ borderInlineEnd: 'none' }}
+        />
 
-        <div className="sidebar-separator" />
+        <div style={{ height: 1, background: 'rgba(255,255,255,0.06)', margin: '12px 20px' }} />
 
-        <ul className="sidebar-nav-list">
-          {secondaryNav.map((item) => (
-            <li key={item.to}>
-              <NavLink
-                to={item.to}
-                className={({ isActive }) =>
-                  clsx('sidebar-nav-link', isActive && 'active')
-                }
-              >
-                {item.icon}
-                <span>{item.label}</span>
-                {item.comingSoon && (
-                  <span className="badge badge-coming-soon">Coming Soon</span>
-                )}
-              </NavLink>
-            </li>
-          ))}
-        </ul>
-      </nav>
+        <Menu
+          mode="inline"
+          theme="dark"
+          selectedKeys={[currentKey]}
+          onClick={handleClick}
+          items={secondaryItems}
+          style={{ borderInlineEnd: 'none' }}
+        />
+      </div>
 
       <div className="sidebar-footer">
-        <div className="sidebar-footer-text">AD Testing Platform</div>
+        <div className="sidebar-footer-text">AD Testing Platform v0.1</div>
       </div>
-    </aside>
+    </div>
   );
 }

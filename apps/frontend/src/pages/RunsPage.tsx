@@ -1,94 +1,120 @@
 import { useQuery } from '@tanstack/react-query';
 import { Link } from 'react-router-dom';
+import { Table, Tag, Empty } from 'antd';
 import { Play } from 'lucide-react';
 import { getRuns } from '../api/client';
+import type { Run } from '../api/client';
+import type { ColumnsType } from 'antd/es/table';
 
-const statusBadge: Record<string, string> = {
-  Scheduled: 'badge-blue',
-  Active: 'badge-yellow',
-  Completed: 'badge-green',
-  Aborted: 'badge-red',
-  pending: 'badge-gray',
-  queued: 'badge-blue',
-  running: 'badge-yellow',
-  passed: 'badge-green',
-  failed: 'badge-red',
-  cancelled: 'badge-gray',
+const statusColor: Record<string, string> = {
+  Scheduled: 'blue',
+  Active: 'gold',
+  Completed: 'green',
+  Aborted: 'red',
+  pending: 'default',
+  queued: 'blue',
+  running: 'gold',
+  passed: 'green',
+  failed: 'red',
+  cancelled: 'default',
 };
 
 export default function RunsPage() {
-  const { data: runs, isLoading, error } = useQuery({
+  const { data: runs, isLoading } = useQuery({
     queryKey: ['runs'],
     queryFn: () => getRuns(),
   });
 
+  const columns: ColumnsType<Run> = [
+    {
+      title: 'Run ID',
+      dataIndex: 'id',
+      key: 'id',
+      width: 120,
+      render: (id: string) => (
+        <Link to={`/runs/${id}`} style={{ color: '#818cf8', fontWeight: 500, fontFamily: 'monospace' }}>
+          {id.slice(0, 8)}
+        </Link>
+      ),
+    },
+    {
+      title: 'Task',
+      dataIndex: 'taskId',
+      key: 'taskId',
+      width: 120,
+      render: (taskId: string) =>
+        taskId ? (
+          <Link to={`/tasks/${taskId}`} style={{ fontFamily: 'monospace', color: '#94a3b8' }}>
+            {taskId.slice(0, 8)}
+          </Link>
+        ) : (
+          <span style={{ color: 'var(--text-muted)' }}>—</span>
+        ),
+    },
+    {
+      title: 'Status',
+      dataIndex: 'status',
+      key: 'status',
+      width: 120,
+      render: (status: string) => (
+        <Tag color={statusColor[status] ?? 'default'}>{status}</Tag>
+      ),
+    },
+    {
+      title: 'Result',
+      dataIndex: 'result',
+      key: 'result',
+      width: 100,
+      render: (v: string | undefined) => v ?? <span style={{ color: 'var(--text-muted)' }}>—</span>,
+    },
+    {
+      title: 'Vehicles',
+      dataIndex: 'vehicleIds',
+      key: 'vehicles',
+      width: 90,
+      render: (ids: string[] | undefined) => ids?.length ?? 0,
+    },
+    {
+      title: 'Started',
+      dataIndex: 'startedAt',
+      key: 'startedAt',
+      width: 160,
+      render: (d: string | undefined) => d ? new Date(d).toLocaleString() : <span style={{ color: 'var(--text-muted)' }}>—</span>,
+    },
+    {
+      title: 'Completed',
+      dataIndex: 'completedAt',
+      key: 'completedAt',
+      width: 160,
+      render: (d: string | undefined) => d ? new Date(d).toLocaleString() : <span style={{ color: 'var(--text-muted)' }}>—</span>,
+    },
+  ];
+
   return (
     <div>
-      <div className="page-header">
-        <div>
-          <h1 className="page-title">Test Runs</h1>
-          <p className="page-subtitle">Monitor and manage test execution runs</p>
-        </div>
+      <div style={{ marginBottom: 24 }}>
+        <h1 className="page-title">Test Runs</h1>
+        <p className="page-subtitle">Monitor and manage test execution runs</p>
       </div>
 
-      {isLoading && (
-        <div className="loading-center"><div className="spinner" /></div>
-      )}
-
-      {error && (
-        <div className="card">
-          <div className="card-body">
-            <p style={{ color: 'var(--danger)' }}>Failed to load runs.</p>
-          </div>
-        </div>
-      )}
-
-      {runs && runs.length === 0 && (
-        <div className="empty-state">
-          <Play size={48} />
-          <h3>No test runs</h3>
-          <p>Test runs will appear here once tasks are executed.</p>
-        </div>
-      )}
-
-      {runs && runs.length > 0 && (
-        <div className="card">
-          <table className="data-table">
-            <thead>
-              <tr>
-                <th>Run ID</th>
-                <th>Task</th>
-                <th>Status</th>
-                <th>Result</th>
-                <th>Vehicles</th>
-                <th>Started</th>
-                <th>Completed</th>
-              </tr>
-            </thead>
-            <tbody>
-              {runs.map((r) => (
-                <tr key={r.id}>
-                  <td>
-                    <Link to={`/runs/${r.id}`} style={{ fontFamily: 'monospace' }}>
-                      {(r.id ?? '').slice(0, 8)}
-                    </Link>
-                  </td>
-                  <td>
-                    {r.taskId
-                      ? <Link to={`/tasks/${r.taskId}`} style={{ fontFamily: 'monospace' }}>{r.taskId.slice(0, 8)}</Link>
-                      : '—'}
-                  </td>
-                  <td><span className={`badge ${statusBadge[r.status] ?? 'badge-gray'}`}>{r.status}</span></td>
-                  <td>{r.result ?? '—'}</td>
-                  <td>{r.vehicleIds?.length ?? 0}</td>
-                  <td>{r.startedAt ? new Date(r.startedAt).toLocaleString() : '—'}</td>
-                  <td>{r.completedAt ? new Date(r.completedAt).toLocaleString() : '—'}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      )}
+      <div className="glass-panel" style={{ overflow: 'hidden' }}>
+        <Table
+          columns={columns}
+          dataSource={runs}
+          rowKey="id"
+          loading={isLoading}
+          pagination={{ pageSize: 15, showSizeChanger: false }}
+          scroll={{ x: 900 }}
+          locale={{
+            emptyText: (
+              <Empty
+                image={<Play size={48} style={{ color: 'var(--text-muted)', opacity: 0.4 }} />}
+                description={<span style={{ color: 'var(--text-muted)' }}>No test runs yet. Runs will appear here once tasks are executed.</span>}
+              />
+            ),
+          }}
+        />
+      </div>
     </div>
   );
 }

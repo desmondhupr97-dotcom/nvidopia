@@ -1,19 +1,20 @@
 import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { GitBranch, Search, ArrowDown } from 'lucide-react';
-import clsx from 'clsx';
+import { Card, Tabs, Input, Button, Timeline, Progress, Tag, Space, Spin, Empty } from 'antd';
+import { SearchOutlined } from '@ant-design/icons';
+import { GitBranch } from 'lucide-react';
 import { traceForward, traceBackward, getCoverage } from '../api/client';
 
 type Tab = 'forward' | 'backward';
 
 const NODE_TYPE_COLORS: Record<string, string> = {
-  requirement: 'bg-blue-500',
-  commit: 'bg-gray-600',
-  build: 'bg-amber-500',
-  project: 'bg-indigo-500',
-  task: 'bg-violet-500',
-  run: 'bg-emerald-500',
-  issue: 'bg-red-500',
+  requirement: '#3b82f6',
+  commit: '#64748b',
+  build: '#f59e0b',
+  project: '#6366f1',
+  task: '#8b5cf6',
+  run: '#22c55e',
+  issue: '#ef4444',
 };
 
 const NODE_TYPE_LABELS: Record<string, string> = {
@@ -48,8 +49,7 @@ export default function TraceabilityPage() {
     queryFn: () => getCoverage({}),
   });
 
-  const handleTrace = (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleTrace = () => {
     setTraceId(inputId.trim());
   };
 
@@ -58,125 +58,137 @@ export default function TraceabilityPage() {
   const traceLinks = traceData?.links ?? [];
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center gap-3">
-        <GitBranch className="h-7 w-7 text-indigo-600" />
-        <h1 className="text-2xl font-bold text-gray-900">Traceability</h1>
+    <div>
+      {/* Header */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 8 }}>
+        <GitBranch size={28} style={{ color: '#6366f1' }} />
+        <h1 className="page-title">Traceability</h1>
       </div>
-
-      <p className="text-sm text-gray-500">
-        Traceability shows end-to-end links between requirements, tasks, runs, and issues, helping you understand coverage and impact before release.
+      <p className="page-subtitle" style={{ marginBottom: 24 }}>
+        End-to-end links between requirements, tasks, runs, and issues for coverage and impact analysis.
       </p>
 
       {/* Coverage card */}
       {coverage && (
-        <div className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm">
-          <h2 className="text-sm font-medium text-gray-500">Requirement Verification Coverage</h2>
-          <div className="mt-3 flex items-center gap-4">
-            <span className="text-3xl font-bold text-indigo-600">
+        <Card className="glass-panel" style={{ marginBottom: 24 }}>
+          <div style={{ fontFamily: "'Exo 2', sans-serif", fontWeight: 500, fontSize: 13, color: 'var(--text-muted)', marginBottom: 12 }}>
+            Requirement Verification Coverage
+          </div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 20 }}>
+            <span style={{ fontFamily: "'Orbitron', sans-serif", fontSize: 32, fontWeight: 700, color: '#6366f1' }}>
               {coverage.coverage_percent != null ? `${Number(coverage.coverage_percent).toFixed(1)}%` : '—'}
             </span>
-            <div className="flex-1">
-              <div className="h-3 w-full overflow-hidden rounded-full bg-gray-200">
-                <div
-                  className="h-full rounded-full bg-indigo-600 transition-all duration-500"
-                  style={{ width: `${coverage.coverage_percent ?? 0}%` }}
-                />
-              </div>
+            <div style={{ flex: 1 }}>
+              <Progress
+                percent={Number(coverage.coverage_percent ?? 0)}
+                showInfo={false}
+                strokeColor={{ from: '#6366f1', to: '#8b5cf6' }}
+              />
             </div>
-            <div className="text-xs text-gray-500">
+            <span style={{ fontSize: 12, color: 'var(--text-muted)', whiteSpace: 'nowrap' }}>
               {coverage.verified ?? 0} / {coverage.total_requirements ?? 0} verified
-            </div>
+            </span>
           </div>
-        </div>
+        </Card>
       )}
 
-      {/* Tab selector */}
-      <div className="flex gap-1 rounded-lg bg-gray-100 p-1">
-        {(['forward', 'backward'] as Tab[]).map((t) => (
-          <button
-            key={t}
-            onClick={() => { setTab(t); setTraceId(''); setInputId(''); }}
-            className={clsx(
-              'flex-1 rounded-md px-4 py-2 text-sm font-medium transition-colors',
-              tab === t ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500 hover:text-gray-700',
-            )}
-          >
-            {t === 'forward' ? 'Forward Trace' : 'Backward Trace'}
-          </button>
-        ))}
-      </div>
+      {/* Tabs */}
+      <Tabs
+        activeKey={tab}
+        onChange={(k) => { setTab(k as Tab); setTraceId(''); setInputId(''); }}
+        items={[
+          { key: 'forward', label: 'Forward Trace' },
+          { key: 'backward', label: 'Backward Trace' },
+        ]}
+        style={{ marginBottom: 16 }}
+      />
 
-      {/* Search form */}
-      <form onSubmit={handleTrace} className="flex gap-2">
-        <input
+      {/* Search */}
+      <Space.Compact style={{ width: '100%', maxWidth: 500, marginBottom: 24 }}>
+        <Input
           value={inputId}
           onChange={(e) => setInputId(e.target.value)}
           placeholder={tab === 'forward' ? 'Enter Requirement ID...' : 'Enter Issue ID...'}
-          className="flex-1 rounded-lg border border-gray-300 px-4 py-2.5 text-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+          onPressEnter={handleTrace}
+          size="large"
         />
-        <button
-          type="submit"
+        <Button
+          type="primary"
+          icon={<SearchOutlined />}
+          onClick={handleTrace}
           disabled={!inputId.trim()}
-          className="inline-flex items-center gap-2 rounded-lg bg-indigo-600 px-5 py-2.5 text-sm font-medium text-white hover:bg-indigo-700 disabled:opacity-50 transition-colors"
+          size="large"
         >
-          <Search className="h-4 w-4" />
           Trace
-        </button>
-      </form>
+        </Button>
+      </Space.Compact>
 
       {/* Loading */}
       {isLoading && (
-        <div className="flex justify-center py-12">
-          <div className="h-8 w-8 animate-spin rounded-full border-4 border-indigo-200 border-t-indigo-600" />
+        <div style={{ display: 'flex', justifyContent: 'center', padding: 48 }}>
+          <Spin size="large" />
         </div>
       )}
 
-      {/* Trace result timeline */}
+      {/* Results */}
       {traceData && traceData.nodes && traceData.nodes.length > 0 && (
-        <div className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
-          <h2 className="mb-4 text-sm font-medium text-gray-500">
-            {tab === 'forward' ? 'Forward' : 'Backward'} Trace from{' '}
-            <span className="font-mono text-gray-900">{traceData.origin_id}</span>
-          </h2>
-          <div className="space-y-0">
-            {traceData.nodes.map((node: Record<string, unknown>, idx: number) => {
+        <Card
+          className="glass-panel"
+          title={
+            <span style={{ fontFamily: "'Exo 2', sans-serif", fontWeight: 600 }}>
+              {tab === 'forward' ? 'Forward' : 'Backward'} Trace from{' '}
+              <code style={{ color: '#818cf8' }}>{traceData.origin_id}</code>
+            </span>
+          }
+        >
+          <Timeline
+            items={traceData.nodes.map((node: Record<string, unknown>, idx: number) => {
               const nodeType = node.type as string;
               const link = idx < traceLinks.length ? traceLinks[idx] as Record<string, unknown> : null;
-              return (
-                <div key={`${nodeType}-${node.id}`}>
-                  <div className="flex items-center gap-3">
-                    <div className={clsx('flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full text-xs font-bold text-white', NODE_TYPE_COLORS[nodeType] ?? 'bg-gray-500')}>
-                      {NODE_TYPE_LABELS[nodeType] ?? '?'}
-                    </div>
-                    <div className="flex-1">
-                      <p className="text-sm font-medium text-gray-900">
-                        {(node.label as string) || (node.id as string)}
-                      </p>
-                      <p className="text-xs text-gray-400">
-                        {nodeType} &middot; <span className="font-mono">{node.id as string}</span>
-                      </p>
-                    </div>
+              return {
+                dot: (
+                  <div style={{
+                    width: 32,
+                    height: 32,
+                    borderRadius: '50%',
+                    background: NODE_TYPE_COLORS[nodeType] ?? '#64748b',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    fontSize: 10,
+                    fontWeight: 700,
+                    color: '#fff',
+                    fontFamily: "'Exo 2', sans-serif",
+                    boxShadow: `0 0 12px ${NODE_TYPE_COLORS[nodeType] ?? '#64748b'}40`,
+                  }}>
+                    {NODE_TYPE_LABELS[nodeType] ?? '?'}
                   </div>
-                  {idx < traceData.nodes.length - 1 && (
-                    <div className="ml-4 flex items-center gap-2 py-1.5">
-                      <ArrowDown className="h-4 w-4 text-gray-300" />
-                      {link && (
-                        <span className="text-xs text-gray-400 italic">{link.relationship as string}</span>
-                      )}
+                ),
+                children: (
+                  <div style={{ paddingBottom: 8 }}>
+                    <div style={{ fontWeight: 500, color: 'var(--text-primary)' }}>
+                      {(node.label as string) || (node.id as string)}
                     </div>
-                  )}
-                </div>
-              );
+                    <div style={{ fontSize: 12, color: 'var(--text-muted)' }}>
+                      {nodeType} &middot; <code>{node.id as string}</code>
+                    </div>
+                    {link && (
+                      <Tag style={{ marginTop: 4, fontSize: 11, fontStyle: 'italic' }}>
+                        {link.relationship as string}
+                      </Tag>
+                    )}
+                  </div>
+                ),
+              };
             })}
-          </div>
-        </div>
+          />
+        </Card>
       )}
 
       {traceId && !isLoading && traceData && (!traceData.nodes || traceData.nodes.length === 0) && (
-        <div className="rounded-xl border border-gray-200 bg-white p-8 text-center text-sm text-gray-400">
-          No trace results found for "{traceId}".
-        </div>
+        <Card className="glass-panel">
+          <Empty description={`No trace results found for "${traceId}"`} />
+        </Card>
       )}
     </div>
   );

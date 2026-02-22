@@ -1,4 +1,5 @@
-import { Brain, Square } from 'lucide-react';
+import { Card, Space } from 'antd';
+import { Brain, CheckCircle2 } from 'lucide-react';
 
 const PLANNED_CAPABILITIES = [
   'Rule-based classification',
@@ -9,29 +10,49 @@ const PLANNED_CAPABILITIES = [
 
 export default function AutoTriagePlaceholderPage() {
   return (
-    <div className="flex min-h-[60vh] items-center justify-center">
-      <div className="w-full max-w-lg rounded-2xl border border-gray-200 bg-white p-10 text-center shadow-sm">
-        <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-indigo-100">
-          <Brain className="h-8 w-8 text-indigo-600" />
+    <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '60vh' }}>
+      <Card
+        className="glass-panel-elevated"
+        style={{ maxWidth: 480, width: '100%', textAlign: 'center', padding: '20px 0' }}
+      >
+        <div
+          style={{
+            width: 72,
+            height: 72,
+            borderRadius: 20,
+            background: 'rgba(99,102,241,0.12)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            margin: '0 auto 24px',
+            boxShadow: '0 0 24px rgba(99,102,241,0.2)',
+          }}
+        >
+          <Brain size={36} style={{ color: '#818cf8' }} />
         </div>
-        <h1 className="mt-6 text-2xl font-bold text-gray-900">Auto-Triage</h1>
-        <p className="mt-1 text-lg font-medium text-indigo-600">Coming Soon</p>
-        <p className="mt-4 text-sm leading-relaxed text-gray-500">
-          Intelligent automated issue classification and assignment powered by rule engine
-          and ML models. This feature is currently in the planning phase.
+
+        <h1 style={{ fontFamily: "'Orbitron', 'Exo 2', sans-serif", fontSize: '1.5rem', fontWeight: 700, color: 'var(--text-primary)', margin: 0 }}>
+          Auto-Triage
+        </h1>
+        <p style={{ fontSize: 16, fontWeight: 600, color: '#6366f1', marginTop: 4 }}>Coming Soon</p>
+        <p style={{ color: 'var(--text-secondary)', fontSize: 14, lineHeight: 1.7, marginTop: 16, padding: '0 12px' }}>
+          Intelligent automated issue classification and assignment powered by rule engine and ML models.
         </p>
-        <div className="mt-8 text-left">
-          <h2 className="mb-3 text-xs font-semibold uppercase tracking-wider text-gray-400">Planned Capabilities</h2>
-          <ul className="space-y-3">
+
+        <div style={{ textAlign: 'left', padding: '0 24px', marginTop: 32 }}>
+          <div style={{ fontSize: 11, fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 16 }}>
+            Planned Capabilities
+          </div>
+          <Space direction="vertical" size={12} style={{ width: '100%' }}>
             {PLANNED_CAPABILITIES.map((cap) => (
-              <li key={cap} className="flex items-center gap-3">
-                <Square className="h-4 w-4 flex-shrink-0 text-gray-300" />
-                <span className="text-sm text-gray-600">{cap}</span>
-              </li>
+              <div key={cap} style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                <CheckCircle2 size={16} style={{ color: 'var(--text-muted)', opacity: 0.4, flexShrink: 0 }} />
+                <span style={{ color: 'var(--text-secondary)', fontSize: 14 }}>{cap}</span>
+              </div>
             ))}
-          </ul>
+          </Space>
         </div>
-      </div>
+      </Card>
     </div>
   );
 }
