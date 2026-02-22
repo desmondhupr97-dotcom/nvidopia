@@ -12,3 +12,5 @@ Thumbs.db
 *.tgz
 .commitmsg
 apps/frontend/tsconfig.tsbuildinfo
+screenshots/
+FRONTEND_VERIFICATION_REPORT.md
