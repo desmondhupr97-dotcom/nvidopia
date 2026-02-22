@@ -1,0 +1,14 @@
+node_modules
+dist
+.git
+.gitignore
+.dockerignore
+.env
+.env.*
+*.md
+screenshots
+docs
+infra
+contracts
+.cursor
+.vscode

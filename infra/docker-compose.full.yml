@@ -1,5 +1,3 @@
-version: "3.9"
-
 services:
   # ---------------------------------------------------------------------------
   # Infrastructure
@@ -57,7 +55,9 @@ services:
   # Microservices
   # ---------------------------------------------------------------------------
   bff-gateway:
-    build: ../apps/bff-gateway
+    build:
+      context: ..
+      dockerfile: apps/bff-gateway/Dockerfile
     container_name: nvidopia-bff-gateway
     ports:
       - "3000:3000"
@@ -81,7 +81,9 @@ services:
       - mongodb
 
   release-manager:
-    build: ../services/release-manager
+    build:
+      context: ..
+      dockerfile: services/release-manager/Dockerfile
     container_name: nvidopia-release-manager
     ports:
       - "3001:3001"
@@ -92,7 +94,9 @@ services:
       - mongodb
 
   fleet-manager:
-    build: ../services/fleet-manager
+    build:
+      context: ..
+      dockerfile: services/fleet-manager/Dockerfile
     container_name: nvidopia-fleet-manager
     ports:
       - "3002:3002"
@@ -105,7 +109,9 @@ services:
       - mongodb
 
   issue-workflow:
-    build: ../services/issue-workflow
+    build:
+      context: ..
+      dockerfile: services/issue-workflow/Dockerfile
     container_name: nvidopia-issue-workflow
     ports:
       - "3003:3003"
@@ -118,7 +124,9 @@ services:
       - mongodb
 
   traceability:
-    build: ../services/traceability
+    build:
+      context: ..
+      dockerfile: services/traceability/Dockerfile
     container_name: nvidopia-traceability
     ports:
       - "3004:3004"
@@ -129,7 +137,9 @@ services:
       - mongodb
 
   kpi-engine:
-    build: ../services/kpi-engine
+    build:
+      context: ..
+      dockerfile: services/kpi-engine/Dockerfile
     container_name: nvidopia-kpi-engine
     ports:
       - "3005:3005"
@@ -142,7 +152,9 @@ services:
       - mongodb
 
   frontend:
-    build: ../apps/frontend
+    build:
+      context: ..
+      dockerfile: apps/frontend/Dockerfile
     container_name: nvidopia-frontend
     ports:
       - "5173:80"
