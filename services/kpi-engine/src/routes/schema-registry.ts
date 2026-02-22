@@ -76,7 +76,7 @@ router.get('/fields', asyncHandler(async (_req: Request, res: Response) => {
 }));
 
 router.get('/fields/:entity', asyncHandler(async (req: Request, res: Response) => {
-  const entity = req.params.entity.toLowerCase();
+  const entity = (req.params.entity as string).toLowerCase();
   const model = ENTITY_MAP[entity];
   if (!model) {
     res.status(404).json({ error: `Entity "${entity}" not found. Available: ${Object.keys(ENTITY_MAP).join(', ')}` });

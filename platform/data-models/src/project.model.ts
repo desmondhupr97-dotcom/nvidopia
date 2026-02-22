@@ -14,8 +14,10 @@ export interface IProject {
   start_date: Date;
   end_date?: Date;
   status: ProjectStatus;
+  extra?: Record<string, unknown>;
   created_at: Date;
   updated_at: Date;
+  [key: string]: unknown;
 }
 
 export type ProjectDocument = IProject & Document;
@@ -36,8 +38,12 @@ const ProjectSchema = new Schema<ProjectDocument>(
       enum: PROJECT_STATUS,
       default: 'Planning',
     },
+    extra: { type: Schema.Types.Mixed, default: {} },
   },
-  { timestamps: { createdAt: 'created_at', updatedAt: 'updated_at' } },
+  {
+    timestamps: { createdAt: 'created_at', updatedAt: 'updated_at' },
+    strict: false,
+  },
 );
 
 ProjectSchema.index({ project_id: 1 }, { unique: true });

@@ -18,8 +18,10 @@ export interface IRun {
   simulation_ref: string | null;
   /** RESERVED for future simulation integration */
   simulation_status: string | null;
+  extra?: Record<string, unknown>;
   created_at: Date;
   updated_at: Date;
+  [key: string]: unknown;
 }
 
 export type RunDocument = IRun & Document;
@@ -38,8 +40,12 @@ const RunSchema = new Schema<RunDocument>(
     status: { type: String, enum: RUN_STATUS, default: 'Scheduled' },
     simulation_ref: { type: String, default: null },
     simulation_status: { type: String, default: null },
+    extra: { type: Schema.Types.Mixed, default: {} },
   },
-  { timestamps: { createdAt: 'created_at', updatedAt: 'updated_at' } },
+  {
+    timestamps: { createdAt: 'created_at', updatedAt: 'updated_at' },
+    strict: false,
+  },
 );
 
 RunSchema.index({ run_id: 1 }, { unique: true });

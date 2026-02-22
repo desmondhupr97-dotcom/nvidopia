@@ -21,6 +21,57 @@ export type IssueStatus = (typeof ISSUE_STATUS)[number];
 export const TRIAGE_MODE = ['manual', 'auto_reserved'] as const;
 export type TriageMode = (typeof TRIAGE_MODE)[number];
 
+/* ── Vehicle Dynamics Snapshot (embedded sub-document) ── */
+
+export interface IQuaternion {
+  w: number;
+  x: number;
+  y: number;
+  z: number;
+}
+
+export interface IVehicleDynamicsSnapshot {
+  speed_mps?: number;
+  acceleration_mps2?: number;
+  lateral_acceleration_mps2?: number;
+  yaw_rate_dps?: number;
+  heading_deg?: number;
+  quaternion?: IQuaternion;
+  steering_angle_deg?: number;
+  throttle_pct?: number;
+  brake_pressure_bar?: number;
+  gear?: string;
+  wheel_speeds_mps?: number[];
+  extra?: Record<string, unknown>;
+}
+
+const QuaternionSchema = new Schema<IQuaternion>(
+  { w: Number, x: Number, y: Number, z: Number },
+  { _id: false },
+);
+
+const VehicleDynamicsSnapshotSchema = new Schema<IVehicleDynamicsSnapshot>(
+  {
+    speed_mps: Number,
+    acceleration_mps2: Number,
+    lateral_acceleration_mps2: Number,
+    yaw_rate_dps: Number,
+    heading_deg: Number,
+    quaternion: { type: QuaternionSchema },
+    steering_angle_deg: Number,
+    throttle_pct: Number,
+    brake_pressure_bar: Number,
+    gear: String,
+    wheel_speeds_mps: { type: [Number] },
+    extra: { type: Schema.Types.Mixed },
+  },
+  { _id: false, strict: false },
+);
+
+export { VehicleDynamicsSnapshotSchema };
+
+/* ── Issue ── */
+
 export interface IIssue {
   issue_id: string;
   run_id: string;
@@ -44,8 +95,11 @@ export interface IIssue {
   triage_hint: string | null;
   /** RESERVED for auto-triage */
   triage_source: string | null;
+  vehicle_dynamics?: IVehicleDynamicsSnapshot;
+  extra?: Record<string, unknown>;
   created_at: Date;
   updated_at: Date;
+  [key: string]: unknown;
 }
 
 export type IssueDocument = IIssue & Document;
@@ -71,8 +125,13 @@ const IssueSchema = new Schema<IssueDocument>(
     triage_mode: { type: String, enum: TRIAGE_MODE, default: 'manual' },
     triage_hint: { type: String, default: null },
     triage_source: { type: String, default: null },
+    vehicle_dynamics: { type: VehicleDynamicsSnapshotSchema },
+    extra: { type: Schema.Types.Mixed, default: {} },
   },
-  { timestamps: { createdAt: 'created_at', updatedAt: 'updated_at' } },
+  {
+    timestamps: { createdAt: 'created_at', updatedAt: 'updated_at' },
+    strict: false,
+  },
 );
 
 IssueSchema.index({ issue_id: 1 }, { unique: true });

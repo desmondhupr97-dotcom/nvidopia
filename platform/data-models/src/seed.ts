@@ -17,6 +17,8 @@ import { Commit } from './commit.model.js';
 import { Build } from './build.model.js';
 import { Vehicle } from './vehicle.model.js';
 import { KpiSnapshot } from './kpi-snapshot.model.js';
+import { IssueTimeSeries } from './issue-timeseries.model.js';
+import { KpiDefinition } from './kpi-definition.model.js';
 
 const MONGO_URI =
   process.env.MONGO_URI ??
@@ -36,6 +38,7 @@ async function seed(): Promise<void> {
   const collections = [
     'projects', 'tasks', 'runs', 'issues', 'issuestatetransitions',
     'requirements', 'commits', 'builds', 'vehicles', 'kpisnapshots',
+    'issuetimeseries', 'kpidefinitions',
   ];
   for (const name of collections) {
     try { await mongoose.connection.db!.dropCollection(name); } catch { /* may not exist */ }
@@ -372,17 +375,130 @@ async function seed(): Promise<void> {
   ]);
   console.log(`[seed] Inserted ${transitions.length} issue state transitions`);
 
+  // -------------------------------------------------------------------------
+  // Vehicle dynamics snapshots for sample issues
+  // -------------------------------------------------------------------------
+  await Issue.updateOne({ issue_id: 'ISS-001' }, {
+    $set: {
+      vehicle_dynamics: {
+        speed_mps: 13.4, acceleration_mps2: -2.1, lateral_acceleration_mps2: 0.3,
+        yaw_rate_dps: 1.2, heading_deg: 87.5, quaternion: { w: 0.998, x: 0.0, y: 0.0, z: 0.063 },
+        steering_angle_deg: -3.2, throttle_pct: 0, brake_pressure_bar: 45.0, gear: 'D',
+        wheel_speeds_mps: [13.2, 13.3, 13.5, 13.6],
+      },
+    },
+  });
+  await Issue.updateOne({ issue_id: 'ISS-003' }, {
+    $set: {
+      vehicle_dynamics: {
+        speed_mps: 22.0, acceleration_mps2: -8.5, lateral_acceleration_mps2: 0.1,
+        yaw_rate_dps: 0.0, heading_deg: 180.0, quaternion: { w: 0.707, x: 0.0, y: 0.0, z: 0.707 },
+        steering_angle_deg: 0.0, throttle_pct: 0, brake_pressure_bar: 120.0, gear: 'D',
+        wheel_speeds_mps: [22.1, 22.0, 21.8, 21.9],
+      },
+    },
+  });
+  console.log('[seed] Added vehicle dynamics snapshots to ISS-001, ISS-003');
+
+  // -------------------------------------------------------------------------
+  // Time-series data for ISS-001
+  // -------------------------------------------------------------------------
+  const tsData = await IssueTimeSeries.insertMany([
+    {
+      issue_id: 'ISS-001',
+      channel: 'lidar_front',
+      channel_type: 'sensor',
+      time_range_ms: { start: -3000, end: 3000 },
+      data_points: Array.from({ length: 61 }, (_, i) => ({
+        t: -3000 + i * 100,
+        values: { point_count: 12000 + Math.floor(Math.random() * 2000), detection_score: 0.85 + Math.random() * 0.15 },
+      })),
+    },
+    {
+      issue_id: 'ISS-001',
+      channel: 'ego_dynamics',
+      channel_type: 'vehicle_dynamics',
+      time_range_ms: { start: -3000, end: 3000 },
+      data_points: Array.from({ length: 61 }, (_, i) => ({
+        t: -3000 + i * 100,
+        values: { speed_mps: 13.4 + Math.sin(i * 0.1) * 0.5, accel_mps2: -2.1 + Math.cos(i * 0.2) * 0.3 },
+      })),
+    },
+    {
+      issue_id: 'ISS-001',
+      channel: 'state_machine',
+      channel_type: 'state_machine',
+      time_range_ms: { start: -3000, end: 3000 },
+      data_points: [
+        { t: -3000, values: { state: 'CRUISING', confidence: 0.95 } },
+        { t: -1500, values: { state: 'OBSTACLE_DETECTED', confidence: 0.72 } },
+        { t: -500, values: { state: 'EMERGENCY_BRAKE', confidence: 0.99 } },
+        { t: 500, values: { state: 'STOPPED', confidence: 1.0 } },
+        { t: 2000, values: { state: 'TAKEOVER_REQUESTED', confidence: 1.0 } },
+      ],
+    },
+  ]);
+  console.log(`[seed] Inserted ${tsData.length} time-series channels for ISS-001`);
+
+  // -------------------------------------------------------------------------
+  // Custom KPI definitions (defaults)
+  // -------------------------------------------------------------------------
+  const kpiDefs = await KpiDefinition.insertMany([
+    {
+      kpi_id: 'KPI-DEF-001',
+      name: 'Issue Count by Category',
+      description: 'Total number of issues grouped by category',
+      data_source: 'issue',
+      formula: 'issue_count',
+      variables: [{ name: 'issue_count', source_entity: 'issue', field: 'issue_id', aggregation: 'count' }],
+      group_by: ['category'],
+      visualization: { chart_type: 'bar', x_axis: { field: 'category', label: 'Category' }, y_axes: [{ variable: 'issue_count', label: 'Count' }] },
+      display_order: 1,
+      enabled: true,
+      created_by: 'system',
+    },
+    {
+      kpi_id: 'KPI-DEF-002',
+      name: 'Avg Mileage per Run',
+      description: 'Average autonomous mileage per completed run',
+      data_source: 'run',
+      filters: [{ field: 'status', operator: 'eq', value: 'Completed' }],
+      formula: 'avg_mileage',
+      variables: [{ name: 'avg_mileage', source_entity: 'run', field: 'total_auto_mileage_km', aggregation: 'avg' }],
+      visualization: { chart_type: 'stat' },
+      display_order: 2,
+      enabled: true,
+      created_by: 'system',
+    },
+    {
+      kpi_id: 'KPI-DEF-003',
+      name: 'Issue Severity Distribution',
+      description: 'Issue count by severity level',
+      data_source: 'issue',
+      formula: 'count_by_severity',
+      variables: [{ name: 'count_by_severity', source_entity: 'issue', field: 'issue_id', aggregation: 'count' }],
+      group_by: ['severity'],
+      visualization: { chart_type: 'pie', x_axis: { field: 'severity' }, y_axes: [{ variable: 'count_by_severity', label: 'Count' }] },
+      display_order: 3,
+      enabled: true,
+      created_by: 'system',
+    },
+  ]);
+  console.log(`[seed] Inserted ${kpiDefs.length} custom KPI definitions`);
+
   console.log('\n[seed] Seeding complete!');
   console.log('  - 2 Projects');
   console.log('  - 6 Tasks');
   console.log('  - 5 Vehicles');
   console.log('  - 10 Runs');
-  console.log('  - 20 Issues');
+  console.log('  - 20 Issues (2 with vehicle dynamics snapshots)');
   console.log('  - 3 Requirements');
   console.log('  - 5 Commits');
   console.log('  - 2 Builds');
   console.log('  - 5 KPI Snapshots');
   console.log('  - 10 Issue State Transitions');
+  console.log('  - 3 Time-Series Channels');
+  console.log('  - 3 Custom KPI Definitions');
 
   await mongoose.disconnect();
   console.log('[seed] Disconnected from MongoDB');

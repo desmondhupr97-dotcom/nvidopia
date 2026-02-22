@@ -13,6 +13,7 @@ export interface Project {
   software_baseline_version?: string;
   target_mileage_km?: number;
   start_date?: string;
+  extra?: Record<string, unknown>;
   createdAt: string;
   updatedAt: string;
 }
@@ -28,6 +29,7 @@ export interface Task {
   assignee?: string;
   executionRegion?: string;
   targetVehicleCount?: number;
+  extra?: Record<string, unknown>;
   createdAt: string;
   updatedAt: string;
 }
@@ -41,6 +43,7 @@ export interface Run {
   completedAt?: string;
   totalAutoMileageKm?: number;
   result?: string;
+  extra?: Record<string, unknown>;
   createdAt: string;
   updatedAt: string;
 }
@@ -50,6 +53,35 @@ export interface Vehicle {
   name: string;
   status: string;
   platform?: string;
+}
+
+export interface VehicleDynamicsSnapshot {
+  speed_mps?: number;
+  acceleration_mps2?: number;
+  lateral_acceleration_mps2?: number;
+  yaw_rate_dps?: number;
+  heading_deg?: number;
+  quaternion?: { w: number; x: number; y: number; z: number };
+  steering_angle_deg?: number;
+  throttle_pct?: number;
+  brake_pressure_bar?: number;
+  gear?: string;
+  wheel_speeds_mps?: number[];
+  extra?: Record<string, unknown>;
+}
+
+export interface TimeSeriesDataPoint {
+  t: number;
+  values: Record<string, number | string | boolean>;
+}
+
+export interface IssueTimeSeriesChannel {
+  issue_id: string;
+  channel: string;
+  channel_type: string;
+  data_points: TimeSeriesDataPoint[];
+  time_range_ms: { start: number; end: number };
+  metadata?: Record<string, unknown>;
 }
 
 export interface Issue {
@@ -74,6 +106,8 @@ export interface Issue {
   triageHint?: string;
   fixCommitId?: string;
   rejectionReason?: string;
+  vehicleDynamics?: VehicleDynamicsSnapshot;
+  extra?: Record<string, unknown>;
   createdAt: string;
   updatedAt: string;
 }
@@ -142,6 +176,17 @@ function optNum(value: unknown): number | undefined {
   return typeof value === 'number' ? value : undefined;
 }
 
+function collectExtra(raw: AnyRecord, knownKeys: Set<string>): Record<string, unknown> {
+  const extra: Record<string, unknown> = {};
+  for (const [k, v] of Object.entries(raw)) {
+    if (!knownKeys.has(k) && !k.startsWith('_')) extra[k] = v;
+  }
+  if (raw.extra && typeof raw.extra === 'object') Object.assign(extra, raw.extra as Record<string, unknown>);
+  return extra;
+}
+
+const PROJECT_KNOWN = new Set(['id','project_id','name','description','status','vehicle_platform','soc_architecture','sensor_suite_version','software_baseline_version','target_mileage_km','start_date','end_date','extra','createdAt','created_at','updatedAt','updated_at','__v']);
+
 function normalizeProject(raw: AnyRecord): Project {
   return {
     id: str(raw.id ?? raw.project_id),
@@ -154,10 +199,13 @@ function normalizeProject(raw: AnyRecord): Project {
     software_baseline_version: optStr(raw.software_baseline_version),
     target_mileage_km: optNum(raw.target_mileage_km),
     start_date: optStr(raw.start_date),
+    extra: collectExtra(raw, PROJECT_KNOWN),
     createdAt: str(raw.createdAt ?? raw.created_at, new Date().toISOString()),
     updatedAt: str(raw.updatedAt ?? raw.updated_at, new Date().toISOString()),
   };
 }
+
+const TASK_KNOWN = new Set(['id','task_id','project_id','projectId','name','title','description','stage','status','task_type','taskType','priority','assignee','assigned_to','execution_region','executionRegion','target_vehicle_count','targetVehicleCount','simulation_ref','simulation_status','extra','createdAt','created_at','updatedAt','updated_at','__v']);
 
 function normalizeTask(raw: AnyRecord): Task {
   return {
@@ -171,10 +219,13 @@ function normalizeTask(raw: AnyRecord): Task {
     assignee: optStr(raw.assignee ?? raw.assigned_to),
     executionRegion: optStr(raw.execution_region ?? raw.executionRegion),
     targetVehicleCount: optNum(raw.target_vehicle_count ?? raw.targetVehicleCount),
+    extra: collectExtra(raw, TASK_KNOWN),
     createdAt: str(raw.createdAt ?? raw.created_at, new Date().toISOString()),
     updatedAt: str(raw.updatedAt ?? raw.updated_at, new Date().toISOString()),
   };
 }
+
+const RUN_KNOWN = new Set(['id','run_id','task_id','taskId','vehicle_vin','vehicleIds','driver_id','start_time','startedAt','end_time','completedAt','total_auto_mileage_km','software_version_hash','hardware_heartbeat_version','status','result','simulation_ref','simulation_status','extra','createdAt','created_at','updatedAt','updated_at','__v']);
 
 function normalizeRun(raw: AnyRecord): Run {
   const vehicleVin = optStr(raw.vehicle_vin);
@@ -191,10 +242,13 @@ function normalizeRun(raw: AnyRecord): Run {
     completedAt: optStr(raw.completedAt ?? raw.end_time),
     totalAutoMileageKm: optNum(raw.total_auto_mileage_km),
     result: optStr(raw.result),
+    extra: collectExtra(raw, RUN_KNOWN),
     createdAt: str(raw.createdAt ?? raw.created_at, new Date().toISOString()),
     updatedAt: str(raw.updatedAt ?? raw.updated_at, new Date().toISOString()),
   };
 }
+
+const ISSUE_KNOWN = new Set(['id','issue_id','run_id','runId','task_id','taskId','title','description','status','severity','category','assignee','assigned_to','module','assigned_module','takeover_type','takeoverType','gps_coordinates','gps_lat','gps_lng','data_snapshot_uri','data_snapshot_url','trigger_timestamp','fault_codes','environment_tags','triage_mode','triage_hint','triage_source','fix_commit_id','fix_version_hash','rejection_reason','vehicle_dynamics','extra','createdAt','created_at','updatedAt','updated_at','__v']);
 
 function normalizeIssue(raw: AnyRecord): Issue {
   const issueId = str(raw.id ?? raw.issue_id);
@@ -222,6 +276,8 @@ function normalizeIssue(raw: AnyRecord): Issue {
     triageHint: optStr(raw.triage_hint),
     fixCommitId: optStr(raw.fix_commit_id),
     rejectionReason: optStr(raw.rejection_reason),
+    vehicleDynamics: raw.vehicle_dynamics as VehicleDynamicsSnapshot | undefined,
+    extra: collectExtra(raw, ISSUE_KNOWN),
     createdAt: str(raw.createdAt ?? raw.created_at, new Date().toISOString()),
     updatedAt: str(raw.updatedAt ?? raw.updated_at, new Date().toISOString()),
   };
@@ -459,4 +515,112 @@ export function getIssueConvergence(params?: Record<string, string | undefined>)
       ...raw,
     } as KpiValue;
   });
+}
+
+/* ── Issue Snapshot & Time-Series ─────────────────────── */
+
+export function getIssueSnapshot(issueId: string) {
+  return fetchJson<VehicleDynamicsSnapshot>(`/issues/${issueId}/snapshot`);
+}
+
+export function uploadIssueSnapshot(issueId: string, data: VehicleDynamicsSnapshot) {
+  return fetchJson<VehicleDynamicsSnapshot>(`/issues/${issueId}/snapshot`, {
+    method: 'POST', body: JSON.stringify(data),
+  });
+}
+
+export function getIssueTimeSeries(issueId: string) {
+  return fetchJson<IssueTimeSeriesChannel[]>(`/issues/${issueId}/timeseries`);
+}
+
+export function getIssueTimeSeriesChannel(issueId: string, channel: string) {
+  return fetchJson<IssueTimeSeriesChannel>(`/issues/${issueId}/timeseries/${channel}`);
+}
+
+export function uploadIssueTimeSeries(issueId: string, data: Partial<IssueTimeSeriesChannel> | Partial<IssueTimeSeriesChannel>[]) {
+  return fetchJson<unknown>(`/issues/${issueId}/timeseries`, {
+    method: 'POST', body: JSON.stringify(data),
+  });
+}
+
+/* ── Schema Registry ─────────────────────────────────── */
+
+export interface SchemaFieldMeta {
+  name: string;
+  type: string;
+  required: boolean;
+  enum?: string[];
+  children?: SchemaFieldMeta[];
+}
+
+export interface SchemaEntityFields {
+  entity: string;
+  fields: SchemaFieldMeta[];
+}
+
+export function getSchemaFields(entity?: string) {
+  const path = entity ? `/schema/fields/${entity}` : '/schema/fields';
+  return fetchJson<SchemaEntityFields | Record<string, SchemaEntityFields>>(path);
+}
+
+/* ── Custom KPI Definitions ──────────────────────────── */
+
+export interface KpiDefinition {
+  kpi_id: string;
+  name: string;
+  description?: string;
+  data_source: string;
+  filters?: Array<{ field: string; operator: string; value: unknown }>;
+  group_by?: string[];
+  formula: string;
+  variables: Array<{ name: string; source_entity: string; field: string; aggregation: string }>;
+  visualization: {
+    chart_type: string;
+    x_axis?: { field: string; label?: string };
+    y_axes?: Array<{ variable: string; label?: string; color?: string; axis_id?: string }>;
+    dimensions?: string[];
+  };
+  display_order?: number;
+  enabled: boolean;
+  created_by?: string;
+  created_at?: string;
+  updated_at?: string;
+}
+
+export interface KpiEvalResult {
+  kpi_id: string;
+  name: string;
+  value: number | null;
+  groups?: Array<{ group: Record<string, unknown>; value: number }>;
+  error?: string;
+  visualization?: KpiDefinition['visualization'];
+  computed_at: string;
+}
+
+export function getKpiDefinitions() {
+  return fetchJson<KpiDefinition[]>('/kpi/definitions');
+}
+
+export function getKpiDefinition(id: string) {
+  return fetchJson<KpiDefinition>(`/kpi/definitions/${id}`);
+}
+
+export function createKpiDefinition(data: Partial<KpiDefinition>) {
+  return fetchJson<KpiDefinition>('/kpi/definitions', { method: 'POST', body: JSON.stringify(data) });
+}
+
+export function updateKpiDefinition(id: string, data: Partial<KpiDefinition>) {
+  return fetchJson<KpiDefinition>(`/kpi/definitions/${id}`, { method: 'PUT', body: JSON.stringify(data) });
+}
+
+export function deleteKpiDefinition(id: string) {
+  return fetchJson<{ deleted: boolean }>(`/kpi/definitions/${id}`, { method: 'DELETE' });
+}
+
+export function evaluateKpi(id: string, params?: Record<string, string | undefined>) {
+  return fetchJson<KpiEvalResult>(`/kpi/custom/${id}/evaluate${toQueryString(params)}`);
+}
+
+export function previewKpiFormula(data: { formula: string; variables: KpiDefinition['variables']; filters?: KpiDefinition['filters']; group_by?: string[]; runtime_filters?: Record<string, unknown> }) {
+  return fetchJson<KpiEvalResult>('/kpi/custom/preview', { method: 'POST', body: JSON.stringify(data) });
 }

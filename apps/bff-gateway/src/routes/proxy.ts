@@ -55,6 +55,7 @@ router.use('/api/issues',   createProxyMiddleware(proxyOpts(issueWorkflowUrl(), 
 
 router.use('/api/traceability', createProxyMiddleware(proxyOpts(traceabilityUrl(), '/api/trace')));
 
+router.use('/api/schema',   createProxyMiddleware(proxyOpts(kpiEngineUrl(), '/schema')));
 router.use('/api/kpi',      createProxyMiddleware(proxyOpts(kpiEngineUrl(), '/kpi')));
 
 export default router;

@@ -1,6 +1,6 @@
 import { Router, type Request, type Response } from 'express';
 import crypto from 'node:crypto';
-import { Issue, IssueStateTransition, type IssueStatus } from '@nvidopia/data-models';
+import { Issue, IssueStateTransition, IssueTimeSeries, type IssueStatus } from '@nvidopia/data-models';
 import { createListHandler, createGetByIdHandler, asyncHandler } from '@nvidopia/service-toolkit';
 import { executeTransition, getValidTransitions, validateTransition } from '../state-machine.js';
 
@@ -90,6 +90,75 @@ router.post('/issues/:id/triage', asyncHandler(async (req: Request, res: Respons
   updated.assigned_module = assigned_module;
   await updated.save();
   res.json(updated);
+}));
+
+/* ── Vehicle Dynamics Snapshot ── */
+
+router.post('/issues/:id/snapshot', asyncHandler(async (req: Request, res: Response) => {
+  const issue = await Issue.findOne({ issue_id: req.params.id });
+  if (!issue) {
+    res.status(404).json({ error: `Issue "${req.params.id}" not found` });
+    return;
+  }
+  issue.vehicle_dynamics = req.body;
+  await issue.save();
+  res.status(issue.vehicle_dynamics ? 200 : 201).json(issue.vehicle_dynamics);
+}));
+
+router.get('/issues/:id/snapshot', asyncHandler(async (req: Request, res: Response) => {
+  const issue = await Issue.findOne({ issue_id: req.params.id }).lean();
+  if (!issue) {
+    res.status(404).json({ error: `Issue "${req.params.id}" not found` });
+    return;
+  }
+  if (!issue.vehicle_dynamics) {
+    res.status(404).json({ error: 'No vehicle dynamics snapshot for this issue' });
+    return;
+  }
+  res.json(issue.vehicle_dynamics);
+}));
+
+/* ── Time-Series Data ── */
+
+router.post('/issues/:id/timeseries', asyncHandler(async (req: Request, res: Response) => {
+  const issue = await Issue.findOne({ issue_id: req.params.id }).lean();
+  if (!issue) {
+    res.status(404).json({ error: `Issue "${req.params.id}" not found` });
+    return;
+  }
+
+  const items = Array.isArray(req.body) ? req.body : [req.body];
+  const results = [];
+
+  for (const item of items) {
+    const doc = await IssueTimeSeries.findOneAndUpdate(
+      { issue_id: req.params.id, channel: item.channel },
+      { $set: { ...item, issue_id: req.params.id } },
+      { upsert: true, new: true, runValidators: true },
+    );
+    results.push(doc);
+  }
+
+  res.status(201).json(results.length === 1 ? results[0] : results);
+}));
+
+router.get('/issues/:id/timeseries', asyncHandler(async (req: Request, res: Response) => {
+  const channels = await IssueTimeSeries.find({ issue_id: req.params.id })
+    .sort({ channel_type: 1, channel: 1 })
+    .lean();
+  res.json(channels);
+}));
+
+router.get('/issues/:id/timeseries/:channel', asyncHandler(async (req: Request, res: Response) => {
+  const doc = await IssueTimeSeries.findOne({
+    issue_id: req.params.id,
+    channel: req.params.channel,
+  }).lean();
+  if (!doc) {
+    res.status(404).json({ error: `Channel "${req.params.channel}" not found for issue "${req.params.id}"` });
+    return;
+  }
+  res.json(doc);
 }));
 
 export default router;
