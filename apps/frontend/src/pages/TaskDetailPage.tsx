@@ -1,15 +1,18 @@
 import { useParams } from 'react-router-dom';
-import { useQuery } from '@tanstack/react-query';
-import { Descriptions, Tag, Table, Card, Empty, Row, Col } from 'antd';
-import { getTask, getRuns } from '../api/client';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { Descriptions, Tag, Table, Card, Empty, Row, Col, Button, Space, message } from 'antd';
+import { getTask, getRuns, advanceTaskStage, getProject } from '../api/client';
 import type { Run } from '../api/client';
 import type { ColumnsType } from 'antd/es/table';
 import { statusColor, stageColor, priorityColor } from '../constants/colors';
 import { FullPageSpinner, NotFoundState, GlassCardTitle, EntityLink, EmptyDash } from '../components/shared';
 import { useEntityDetail } from '../hooks/useEntityDetail';
 
+const TERMINAL_STATUSES = ['Completed', 'Cancelled'];
+
 export default function TaskDetailPage() {
   const { id } = useParams<{ id: string }>();
+  const queryClient = useQueryClient();
 
   const { data: task, isLoading } = useEntityDetail('task', id, getTask);
 
@@ -19,13 +22,26 @@ export default function TaskDetailPage() {
     enabled: !!id,
   });
 
-  if (isLoading) {
-    return <FullPageSpinner />;
-  }
+  const { data: project } = useQuery({
+    queryKey: ['project', task?.projectId],
+    queryFn: () => getProject(task!.projectId),
+    enabled: !!task?.projectId,
+  });
 
-  if (!task) {
-    return <NotFoundState entity="Task" />;
-  }
+  const advanceMutation = useMutation({
+    mutationFn: () => advanceTaskStage(id!),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['task', id] });
+      queryClient.invalidateQueries({ queryKey: ['tasks'] });
+      message.success('Status advanced');
+    },
+    onError: (err: Error) => message.error(err.message || 'Failed to advance status'),
+  });
+
+  if (isLoading) return <FullPageSpinner />;
+  if (!task) return <NotFoundState entity="Task" />;
+
+  const canAdvance = !TERMINAL_STATUSES.includes(task.stage);
 
   const runColumns: ColumnsType<Run> = [
     {
@@ -34,9 +50,7 @@ export default function TaskDetailPage() {
       key: 'id',
       width: 120,
       render: (id: string) => (
-        <EntityLink to={`/runs/${id}`} mono>
-          {id.slice(0, 8)}
-        </EntityLink>
+        <EntityLink to={`/runs/${id}`} mono>{id.slice(0, 8)}</EntityLink>
       ),
     },
     {
@@ -68,10 +82,20 @@ export default function TaskDetailPage() {
           <h1 className="page-title">{task.title}</h1>
           <p className="page-subtitle">{task.description ?? 'No description'}</p>
         </div>
-        <div style={{ display: 'flex', gap: 8 }}>
+        <Space>
           <Tag color={stageColor[task.stage] ?? 'default'} style={{ fontSize: 13, padding: '3px 10px' }}>{task.stage}</Tag>
           <Tag color={priorityColor[task.priority] ?? 'default'} style={{ fontSize: 13, padding: '3px 10px' }}>{task.priority}</Tag>
-        </div>
+          {canAdvance && (
+            <Button
+              size="small"
+              loading={advanceMutation.isPending}
+              onClick={() => advanceMutation.mutate()}
+              style={{ borderColor: 'var(--glass-border-light)', color: 'var(--text-secondary)' }}
+            >
+              Advance Status →
+            </Button>
+          )}
+        </Space>
       </div>
 
       <Row gutter={[24, 24]}>
@@ -92,19 +116,29 @@ export default function TaskDetailPage() {
         </Col>
 
         <Col xs={24} lg={8}>
-          <Card
-            title={<GlassCardTitle>Details</GlassCardTitle>}
-            className="glass-panel"
-          >
+          <Card title={<GlassCardTitle>Details</GlassCardTitle>} className="glass-panel">
             <Descriptions column={1} size="small" colon={false}>
-              <Descriptions.Item label="Stage">
+              <Descriptions.Item label="Status">
                 <Tag color={stageColor[task.stage] ?? 'default'}>{task.stage}</Tag>
+              </Descriptions.Item>
+              <Descriptions.Item label="Task Type">
+                {task.taskType ? <Tag>{task.taskType}</Tag> : <EmptyDash />}
               </Descriptions.Item>
               <Descriptions.Item label="Priority">
                 <Tag color={priorityColor[task.priority] ?? 'default'}>{task.priority}</Tag>
               </Descriptions.Item>
-              <Descriptions.Item label="Assignee">
-                {task.assignee ?? 'Unassigned'}
+              <Descriptions.Item label="Project">
+                {task.projectId ? (
+                  <EntityLink to={`/projects/${task.projectId}`}>
+                    {project?.name ?? task.projectId}
+                  </EntityLink>
+                ) : <EmptyDash />}
+              </Descriptions.Item>
+              <Descriptions.Item label="Execution Region">
+                {task.executionRegion ?? <EmptyDash />}
+              </Descriptions.Item>
+              <Descriptions.Item label="Target Vehicles">
+                {task.targetVehicleCount ?? <EmptyDash />}
               </Descriptions.Item>
               <Descriptions.Item label="Created">
                 {new Date(task.createdAt).toLocaleString()}

@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { Card, Statistic, Progress, Select, Space, Checkbox, Row, Col, Empty } from 'antd';
+import { Card, Statistic, Progress, Select, Space, Checkbox, Row, Col, Empty, DatePicker } from 'antd';
 import { BarChart3, TrendingUp } from 'lucide-react';
 import {
   AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend,
@@ -32,8 +32,8 @@ function gaugeColor(pct: number): string {
 
 export default function KpiDashboardPage() {
   const [projectId, setProjectId] = useState('');
-  const [startDate, setStartDate] = useState('');
-  const [endDate, setEndDate] = useState('');
+  const [startDate, setStartDate] = useState<string>('');
+  const [endDate, setEndDate] = useState<string>('');
   const [interval, setInterval] = useState<'day' | 'week' | 'month'>('day');
   const [enabledPanels, setEnabledPanels] = useState<Record<string, boolean>>(
     Object.fromEntries(PANELS.map((p) => [p.id, true])),
@@ -118,31 +118,15 @@ export default function KpiDashboardPage() {
               label: p.name,
             }))}
           />
-          <input
-            type="date"
-            value={startDate}
-            onChange={(e) => setStartDate(e.target.value)}
-            style={{
-              background: 'rgba(255,255,255,0.04)',
-              border: '1px solid rgba(255,255,255,0.08)',
-              borderRadius: 8,
-              padding: '6px 12px',
-              color: 'var(--text-primary)',
-              fontSize: 13,
-            }}
+          <DatePicker
+            placeholder="Start date"
+            onChange={(_date, dateStr) => setStartDate(typeof dateStr === 'string' ? dateStr : '')}
+            style={{ width: 140 }}
           />
-          <input
-            type="date"
-            value={endDate}
-            onChange={(e) => setEndDate(e.target.value)}
-            style={{
-              background: 'rgba(255,255,255,0.04)',
-              border: '1px solid rgba(255,255,255,0.08)',
-              borderRadius: 8,
-              padding: '6px 12px',
-              color: 'var(--text-primary)',
-              fontSize: 13,
-            }}
+          <DatePicker
+            placeholder="End date"
+            onChange={(_date, dateStr) => setEndDate(typeof dateStr === 'string' ? dateStr : '')}
+            style={{ width: 140 }}
           />
           <Select
             value={interval}

@@ -12,6 +12,7 @@ import EntityLink from '../components/shared/EntityLink';
 
 export default function ProjectsPage() {
   const [search, setSearch] = useState('');
+  const [statusFilter, setStatusFilter] = useState<string>();
   const [createOpen, setCreateOpen] = useState(false);
   const [form] = Form.useForm();
   const queryClient = useQueryClient();
@@ -47,9 +48,11 @@ export default function ProjectsPage() {
     },
   });
 
-  const filtered = projects?.filter(
-    (p) => !search || p.name.toLowerCase().includes(search.toLowerCase()),
-  );
+  const filtered = projects?.filter((p) => {
+    if (search && !p.name.toLowerCase().includes(search.toLowerCase())) return false;
+    if (statusFilter && p.status !== statusFilter) return false;
+    return true;
+  });
 
   const columns: ColumnsType<Project> = [
     {
@@ -98,14 +101,30 @@ export default function ProjectsPage() {
       />
 
       <Space direction="vertical" size={16} style={{ width: '100%' }}>
-        <Input
-          placeholder="Search projects..."
-          prefix={<SearchOutlined style={{ color: 'var(--text-muted)' }} />}
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          allowClear
-          style={{ maxWidth: 360 }}
-        />
+        <Space wrap>
+          <Input
+            placeholder="Search projects..."
+            prefix={<SearchOutlined style={{ color: 'var(--text-muted)' }} />}
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            allowClear
+            style={{ width: 280 }}
+          />
+          <Select
+            placeholder="Filter by status"
+            allowClear
+            value={statusFilter}
+            onChange={setStatusFilter}
+            style={{ width: 160 }}
+            options={[
+              { value: 'Planning', label: 'Planning' },
+              { value: 'Active', label: 'Active' },
+              { value: 'Frozen', label: 'Frozen' },
+              { value: 'Completed', label: 'Completed' },
+              { value: 'Archived', label: 'Archived' },
+            ]}
+          />
+        </Space>
 
         <div className="glass-panel" style={{ overflow: 'hidden' }}>
           <Table

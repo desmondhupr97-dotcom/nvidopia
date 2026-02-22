@@ -287,7 +287,7 @@ export function createProject(data: Partial<Project>) {
 }
 
 export function updateProject(id: string, data: Partial<Project>) {
-  return fetchJson<Project>(`/projects/${id}`, { method: 'PATCH', body: JSON.stringify(data) });
+  return fetchJson<Project>(`/projects/${id}`, { method: 'PUT', body: JSON.stringify(data) });
 }
 
 /* ── Tasks ────────────────────────────────────────────── */
@@ -308,11 +308,11 @@ export function createTask(data: Partial<Task>) {
 }
 
 export function updateTask(id: string, data: Partial<Task>) {
-  return fetchJson<Task>(`/tasks/${id}`, { method: 'PATCH', body: JSON.stringify(data) });
+  return fetchJson<Task>(`/tasks/${id}`, { method: 'PUT', body: JSON.stringify(data) });
 }
 
-export function advanceTaskStage(id: string, stage: string) {
-  return fetchJson<Task>(`/tasks/${id}/advance`, { method: 'POST', body: JSON.stringify({ stage }) });
+export function advanceTaskStage(id: string) {
+  return fetchJson<Task>(`/tasks/${id}/advance-stage`, { method: 'PUT' });
 }
 
 /* ── Runs ─────────────────────────────────────────────── */

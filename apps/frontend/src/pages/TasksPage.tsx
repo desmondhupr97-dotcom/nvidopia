@@ -124,17 +124,16 @@ export default function TasksPage() {
             style={{ width: 280 }}
           />
           <Select
-            placeholder="Filter by stage"
+            placeholder="Filter by status"
             allowClear
             value={stageFilter}
             onChange={setStageFilter}
             style={{ width: 160 }}
             options={[
               { value: 'Pending', label: 'Pending' },
-              { value: 'Smoke', label: 'Smoke' },
-              { value: 'Gray', label: 'Gray' },
-              { value: 'Freeze', label: 'Freeze' },
-              { value: 'GoLive', label: 'Go Live' },
+              { value: 'InProgress', label: 'In Progress' },
+              { value: 'Completed', label: 'Completed' },
+              { value: 'Cancelled', label: 'Cancelled' },
             ]}
           />
         </Space>

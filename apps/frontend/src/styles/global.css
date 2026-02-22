@@ -302,6 +302,28 @@ input, select, textarea {
   border-radius: 0 4px 4px 0;
 }
 
+/* Modal dark overlay & opaque content */
+.ant-modal-mask {
+  background: rgba(0, 0, 0, 0.65) !important;
+  backdrop-filter: blur(4px);
+}
+
+.ant-modal-content {
+  background: var(--bg-surface) !important;
+  border: 1px solid var(--glass-border-light) !important;
+  border-radius: 16px !important;
+  box-shadow: 0 24px 64px rgba(0, 0, 0, 0.6) !important;
+}
+
+.ant-modal-header {
+  background: transparent !important;
+  border-bottom: 1px solid var(--glass-border) !important;
+}
+
+.ant-modal-footer {
+  border-top: 1px solid var(--glass-border) !important;
+}
+
 /* Input focus glow */
 .ant-input:focus,
 .ant-input-focused,
