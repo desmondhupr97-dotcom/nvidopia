@@ -4,6 +4,15 @@ import { Plus, Bug } from 'lucide-react';
 import { getIssues } from '../api/client';
 
 const statusBadge: Record<string, string> = {
+  New: 'badge-status-open',
+  Triage: 'badge-status-triaged',
+  Assigned: 'badge-status-in-progress',
+  InProgress: 'badge-status-in-progress',
+  Fixed: 'badge-status-fixed',
+  RegressionTracking: 'badge-status-verified',
+  Closed: 'badge-status-closed',
+  Reopened: 'badge-status-open',
+  Rejected: 'badge-status-wont-fix',
   open: 'badge-status-open',
   triaged: 'badge-status-triaged',
   'in-progress': 'badge-status-in-progress',
@@ -15,6 +24,10 @@ const statusBadge: Record<string, string> = {
 };
 
 const severityBadge: Record<string, string> = {
+  Blocker: 'badge-red',
+  High: 'badge-orange',
+  Medium: 'badge-yellow',
+  Low: 'badge-blue',
   critical: 'badge-red',
   high: 'badge-orange',
   medium: 'badge-yellow',

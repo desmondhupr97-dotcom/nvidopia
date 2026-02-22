@@ -156,23 +156,32 @@ function ConvergencePanel({ title, data }: { title: string; data: Array<{ timest
 
 export default function KpiDashboardPage() {
   const [projectId, setProjectId] = useState('');
-  const [timeRange, setTimeRange] = useState('');
+  const [startDate, setStartDate] = useState('');
+  const [endDate, setEndDate] = useState('');
+  const [interval, setInterval] = useState<'day' | 'week' | 'month'>('day');
+  const [enabledPanels, setEnabledPanels] = useState<Record<string, boolean>>(
+    Object.fromEntries(DASHBOARD_CONFIG.panels.map((panel) => [panel.panel_id, true])) as Record<string, boolean>,
+  );
 
   const { data: projectsData } = useQuery({
     queryKey: ['projects'],
     queryFn: () => getProjects({}),
   });
 
-  const queryParams = { project_id: projectId || undefined, time_range: timeRange || undefined };
+  const queryParams = {
+    project_id: projectId || undefined,
+    start_date: startDate || undefined,
+    end_date: endDate || undefined,
+  };
 
   const { data: mpiData } = useQuery({
-    queryKey: ['kpi-mpi', projectId, timeRange],
+    queryKey: ['kpi-mpi', projectId, startDate, endDate],
     queryFn: () => getMpi(queryParams),
     enabled: !!projectId,
   });
 
   const { data: mttrData } = useQuery({
-    queryKey: ['kpi-mttr', projectId, timeRange],
+    queryKey: ['kpi-mttr', projectId, startDate, endDate],
     queryFn: () => getMttr(queryParams),
     enabled: !!projectId,
   });
@@ -184,14 +193,14 @@ export default function KpiDashboardPage() {
   });
 
   const { data: fleetData } = useQuery({
-    queryKey: ['kpi-fleet', projectId, timeRange],
+    queryKey: ['kpi-fleet', projectId, startDate, endDate],
     queryFn: () => getFleetUtilization(queryParams),
     enabled: !!projectId,
   });
 
   const { data: convergenceData } = useQuery({
-    queryKey: ['kpi-convergence', projectId, timeRange],
-    queryFn: () => getIssueConvergence(queryParams),
+    queryKey: ['kpi-convergence', projectId, startDate, endDate, interval],
+    queryFn: () => getIssueConvergence({ ...queryParams, interval }),
     enabled: !!projectId,
   });
 
@@ -268,12 +277,45 @@ export default function KpiDashboardPage() {
             ))}
           </select>
           <input
-            type="text"
-            value={timeRange}
-            onChange={(e) => setTimeRange(e.target.value)}
-            placeholder="e.g. 2026-01-01/2026-02-01"
+            type="date"
+            value={startDate}
+            onChange={(e) => setStartDate(e.target.value)}
             className="rounded-lg border border-gray-300 px-3 py-2 text-sm shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
           />
+          <input
+            type="date"
+            value={endDate}
+            onChange={(e) => setEndDate(e.target.value)}
+            className="rounded-lg border border-gray-300 px-3 py-2 text-sm shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+          />
+          <select
+            value={interval}
+            onChange={(e) => setInterval(e.target.value as 'day' | 'week' | 'month')}
+            className="rounded-lg border border-gray-300 px-3 py-2 text-sm shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+          >
+            <option value="day">Daily</option>
+            <option value="week">Weekly</option>
+            <option value="month">Monthly</option>
+          </select>
+        </div>
+      </div>
+
+      <div className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm">
+        <h2 className="text-sm font-semibold text-gray-700">KPI Panel Configuration</h2>
+        <p className="mt-1 text-xs text-gray-500">Select which KPI panels should be shown.</p>
+        <div className="mt-3 flex flex-wrap gap-3">
+          {DASHBOARD_CONFIG.panels.map((panel) => (
+            <label key={panel.panel_id} className="inline-flex items-center gap-2 text-sm text-gray-700">
+              <input
+                type="checkbox"
+                checked={enabledPanels[panel.panel_id] ?? false}
+                onChange={(e) => {
+                  setEnabledPanels((prev) => ({ ...prev, [panel.panel_id]: e.target.checked }));
+                }}
+              />
+              {panel.title}
+            </label>
+          ))}
         </div>
       </div>
 
@@ -288,11 +330,11 @@ export default function KpiDashboardPage() {
         <>
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
             {DASHBOARD_CONFIG.panels
-              .filter((p) => p.visualization_type === 'stat' || p.visualization_type === 'gauge')
+              .filter((p) => (enabledPanels[p.panel_id] ?? true) && (p.visualization_type === 'stat' || p.visualization_type === 'gauge'))
               .map(renderPanel)}
           </div>
           {DASHBOARD_CONFIG.panels
-            .filter((p) => p.visualization_type === 'timeseries')
+            .filter((p) => (enabledPanels[p.panel_id] ?? true) && p.visualization_type === 'timeseries')
             .map(renderPanel)}
         </>
       )}

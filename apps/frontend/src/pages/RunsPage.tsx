@@ -3,6 +3,10 @@ import { Play } from 'lucide-react';
 import { getRuns } from '../api/client';
 
 const statusBadge: Record<string, string> = {
+  Scheduled: 'badge-blue',
+  Active: 'badge-yellow',
+  Completed: 'badge-green',
+  Aborted: 'badge-red',
   pending: 'badge-gray',
   queued: 'badge-blue',
   running: 'badge-yellow',
@@ -63,8 +67,8 @@ export default function RunsPage() {
             <tbody>
               {runs.map((r) => (
                 <tr key={r.id}>
-                  <td><span style={{ fontFamily: 'monospace' }}>{r.id.slice(0, 8)}</span></td>
-                  <td><span style={{ fontFamily: 'monospace' }}>{r.taskId.slice(0, 8)}</span></td>
+                  <td><span style={{ fontFamily: 'monospace' }}>{(r.id ?? '').slice(0, 8)}</span></td>
+                  <td><span style={{ fontFamily: 'monospace' }}>{(r.taskId ?? '').slice(0, 8)}</span></td>
                   <td><span className={`badge ${statusBadge[r.status] ?? 'badge-gray'}`}>{r.status}</span></td>
                   <td>{r.result ?? '—'}</td>
                   <td>{r.vehicleIds?.length ?? 0}</td>

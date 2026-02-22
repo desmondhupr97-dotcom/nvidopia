@@ -136,6 +136,82 @@ class ApiError extends Error {
   }
 }
 
+type AnyRecord = Record<string, unknown>;
+
+function asString(value: unknown, fallback = ''): string {
+  return typeof value === 'string' ? value : fallback;
+}
+
+function asOptionalString(value: unknown): string | undefined {
+  return typeof value === 'string' ? value : undefined;
+}
+
+function normalizeProject(raw: AnyRecord): Project {
+  return {
+    ...raw,
+    id: asString(raw.id ?? raw.project_id),
+    name: asString(raw.name, 'Unnamed Project'),
+    status: asString(raw.status, 'Planning'),
+    createdAt: asString(raw.createdAt ?? raw.created_at, new Date().toISOString()),
+    updatedAt: asString(raw.updatedAt ?? raw.updated_at, new Date().toISOString()),
+  };
+}
+
+function normalizeTask(raw: AnyRecord): Task {
+  return {
+    ...raw,
+    id: asString(raw.id ?? raw.task_id),
+    projectId: asString(raw.projectId ?? raw.project_id),
+    title: asString(raw.title ?? raw.name ?? raw.task_id, 'Untitled Task'),
+    description: asOptionalString(raw.description),
+    stage: asString(raw.stage ?? raw.status, 'Pending'),
+    priority: asString(raw.priority, 'Medium'),
+    assignee: asOptionalString(raw.assignee ?? raw.assigned_to),
+    createdAt: asString(raw.createdAt ?? raw.created_at, new Date().toISOString()),
+    updatedAt: asString(raw.updatedAt ?? raw.updated_at, new Date().toISOString()),
+  };
+}
+
+function normalizeRun(raw: AnyRecord): Run {
+  const vehicleVin = asOptionalString(raw.vehicle_vin);
+  return {
+    ...raw,
+    id: asString(raw.id ?? raw.run_id),
+    taskId: asString(raw.taskId ?? raw.task_id),
+    status: asString(raw.status, 'Scheduled'),
+    vehicleIds: Array.isArray(raw.vehicleIds)
+      ? (raw.vehicleIds as string[])
+      : vehicleVin
+        ? [vehicleVin]
+        : [],
+    startedAt: asOptionalString(raw.startedAt ?? raw.start_time),
+    completedAt: asOptionalString(raw.completedAt ?? raw.end_time),
+    result: asOptionalString(raw.result),
+    createdAt: asString(raw.createdAt ?? raw.created_at, new Date().toISOString()),
+    updatedAt: asString(raw.updatedAt ?? raw.updated_at, new Date().toISOString()),
+  };
+}
+
+function normalizeIssue(raw: AnyRecord): Issue {
+  const issueId = asString(raw.id ?? raw.issue_id);
+  const category = asOptionalString(raw.category);
+  return {
+    ...raw,
+    id: issueId,
+    title: asString(raw.title, category ? `${category} (${issueId})` : `Issue ${issueId}`),
+    status: asString(raw.status, 'New'),
+    severity: asString(raw.severity, 'Medium'),
+    runId: asOptionalString(raw.runId ?? raw.run_id),
+    taskId: asOptionalString(raw.taskId ?? raw.task_id),
+    assignee: asOptionalString(raw.assignee ?? raw.assigned_to),
+    createdAt: asString(raw.createdAt ?? raw.created_at, new Date().toISOString()),
+    updatedAt: asString(raw.updatedAt ?? raw.updated_at, new Date().toISOString()),
+    data_snapshot_uri: asOptionalString(raw.data_snapshot_uri ?? raw.data_snapshot_url),
+    gps_lat: (raw.gps_lat as number | undefined) ?? ((raw.gps_coordinates as AnyRecord | undefined)?.lat as number | undefined),
+    gps_lng: (raw.gps_lng as number | undefined) ?? ((raw.gps_coordinates as AnyRecord | undefined)?.lng as number | undefined),
+  };
+}
+
 async function fetchJson<T>(
   path: string,
   init?: RequestInit,
@@ -161,8 +237,19 @@ async function fetchJson<T>(
 
 function toQueryString(params?: Record<string, string | undefined>): string {
   if (!params) return '';
+  const aliases: Record<string, string> = {
+    projectId: 'project_id',
+    taskId: 'task_id',
+    runId: 'run_id',
+    vehicleVin: 'vehicle_vin',
+    startDate: 'start_date',
+    endDate: 'end_date',
+    timeRange: 'time_range',
+  };
   const normalized = Object.fromEntries(
-    Object.entries(params).filter(([, value]) => value !== undefined && value !== ''),
+    Object.entries(params)
+      .filter(([, value]) => value !== undefined && value !== '')
+      .map(([key, value]) => [aliases[key] ?? key, value]),
   ) as Record<string, string>;
   const query = new URLSearchParams(normalized).toString();
   return query ? `?${query}` : '';
@@ -171,11 +258,12 @@ function toQueryString(params?: Record<string, string | undefined>): string {
 export async function getProjects(params?: Record<string, string | undefined>) {
   const qs = toQueryString(params);
   const data = await fetchJson<Project[] | { items: Project[] }>(`/projects${qs}`);
-  return Array.isArray(data) ? data : data.items ?? [];
+  const items = Array.isArray(data) ? data : data.items ?? [];
+  return items.map((item) => normalizeProject(item as unknown as AnyRecord));
 }
 
 export function getProject(id: string) {
-  return fetchJson<Project>(`/projects/${id}`);
+  return fetchJson<AnyRecord>(`/projects/${id}`).then((data) => normalizeProject(data));
 }
 
 export function createProject(data: Partial<Project>) {
@@ -196,11 +284,11 @@ export function updateProject(id: string, data: Partial<Project>) {
 
 export function getTasks(params?: Record<string, string | undefined>) {
   const qs = toQueryString(params);
-  return fetchJson<Task[]>(`/tasks${qs}`);
+  return fetchJson<AnyRecord[]>(`/tasks${qs}`).then((data) => data.map((item) => normalizeTask(item)));
 }
 
 export function getTask(id: string) {
-  return fetchJson<Task>(`/tasks/${id}`);
+  return fetchJson<AnyRecord>(`/tasks/${id}`).then((data) => normalizeTask(data));
 }
 
 export function createTask(data: Partial<Task>) {
@@ -228,11 +316,11 @@ export function advanceTaskStage(id: string, stage: string) {
 
 export function getRuns(params?: Record<string, string | undefined>) {
   const qs = toQueryString(params);
-  return fetchJson<Run[]>(`/runs${qs}`);
+  return fetchJson<AnyRecord[]>(`/runs${qs}`).then((data) => data.map((item) => normalizeRun(item)));
 }
 
 export function getRun(id: string) {
-  return fetchJson<Run>(`/runs/${id}`);
+  return fetchJson<AnyRecord>(`/runs/${id}`).then((data) => normalizeRun(data));
 }
 
 export function createRun(data: Partial<Run>) {
@@ -270,11 +358,11 @@ export function getVehicle(id: string) {
 
 export function getIssues(params?: Record<string, string | undefined>) {
   const qs = toQueryString(params);
-  return fetchJson<Issue[]>(`/issues${qs}`);
+  return fetchJson<AnyRecord[]>(`/issues${qs}`).then((data) => data.map((item) => normalizeIssue(item)));
 }
 
 export function getIssue(id: string) {
-  return fetchJson<Issue>(`/issues/${id}`);
+  return fetchJson<AnyRecord>(`/issues/${id}`).then((data) => normalizeIssue(data));
 }
 
 export function createIssue(data: Partial<Issue>) {
@@ -317,7 +405,12 @@ export function triageIssue(
 
 export async function getIssueTransitions(id: string) {
   const data = await fetchJson<IssueTransition[] | { items: IssueTransition[] }>(`/issues/${id}/transitions`);
-  return Array.isArray(data) ? { items: data } : data;
+  const items = (Array.isArray(data) ? data : data.items ?? []).map((item) => ({
+    ...item,
+    id: item.id ?? (item as AnyRecord).transition_id,
+    transitioned_at: item.transitioned_at ?? (item as AnyRecord).created_at as string | undefined,
+  }));
+  return { items };
 }
 
 /* ── Traceability ─────────────────────────────────────── */
@@ -343,7 +436,17 @@ export function traceBackward(issueId: string) {
 }
 
 export function getCoverage(_params?: Record<string, unknown>) {
-  return fetchJson<CoverageResult>(`/traceability/coverage`);
+  return fetchJson<AnyRecord>(`/traceability/coverage`).then((raw) => ({
+    total: Number(raw.total ?? raw.total_requirements ?? 0),
+    covered: Number(raw.covered ?? raw.covered_requirements ?? 0),
+    percentage: Number(raw.percentage ?? raw.coverage_percentage ?? 0),
+    coverage_percentage: Number(raw.coverage_percentage ?? 0),
+    coverage_percent: Number(raw.coverage_percent ?? raw.coverage_percentage ?? 0),
+    verified: Number(raw.verified ?? raw.covered_requirements ?? 0),
+    total_requirements: Number(raw.total_requirements ?? raw.total ?? 0),
+    verified_requirements: Number(raw.verified_requirements ?? raw.covered_requirements ?? 0),
+    details: Array.isArray(raw.details) ? raw.details as CoverageResult['details'] : [],
+  }));
 }
 
 /* ── KPI ──────────────────────────────────────────────── */
@@ -370,5 +473,21 @@ export function getFleetUtilization(params?: Record<string, string | undefined>)
 
 export function getIssueConvergence(params?: Record<string, string | undefined>) {
   const qs = toQueryString(params);
-  return fetchJson<KpiValue>(`/kpi/issue-convergence${qs}`);
+  return fetchJson<AnyRecord>(`/kpi/issue-convergence${qs}`).then((raw) => {
+    const series = Array.isArray(raw.series) ? (raw.series as AnyRecord[]) : [];
+    const points = series.map((row) => ({
+      timestamp: asString(row.date),
+      value: Number(row.new_issues ?? 0),
+      dimensions: {
+        open_count: Number(row.new_issues ?? 0),
+        closed_count: Number(row.closed_issues ?? 0),
+      },
+    }));
+    return {
+      value: Number(raw.value ?? 0),
+      unit: asString(raw.unit, ''),
+      points,
+      ...raw,
+    } as KpiValue;
+  });
 }

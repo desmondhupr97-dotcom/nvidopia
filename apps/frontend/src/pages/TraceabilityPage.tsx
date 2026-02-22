@@ -64,6 +64,10 @@ export default function TraceabilityPage() {
         <h1 className="text-2xl font-bold text-gray-900">Traceability</h1>
       </div>
 
+      <p className="text-sm text-gray-500">
+        Traceability shows end-to-end links between requirements, tasks, runs, and issues, helping you understand coverage and impact before release.
+      </p>
+
       {/* Coverage card */}
       {coverage && (
         <div className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm">
