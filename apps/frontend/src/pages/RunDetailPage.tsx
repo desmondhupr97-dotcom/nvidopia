@@ -1,6 +1,12 @@
 import { useParams, Link } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
+import { Descriptions, Tag, Card, Spin, Empty, Row, Col } from 'antd';
 import { getRun } from '../api/client';
+
+const statusColor: Record<string, string> = {
+  Scheduled: 'blue', Active: 'gold', Completed: 'green', Aborted: 'red',
+  pending: 'default', queued: 'blue', running: 'gold', passed: 'green', failed: 'red',
+};
 
 export default function RunDetailPage() {
   const { id } = useParams<{ id: string }>();
@@ -12,65 +18,57 @@ export default function RunDetailPage() {
   });
 
   if (isLoading) {
-    return <div className="loading-center"><div className="spinner" /></div>;
+    return <div style={{ display: 'flex', justifyContent: 'center', padding: 80 }}><Spin size="large" /></div>;
   }
 
   if (!run) {
-    return (
-      <div className="empty-state">
-        <h3>Run not found</h3>
-        <p>The run you are looking for does not exist.</p>
-      </div>
-    );
+    return <Empty description="Run not found" style={{ padding: 80 }} />;
   }
 
   return (
     <div>
-      <div className="page-header">
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 24 }}>
         <div>
           <h1 className="page-title">Run {run.id.slice(0, 8)}</h1>
-          <p className="page-subtitle">Detailed execution information for this run</p>
+          <p className="page-subtitle">Detailed execution information</p>
         </div>
-        <span className="badge badge-blue">{run.status}</span>
+        <Tag color={statusColor[run.status] ?? 'default'} style={{ fontSize: 14, padding: '4px 12px' }}>{run.status}</Tag>
       </div>
 
-      <div className="detail-grid">
-        <div>
-          <div className="card">
-            <div className="card-header"><h3>Run Overview</h3></div>
-            <div className="card-body">
-              <div className="form-group">
-                <label className="form-label">Run ID</label>
-                <p style={{ fontFamily: 'monospace' }}>{run.id}</p>
-              </div>
-              <div className="form-group">
-                <label className="form-label">Task</label>
-                <p>
-                  {run.taskId
-                    ? <Link to={`/tasks/${run.taskId}`} style={{ fontFamily: 'monospace' }}>{run.taskId}</Link>
-                    : '—'}
-                </p>
-              </div>
-              <div className="form-group">
-                <label className="form-label">Vehicles</label>
-                <p>{run.vehicleIds?.length ?? 0}</p>
-              </div>
-              <div className="form-group">
-                <label className="form-label">Result</label>
-                <p>{run.result ?? '—'}</p>
-              </div>
-              <div className="form-group">
-                <label className="form-label">Started</label>
-                <p>{run.startedAt ? new Date(run.startedAt).toLocaleString() : '—'}</p>
-              </div>
-              <div className="form-group">
-                <label className="form-label">Completed</label>
-                <p>{run.completedAt ? new Date(run.completedAt).toLocaleString() : '—'}</p>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
+      <Row gutter={[24, 24]}>
+        <Col xs={24} lg={16}>
+          <Card
+            title={<span style={{ fontFamily: "'Exo 2', sans-serif", fontWeight: 600 }}>Run Overview</span>}
+            className="glass-panel"
+          >
+            <Descriptions column={{ xs: 1, sm: 2 }} size="small" colon={false}>
+              <Descriptions.Item label="Run ID">
+                <code style={{ color: '#818cf8', fontSize: 13 }}>{run.id}</code>
+              </Descriptions.Item>
+              <Descriptions.Item label="Task">
+                {run.taskId ? (
+                  <Link to={`/tasks/${run.taskId}`} style={{ color: '#818cf8', fontFamily: 'monospace' }}>{run.taskId}</Link>
+                ) : '—'}
+              </Descriptions.Item>
+              <Descriptions.Item label="Status">
+                <Tag color={statusColor[run.status] ?? 'default'}>{run.status}</Tag>
+              </Descriptions.Item>
+              <Descriptions.Item label="Result">
+                {run.result ?? '—'}
+              </Descriptions.Item>
+              <Descriptions.Item label="Vehicles">
+                {run.vehicleIds?.length ?? 0}
+              </Descriptions.Item>
+              <Descriptions.Item label="Started">
+                {run.startedAt ? new Date(run.startedAt).toLocaleString() : '—'}
+              </Descriptions.Item>
+              <Descriptions.Item label="Completed">
+                {run.completedAt ? new Date(run.completedAt).toLocaleString() : '—'}
+              </Descriptions.Item>
+            </Descriptions>
+          </Card>
+        </Col>
+      </Row>
     </div>
   );
 }

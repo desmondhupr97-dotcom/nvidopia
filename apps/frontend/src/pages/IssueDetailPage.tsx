@@ -1,8 +1,14 @@
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useParams, Link } from 'react-router-dom';
-import { ArrowLeft, AlertTriangle, MapPin, ExternalLink, Clock } from 'lucide-react';
-import clsx from 'clsx';
+import {
+  Card, Tag, Descriptions, Timeline, Button, Input, Form, Modal,
+  Space, Row, Col, Spin, Alert, Divider, Tooltip,
+} from 'antd';
+import {
+  ArrowLeftOutlined, EnvironmentOutlined, LinkOutlined, ClockCircleOutlined,
+} from '@ant-design/icons';
+import { AlertTriangle } from 'lucide-react';
 import { getIssue, transitionIssue, triageIssue, getIssueTransitions } from '../api/client';
 
 type IssueStatus = 'New' | 'Triage' | 'Assigned' | 'InProgress' | 'Fixed' | 'RegressionTracking' | 'Closed' | 'Reopened' | 'Rejected';
@@ -19,41 +25,26 @@ const VALID_TRANSITIONS: Record<IssueStatus, IssueStatus[]> = {
   Rejected: [],
 };
 
-const STATUS_COLORS: Record<IssueStatus, string> = {
-  New: 'bg-sky-100 text-sky-800',
-  Triage: 'bg-amber-100 text-amber-800',
-  Assigned: 'bg-indigo-100 text-indigo-800',
-  InProgress: 'bg-violet-100 text-violet-800',
-  Fixed: 'bg-emerald-100 text-emerald-800',
-  RegressionTracking: 'bg-purple-100 text-purple-800',
-  Closed: 'bg-gray-100 text-gray-600',
-  Reopened: 'bg-orange-100 text-orange-800',
-  Rejected: 'bg-gray-100 text-gray-500',
+const STATUS_COLOR: Record<IssueStatus, string> = {
+  New: 'blue', Triage: 'gold', Assigned: 'geekblue', InProgress: 'purple',
+  Fixed: 'green', RegressionTracking: 'cyan', Closed: 'default', Reopened: 'orange', Rejected: 'red',
 };
 
-const SEVERITY_COLORS: Record<string, string> = {
-  Trivial: 'bg-emerald-100 text-emerald-800',
-  Minor: 'bg-yellow-100 text-yellow-800',
-  Major: 'bg-orange-100 text-orange-800',
-  Critical: 'bg-red-100 text-red-800',
+const SEVERITY_COLOR: Record<string, string> = {
+  Trivial: 'green', Minor: 'gold', Major: 'orange', Critical: 'red',
+  Low: 'blue', Medium: 'gold', High: 'orange', Blocker: 'red',
 };
 
-const TRANSITION_BUTTON_COLORS: Record<string, string> = {
-  Triage: 'bg-amber-600 hover:bg-amber-700 text-white',
-  Assigned: 'bg-indigo-600 hover:bg-indigo-700 text-white',
-  InProgress: 'bg-violet-600 hover:bg-violet-700 text-white',
-  Fixed: 'bg-emerald-600 hover:bg-emerald-700 text-white',
-  RegressionTracking: 'bg-purple-600 hover:bg-purple-700 text-white',
-  Closed: 'bg-gray-700 hover:bg-gray-800 text-white',
-  Reopened: 'bg-orange-600 hover:bg-orange-700 text-white',
-  Rejected: 'bg-red-600 hover:bg-red-700 text-white',
+const TRANSITION_COLOR: Record<string, string> = {
+  Triage: 'gold', Assigned: 'geekblue', InProgress: 'purple', Fixed: 'green',
+  RegressionTracking: 'cyan', Closed: 'default', Reopened: 'orange', Rejected: 'red',
 };
 
 export default function IssueDetailPage() {
   const { id } = useParams<{ id: string }>();
   const queryClient = useQueryClient();
-  const [triageForm, setTriageForm] = useState({ assignee: '', module: '' });
-  const [showTriageForm, setShowTriageForm] = useState(false);
+  const [triageOpen, setTriageOpen] = useState(false);
+  const [triageForm] = Form.useForm();
   const [transitionReason, setTransitionReason] = useState('');
 
   const { data: issue, isLoading, error } = useQuery({
@@ -79,29 +70,22 @@ export default function IssueDetailPage() {
   });
 
   const triageMutation = useMutation({
-    mutationFn: () => triageIssue(id!, triageForm),
+    mutationFn: (values: { assignee: string; module: string }) =>
+      triageIssue(id!, values),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['issue', id] });
       queryClient.invalidateQueries({ queryKey: ['issue-transitions', id] });
-      setShowTriageForm(false);
-      setTriageForm({ assignee: '', module: '' });
+      setTriageOpen(false);
+      triageForm.resetFields();
     },
   });
 
   if (isLoading) {
-    return (
-      <div className="flex justify-center py-20">
-        <div className="h-8 w-8 animate-spin rounded-full border-4 border-indigo-200 border-t-indigo-600" />
-      </div>
-    );
+    return <div style={{ display: 'flex', justifyContent: 'center', padding: 80 }}><Spin size="large" /></div>;
   }
 
   if (error || !issue) {
-    return (
-      <div className="rounded-xl border border-red-200 bg-red-50 p-6 text-sm text-red-700">
-        Failed to load issue.
-      </div>
-    );
+    return <Alert type="error" message="Failed to load issue" showIcon style={{ borderRadius: 12 }} />;
   }
 
   const currentStatus = issue.status as IssueStatus;
@@ -109,259 +93,216 @@ export default function IssueDetailPage() {
   const isTriage = currentStatus === 'Triage';
 
   return (
-    <div className="space-y-6">
-      <Link to="/issues" className="inline-flex items-center gap-1.5 text-sm text-gray-500 hover:text-indigo-600 transition-colors">
-        <ArrowLeft className="h-4 w-4" />
-        Back to Issues
+    <div>
+      <Link to="/issues" style={{ display: 'inline-flex', alignItems: 'center', gap: 6, color: 'var(--text-secondary)', marginBottom: 20, fontSize: 13 }}>
+        <ArrowLeftOutlined /> Back to Issues
       </Link>
 
-      {/* Issue details card */}
-      <div className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
-        <div className="flex items-start justify-between">
-          <div className="flex items-center gap-3">
-            <AlertTriangle className="h-6 w-6 text-indigo-600" />
+      {/* Issue header card */}
+      <Card className="glass-panel" style={{ marginBottom: 24 }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+          <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
+            <AlertTriangle size={24} style={{ color: '#6366f1' }} />
             <div>
-              <h1 className="text-xl font-bold text-gray-900">Issue {(issue.id as string).slice(0, 12)}</h1>
-              <p className="mt-0.5 text-sm font-mono text-gray-400">{issue.id}</p>
+              <h1 style={{ fontFamily: "'Orbitron', 'Exo 2', sans-serif", fontSize: '1.25rem', fontWeight: 700, color: 'var(--text-primary)', margin: 0 }}>
+                Issue {(issue.id as string).slice(0, 12)}
+              </h1>
+              <code style={{ fontSize: 12, color: 'var(--text-muted)' }}>{issue.id}</code>
             </div>
           </div>
-          <div className="flex items-center gap-2">
-            <span className={clsx('rounded-full px-3 py-1 text-sm font-semibold', SEVERITY_COLORS[issue.severity] ?? 'bg-gray-100 text-gray-700')}>
-              {issue.severity}
-            </span>
-            <span className={clsx('rounded-full px-3 py-1 text-sm font-semibold', STATUS_COLORS[currentStatus] ?? 'bg-gray-100 text-gray-700')}>
-              {currentStatus}
-            </span>
-          </div>
+          <Space>
+            <Tag color={SEVERITY_COLOR[issue.severity] ?? 'default'} style={{ fontSize: 13, padding: '2px 10px' }}>{issue.severity}</Tag>
+            <Tag color={STATUS_COLOR[currentStatus] ?? 'default'} style={{ fontSize: 13, padding: '2px 10px' }}>{currentStatus}</Tag>
+          </Space>
         </div>
 
         {issue.description && (
-          <p className="mt-4 text-sm text-gray-600">{issue.description}</p>
+          <p style={{ marginTop: 16, color: 'var(--text-secondary)', fontSize: 14 }}>{issue.description}</p>
         )}
 
-        <dl className="mt-6 grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
-          <div>
-            <dt className="text-xs font-medium uppercase tracking-wider text-gray-400">Category</dt>
-            <dd className="mt-1 text-sm font-medium text-gray-900">{issue.category}</dd>
-          </div>
-          <div>
-            <dt className="text-xs font-medium uppercase tracking-wider text-gray-400">Takeover Type</dt>
-            <dd className="mt-1 text-sm font-medium text-gray-900">{issue.takeover_type ?? '—'}</dd>
-          </div>
-          <div>
-            <dt className="text-xs font-medium uppercase tracking-wider text-gray-400">Assignee</dt>
-            <dd className="mt-1 text-sm font-medium text-gray-900">{issue.assignee ?? '—'}</dd>
-          </div>
-          <div>
-            <dt className="text-xs font-medium uppercase tracking-wider text-gray-400">Module</dt>
-            <dd className="mt-1 text-sm font-medium text-gray-900">{issue.module ?? '—'}</dd>
-          </div>
+        <Divider style={{ borderColor: 'rgba(255,255,255,0.06)', margin: '20px 0' }} />
+
+        <Descriptions column={{ xs: 1, sm: 2, lg: 4 }} size="small" colon={false}>
+          <Descriptions.Item label="Category">{issue.category ?? '—'}</Descriptions.Item>
+          <Descriptions.Item label="Takeover Type">{issue.takeover_type ?? '—'}</Descriptions.Item>
+          <Descriptions.Item label="Assignee">{issue.assignee ?? '—'}</Descriptions.Item>
+          <Descriptions.Item label="Module">{issue.module ?? '—'}</Descriptions.Item>
           {(issue.gps_lat != null && issue.gps_lng != null) && (
-            <div>
-              <dt className="text-xs font-medium uppercase tracking-wider text-gray-400">
-                <span className="inline-flex items-center gap-1"><MapPin className="h-3 w-3" /> GPS</span>
-              </dt>
-              <dd className="mt-1 text-sm font-mono text-gray-900">
-                {Number(issue.gps_lat).toFixed(6)}, {Number(issue.gps_lng).toFixed(6)}
-              </dd>
-            </div>
+            <Descriptions.Item label={<><EnvironmentOutlined /> GPS</>}>
+              <code>{Number(issue.gps_lat).toFixed(6)}, {Number(issue.gps_lng).toFixed(6)}</code>
+            </Descriptions.Item>
           )}
           {issue.data_snapshot_uri && (
-            <div>
-              <dt className="text-xs font-medium uppercase tracking-wider text-gray-400">Data Snapshot</dt>
-              <dd className="mt-1 text-sm">
-                <a href={issue.data_snapshot_uri} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 text-indigo-600 hover:underline">
-                  View <ExternalLink className="h-3 w-3" />
-                </a>
-              </dd>
-            </div>
+            <Descriptions.Item label="Snapshot">
+              <a href={issue.data_snapshot_uri} target="_blank" rel="noopener noreferrer" style={{ color: '#818cf8' }}>
+                View <LinkOutlined />
+              </a>
+            </Descriptions.Item>
           )}
-          <div>
-            <dt className="text-xs font-medium uppercase tracking-wider text-gray-400">Run</dt>
-            <dd className="mt-1 text-sm font-mono text-gray-900">{issue.run_id ? (issue.run_id as string).slice(0, 8) : '—'}</dd>
-          </div>
-          <div>
-            <dt className="text-xs font-medium uppercase tracking-wider text-gray-400">Triggered At</dt>
-            <dd className="mt-1 text-sm text-gray-900">
-              {issue.trigger_timestamp ? new Date(issue.trigger_timestamp).toLocaleString() : '—'}
-            </dd>
-          </div>
-        </dl>
+          <Descriptions.Item label="Run">
+            <code>{issue.run_id ? (issue.run_id as string).slice(0, 8) : '—'}</code>
+          </Descriptions.Item>
+          <Descriptions.Item label="Triggered At">
+            {issue.trigger_timestamp ? new Date(issue.trigger_timestamp).toLocaleString() : '—'}
+          </Descriptions.Item>
+        </Descriptions>
 
         {issue.fault_codes && issue.fault_codes.length > 0 && (
-          <div className="mt-4">
-            <h3 className="text-xs font-medium uppercase tracking-wider text-gray-400">Fault Codes</h3>
-            <div className="mt-2 flex flex-wrap gap-2">
+          <div style={{ marginTop: 16 }}>
+            <div style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase', marginBottom: 8 }}>Fault Codes</div>
+            <Space wrap>
               {issue.fault_codes.map((code: string) => (
-                <span key={code} className="rounded-md bg-red-50 px-2 py-0.5 text-xs font-mono text-red-700">{code}</span>
+                <Tag key={code} color="red" style={{ fontFamily: 'monospace' }}>{code}</Tag>
               ))}
-            </div>
+            </Space>
           </div>
         )}
 
         {issue.environment_tags && issue.environment_tags.length > 0 && (
-          <div className="mt-4">
-            <h3 className="text-xs font-medium uppercase tracking-wider text-gray-400">Environment Tags</h3>
-            <div className="mt-2 flex flex-wrap gap-2">
+          <div style={{ marginTop: 12 }}>
+            <div style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase', marginBottom: 8 }}>Environment Tags</div>
+            <Space wrap>
               {issue.environment_tags.map((tag: string) => (
-                <span key={tag} className="rounded-md bg-gray-100 px-2 py-0.5 text-xs text-gray-700">{tag}</span>
+                <Tag key={tag}>{tag}</Tag>
               ))}
-            </div>
+            </Space>
           </div>
         )}
 
-        {/* Reserved triage fields */}
         {(issue.triage_mode || issue.triage_hint) && (
-          <div className="mt-4 rounded-lg border border-amber-200 bg-amber-50 p-3">
-            <h3 className="text-xs font-medium uppercase tracking-wider text-amber-700">Triage Hints</h3>
-            <dl className="mt-2 grid grid-cols-2 gap-3">
-              {issue.triage_mode && (
-                <div>
-                  <dt className="text-xs text-amber-600">Mode</dt>
-                  <dd className="text-sm font-medium text-amber-900">{issue.triage_mode}</dd>
-                </div>
-              )}
-              {issue.triage_hint && (
-                <div>
-                  <dt className="text-xs text-amber-600">Hint</dt>
-                  <dd className="text-sm font-medium text-amber-900">{issue.triage_hint}</dd>
-                </div>
-              )}
-            </dl>
-          </div>
+          <Alert
+            type="warning"
+            style={{ marginTop: 16, borderRadius: 10 }}
+            message="Triage Hints"
+            description={
+              <Space direction="vertical" size={4}>
+                {issue.triage_mode && <span>Mode: <strong>{issue.triage_mode}</strong></span>}
+                {issue.triage_hint && <span>Hint: <strong>{issue.triage_hint}</strong></span>}
+              </Space>
+            }
+          />
         )}
-      </div>
+      </Card>
 
-      {/* Transition panel */}
-      {allowedNext.length > 0 && (
-        <div className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
-          <h2 className="text-lg font-semibold text-gray-900">Transition</h2>
-          <p className="mt-1 text-sm text-gray-500">
-            Current status: <strong>{currentStatus}</strong>. Choose the next state:
-          </p>
+      <Row gutter={[24, 24]}>
+        {/* Transition panel */}
+        {allowedNext.length > 0 && (
+          <Col xs={24} lg={12}>
+            <Card
+              title={<span style={{ fontFamily: "'Exo 2', sans-serif", fontWeight: 600 }}>Transition</span>}
+              className="glass-panel"
+            >
+              <p style={{ color: 'var(--text-secondary)', fontSize: 13, marginBottom: 16 }}>
+                Current: <Tag color={STATUS_COLOR[currentStatus]}>{currentStatus}</Tag> — Choose next state:
+              </p>
 
-          <div className="mt-3">
-            <label className="mb-1 block text-sm font-medium text-gray-700">Reason (optional)</label>
-            <input
-              value={transitionReason}
-              onChange={(e) => setTransitionReason(e.target.value)}
-              placeholder="Justification for transition..."
-              className="w-full max-w-md rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
-            />
-          </div>
+              <Input
+                placeholder="Reason (optional)"
+                value={transitionReason}
+                onChange={(e) => setTransitionReason(e.target.value)}
+                style={{ marginBottom: 16, maxWidth: 400 }}
+              />
 
-          <div className="mt-4 flex flex-wrap gap-2">
-            {allowedNext.map((nextStatus) => {
-              if (isTriage && nextStatus === 'Assigned') {
-                return (
-                  <button
-                    key={nextStatus}
-                    onClick={() => setShowTriageForm(true)}
-                    className={clsx('rounded-lg px-4 py-2 text-sm font-medium transition-colors', TRANSITION_BUTTON_COLORS[nextStatus] ?? 'bg-gray-600 hover:bg-gray-700 text-white')}
-                  >
-                    Assign (Triage)
-                  </button>
-                );
-              }
-              return (
-                <button
-                  key={nextStatus}
-                  onClick={() => transitionMutation.mutate({ toStatus: nextStatus, reason: transitionReason || undefined })}
-                  disabled={transitionMutation.isPending}
-                  className={clsx('rounded-lg px-4 py-2 text-sm font-medium transition-colors disabled:opacity-50', TRANSITION_BUTTON_COLORS[nextStatus] ?? 'bg-gray-600 hover:bg-gray-700 text-white')}
-                >
-                  {nextStatus}
-                </button>
-              );
-            })}
-          </div>
+              <Space wrap>
+                {allowedNext.map((nextStatus) => {
+                  if (isTriage && nextStatus === 'Assigned') {
+                    return (
+                      <Tooltip key={nextStatus} title="Assign owner and module">
+                        <Button
+                          type="primary"
+                          onClick={() => setTriageOpen(true)}
+                        >
+                          Assign (Triage)
+                        </Button>
+                      </Tooltip>
+                    );
+                  }
+                  return (
+                    <Button
+                      key={nextStatus}
+                      onClick={() => transitionMutation.mutate({ toStatus: nextStatus, reason: transitionReason || undefined })}
+                      loading={transitionMutation.isPending}
+                      style={{
+                        borderColor: 'rgba(255,255,255,0.15)',
+                      }}
+                    >
+                      <Tag color={TRANSITION_COLOR[nextStatus]} style={{ margin: 0 }}>{nextStatus}</Tag>
+                    </Button>
+                  );
+                })}
+              </Space>
 
-          {transitionMutation.isError && (
-            <p className="mt-3 text-sm text-red-600">Transition failed. The target state may not be valid.</p>
-          )}
-
-          {showTriageForm && (
-            <div className="mt-4 rounded-lg border border-indigo-200 bg-indigo-50 p-4">
-              <h3 className="text-sm font-semibold text-indigo-900">Triage Assignment</h3>
-              <div className="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-2">
-                <div>
-                  <label className="mb-1 block text-sm font-medium text-gray-700">Assign To *</label>
-                  <input
-                    required
-                    value={triageForm.assignee}
-                    onChange={(e) => setTriageForm({ ...triageForm, assignee: e.target.value })}
-                    className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
-                  />
-                </div>
-                <div>
-                  <label className="mb-1 block text-sm font-medium text-gray-700">Module *</label>
-                  <input
-                    required
-                    value={triageForm.module}
-                    onChange={(e) => setTriageForm({ ...triageForm, module: e.target.value })}
-                    className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
-                  />
-                </div>
-              </div>
-              <div className="mt-3 flex gap-2">
-                <button
-                  onClick={() => triageMutation.mutate()}
-                  disabled={triageMutation.isPending || !triageForm.assignee || !triageForm.module}
-                  className="rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700 disabled:opacity-50 transition-colors"
-                >
-                  {triageMutation.isPending ? 'Assigning...' : 'Assign & Transition'}
-                </button>
-                <button
-                  onClick={() => setShowTriageForm(false)}
-                  className="rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors"
-                >
-                  Cancel
-                </button>
-              </div>
-            </div>
-          )}
-        </div>
-      )}
-
-      {/* Audit trail */}
-      <div className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
-        <h2 className="text-lg font-semibold text-gray-900">Audit Trail</h2>
-        {transitions && transitions.items && transitions.items.length > 0 ? (
-          <div className="mt-4 space-y-0">
-            {transitions.items.map((t: Record<string, unknown>, idx: number) => (
-              <div key={t.id as string} className="relative flex gap-4 pb-6">
-                {idx < transitions.items.length - 1 && (
-                  <div className="absolute left-[11px] top-6 h-full w-0.5 bg-gray-200" />
-                )}
-                <div className="relative z-10 flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full bg-indigo-100">
-                  <Clock className="h-3 w-3 text-indigo-600" />
-                </div>
-                <div className="flex-1">
-                  <div className="flex items-center gap-2">
-                    <span className={clsx('inline-flex rounded-full px-2 py-0.5 text-xs font-medium', STATUS_COLORS[t.from_status as IssueStatus] ?? 'bg-gray-100 text-gray-700')}>
-                      {t.from_status as string}
-                    </span>
-                    <span className="text-xs text-gray-400">&rarr;</span>
-                    <span className={clsx('inline-flex rounded-full px-2 py-0.5 text-xs font-medium', STATUS_COLORS[t.to_status as IssueStatus] ?? 'bg-gray-100 text-gray-700')}>
-                      {t.to_status as string}
-                    </span>
-                  </div>
-                  <p className="mt-1 text-xs text-gray-500">
-                    by <span className="font-medium text-gray-700">{t.triggered_by as string}</span>
-                    {' at '}
-                    {t.transitioned_at ? new Date(t.transitioned_at as string).toLocaleString() : '—'}
-                  </p>
-                  {Boolean(t.reason) && (
-                    <p className="mt-0.5 text-xs text-gray-500 italic">"{String(t.reason)}"</p>
-                  )}
-                </div>
-              </div>
-            ))}
-          </div>
-        ) : (
-          <p className="mt-4 text-sm text-gray-400">No transitions recorded yet.</p>
+              {transitionMutation.isError && (
+                <Alert type="error" message="Transition failed" style={{ marginTop: 12, borderRadius: 8 }} />
+              )}
+            </Card>
+          </Col>
         )}
-      </div>
+
+        {/* Audit trail */}
+        <Col xs={24} lg={allowedNext.length > 0 ? 12 : 24}>
+          <Card
+            title={<span style={{ fontFamily: "'Exo 2', sans-serif", fontWeight: 600 }}>Audit Trail</span>}
+            className="glass-panel"
+          >
+            {transitions?.items && transitions.items.length > 0 ? (
+              <Timeline
+                items={transitions.items.map((t: Record<string, unknown>) => ({
+                  dot: <ClockCircleOutlined style={{ color: '#6366f1' }} />,
+                  children: (
+                    <div>
+                      <Space size={4}>
+                        <Tag color={STATUS_COLOR[t.from_status as IssueStatus] ?? 'default'} style={{ fontSize: 11 }}>
+                          {t.from_status as string}
+                        </Tag>
+                        <span style={{ color: 'var(--text-muted)' }}>&rarr;</span>
+                        <Tag color={STATUS_COLOR[t.to_status as IssueStatus] ?? 'default'} style={{ fontSize: 11 }}>
+                          {t.to_status as string}
+                        </Tag>
+                      </Space>
+                      <div style={{ fontSize: 12, color: 'var(--text-muted)', marginTop: 4 }}>
+                        by <span style={{ color: 'var(--text-secondary)' }}>{t.triggered_by as string}</span>
+                        {' at '}
+                        {t.transitioned_at ? new Date(t.transitioned_at as string).toLocaleString() : '—'}
+                      </div>
+                      {Boolean(t.reason) && (
+                        <div style={{ fontSize: 12, color: 'var(--text-muted)', fontStyle: 'italic', marginTop: 2 }}>
+                          &ldquo;{String(t.reason)}&rdquo;
+                        </div>
+                      )}
+                    </div>
+                  ),
+                }))}
+              />
+            ) : (
+              <div style={{ color: 'var(--text-muted)', fontSize: 13 }}>No transitions recorded yet.</div>
+            )}
+          </Card>
+        </Col>
+      </Row>
+
+      {/* Triage modal */}
+      <Modal
+        title="Triage Assignment"
+        open={triageOpen}
+        onCancel={() => setTriageOpen(false)}
+        onOk={() => triageForm.submit()}
+        confirmLoading={triageMutation.isPending}
+        okText="Assign & Transition"
+      >
+        <Form
+          form={triageForm}
+          layout="vertical"
+          onFinish={(values) => triageMutation.mutate(values)}
+        >
+          <Form.Item name="assignee" label="Assign To" rules={[{ required: true, message: 'Please enter assignee' }]}>
+            <Input placeholder="Developer name" />
+          </Form.Item>
+          <Form.Item name="module" label="Module" rules={[{ required: true, message: 'Please enter module' }]}>
+            <Input placeholder="e.g. perception, planning" />
+          </Form.Item>
+        </Form>
+      </Modal>
     </div>
   );
 }
