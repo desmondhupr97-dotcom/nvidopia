@@ -1,31 +1,17 @@
-import { useParams, Link } from 'react-router-dom';
+import { useParams } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
-import { Descriptions, Tag, Table, Card, Spin, Empty, Row, Col } from 'antd';
+import { Descriptions, Tag, Table, Card, Empty, Row, Col } from 'antd';
 import { getTask, getRuns } from '../api/client';
 import type { Run } from '../api/client';
 import type { ColumnsType } from 'antd/es/table';
-
-const statusColor: Record<string, string> = {
-  Scheduled: 'blue', Active: 'gold', Completed: 'green', Aborted: 'red',
-  pending: 'default', queued: 'blue', running: 'gold', passed: 'green', failed: 'red', cancelled: 'default',
-};
-
-const stageColor: Record<string, string> = {
-  Pending: 'default', Smoke: 'cyan', Gray: 'gold', Freeze: 'orange', GoLive: 'green',
-};
-
-const priorityColor: Record<string, string> = {
-  Critical: 'red', High: 'orange', Medium: 'gold', Low: 'blue',
-};
+import { statusColor, stageColor, priorityColor } from '../constants/colors';
+import { FullPageSpinner, NotFoundState, GlassCardTitle, EntityLink, EmptyDash } from '../components/shared';
+import { useEntityDetail } from '../hooks/useEntityDetail';
 
 export default function TaskDetailPage() {
   const { id } = useParams<{ id: string }>();
 
-  const { data: task, isLoading } = useQuery({
-    queryKey: ['task', id],
-    queryFn: () => getTask(id!),
-    enabled: !!id,
-  });
+  const { data: task, isLoading } = useEntityDetail('task', id, getTask);
 
   const { data: runs } = useQuery({
     queryKey: ['runs', { taskId: id }],
@@ -34,11 +20,11 @@ export default function TaskDetailPage() {
   });
 
   if (isLoading) {
-    return <div style={{ display: 'flex', justifyContent: 'center', padding: 80 }}><Spin size="large" /></div>;
+    return <FullPageSpinner />;
   }
 
   if (!task) {
-    return <Empty description="Task not found" style={{ padding: 80 }} />;
+    return <NotFoundState entity="Task" />;
   }
 
   const runColumns: ColumnsType<Run> = [
@@ -48,9 +34,9 @@ export default function TaskDetailPage() {
       key: 'id',
       width: 120,
       render: (id: string) => (
-        <Link to={`/runs/${id}`} style={{ color: '#818cf8', fontWeight: 500, fontFamily: 'monospace' }}>
+        <EntityLink to={`/runs/${id}`} mono>
           {id.slice(0, 8)}
-        </Link>
+        </EntityLink>
       ),
     },
     {
@@ -65,13 +51,13 @@ export default function TaskDetailPage() {
       dataIndex: 'result',
       key: 'result',
       width: 100,
-      render: (v: string | undefined) => v ?? <span style={{ color: 'var(--text-muted)' }}>—</span>,
+      render: (v: string | undefined) => v ?? <EmptyDash />,
     },
     {
       title: 'Started',
       dataIndex: 'startedAt',
       key: 'startedAt',
-      render: (d: string | undefined) => d ? new Date(d).toLocaleString() : <span style={{ color: 'var(--text-muted)' }}>—</span>,
+      render: (d: string | undefined) => d ? new Date(d).toLocaleString() : <EmptyDash />,
     },
   ];
 
@@ -91,7 +77,7 @@ export default function TaskDetailPage() {
       <Row gutter={[24, 24]}>
         <Col xs={24} lg={16}>
           <Card
-            title={<span style={{ fontFamily: "'Exo 2', sans-serif", fontWeight: 600 }}>Test Runs</span>}
+            title={<GlassCardTitle>Test Runs</GlassCardTitle>}
             className="glass-panel"
             styles={{ body: { padding: 0 } }}
           >
@@ -107,7 +93,7 @@ export default function TaskDetailPage() {
 
         <Col xs={24} lg={8}>
           <Card
-            title={<span style={{ fontFamily: "'Exo 2', sans-serif", fontWeight: 600 }}>Details</span>}
+            title={<GlassCardTitle>Details</GlassCardTitle>}
             className="glass-panel"
           >
             <Descriptions column={1} size="small" colon={false}>

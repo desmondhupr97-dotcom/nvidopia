@@ -3,13 +3,15 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useParams, Link } from 'react-router-dom';
 import {
   Card, Tag, Descriptions, Timeline, Button, Input, Form, Modal,
-  Space, Row, Col, Spin, Alert, Divider, Tooltip,
+  Space, Row, Col, Alert, Divider, Tooltip,
 } from 'antd';
 import {
   ArrowLeftOutlined, EnvironmentOutlined, LinkOutlined, ClockCircleOutlined,
 } from '@ant-design/icons';
 import { AlertTriangle } from 'lucide-react';
 import { getIssue, transitionIssue, triageIssue, getIssueTransitions } from '../api/client';
+import { statusColor as STATUS_COLOR, severityColor as SEVERITY_COLOR, transitionColor as TRANSITION_COLOR } from '../constants/colors';
+import { FullPageSpinner, GlassCardTitle } from '../components/shared';
 
 type IssueStatus = 'New' | 'Triage' | 'Assigned' | 'InProgress' | 'Fixed' | 'RegressionTracking' | 'Closed' | 'Reopened' | 'Rejected';
 
@@ -23,21 +25,6 @@ const VALID_TRANSITIONS: Record<IssueStatus, IssueStatus[]> = {
   Reopened: ['InProgress'],
   Closed: [],
   Rejected: [],
-};
-
-const STATUS_COLOR: Record<IssueStatus, string> = {
-  New: 'blue', Triage: 'gold', Assigned: 'geekblue', InProgress: 'purple',
-  Fixed: 'green', RegressionTracking: 'cyan', Closed: 'default', Reopened: 'orange', Rejected: 'red',
-};
-
-const SEVERITY_COLOR: Record<string, string> = {
-  Trivial: 'green', Minor: 'gold', Major: 'orange', Critical: 'red',
-  Low: 'blue', Medium: 'gold', High: 'orange', Blocker: 'red',
-};
-
-const TRANSITION_COLOR: Record<string, string> = {
-  Triage: 'gold', Assigned: 'geekblue', InProgress: 'purple', Fixed: 'green',
-  RegressionTracking: 'cyan', Closed: 'default', Reopened: 'orange', Rejected: 'red',
 };
 
 export default function IssueDetailPage() {
@@ -81,7 +68,7 @@ export default function IssueDetailPage() {
   });
 
   if (isLoading) {
-    return <div style={{ display: 'flex', justifyContent: 'center', padding: 80 }}><Spin size="large" /></div>;
+    return <FullPageSpinner />;
   }
 
   if (error || !issue) {
@@ -98,7 +85,6 @@ export default function IssueDetailPage() {
         <ArrowLeftOutlined /> Back to Issues
       </Link>
 
-      {/* Issue header card */}
       <Card className="glass-panel" style={{ marginBottom: 24 }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
           <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
@@ -185,11 +171,10 @@ export default function IssueDetailPage() {
       </Card>
 
       <Row gutter={[24, 24]}>
-        {/* Transition panel */}
         {allowedNext.length > 0 && (
           <Col xs={24} lg={12}>
             <Card
-              title={<span style={{ fontFamily: "'Exo 2', sans-serif", fontWeight: 600 }}>Transition</span>}
+              title={<GlassCardTitle>Transition</GlassCardTitle>}
               className="glass-panel"
             >
               <p style={{ color: 'var(--text-secondary)', fontSize: 13, marginBottom: 16 }}>
@@ -239,10 +224,9 @@ export default function IssueDetailPage() {
           </Col>
         )}
 
-        {/* Audit trail */}
         <Col xs={24} lg={allowedNext.length > 0 ? 12 : 24}>
           <Card
-            title={<span style={{ fontFamily: "'Exo 2', sans-serif", fontWeight: 600 }}>Audit Trail</span>}
+            title={<GlassCardTitle>Audit Trail</GlassCardTitle>}
             className="glass-panel"
           >
             {transitions?.items && transitions.items.length > 0 ? (
@@ -281,7 +265,6 @@ export default function IssueDetailPage() {
         </Col>
       </Row>
 
-      {/* Triage modal */}
       <Modal
         title="Triage Assignment"
         open={triageOpen}

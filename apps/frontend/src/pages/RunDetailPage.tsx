@@ -1,28 +1,21 @@
-import { useParams, Link } from 'react-router-dom';
-import { useQuery } from '@tanstack/react-query';
-import { Descriptions, Tag, Card, Spin, Empty, Row, Col } from 'antd';
+import { useParams } from 'react-router-dom';
+import { Descriptions, Tag, Card, Row, Col } from 'antd';
 import { getRun } from '../api/client';
-
-const statusColor: Record<string, string> = {
-  Scheduled: 'blue', Active: 'gold', Completed: 'green', Aborted: 'red',
-  pending: 'default', queued: 'blue', running: 'gold', passed: 'green', failed: 'red',
-};
+import { statusColor } from '../constants/colors';
+import { FullPageSpinner, NotFoundState, GlassCardTitle, EntityLink } from '../components/shared';
+import { useEntityDetail } from '../hooks/useEntityDetail';
 
 export default function RunDetailPage() {
   const { id } = useParams<{ id: string }>();
 
-  const { data: run, isLoading } = useQuery({
-    queryKey: ['run', id],
-    queryFn: () => getRun(id!),
-    enabled: !!id,
-  });
+  const { data: run, isLoading } = useEntityDetail('run', id, getRun);
 
   if (isLoading) {
-    return <div style={{ display: 'flex', justifyContent: 'center', padding: 80 }}><Spin size="large" /></div>;
+    return <FullPageSpinner />;
   }
 
   if (!run) {
-    return <Empty description="Run not found" style={{ padding: 80 }} />;
+    return <NotFoundState entity="Run" />;
   }
 
   return (
@@ -38,7 +31,7 @@ export default function RunDetailPage() {
       <Row gutter={[24, 24]}>
         <Col xs={24} lg={16}>
           <Card
-            title={<span style={{ fontFamily: "'Exo 2', sans-serif", fontWeight: 600 }}>Run Overview</span>}
+            title={<GlassCardTitle>Run Overview</GlassCardTitle>}
             className="glass-panel"
           >
             <Descriptions column={{ xs: 1, sm: 2 }} size="small" colon={false}>
@@ -47,7 +40,7 @@ export default function RunDetailPage() {
               </Descriptions.Item>
               <Descriptions.Item label="Task">
                 {run.taskId ? (
-                  <Link to={`/tasks/${run.taskId}`} style={{ color: '#818cf8', fontFamily: 'monospace' }}>{run.taskId}</Link>
+                  <EntityLink to={`/tasks/${run.taskId}`} mono>{run.taskId}</EntityLink>
                 ) : '—'}
               </Descriptions.Item>
               <Descriptions.Item label="Status">

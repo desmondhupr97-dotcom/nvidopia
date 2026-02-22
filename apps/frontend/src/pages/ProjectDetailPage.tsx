@@ -1,28 +1,17 @@
-import { useParams, Link } from 'react-router-dom';
+import { useParams } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
-import { Descriptions, Tag, Table, Card, Spin, Empty, Row, Col } from 'antd';
+import { Descriptions, Tag, Table, Card, Empty, Row, Col } from 'antd';
 import { getProject, getTasks } from '../api/client';
 import type { Task } from '../api/client';
 import type { ColumnsType } from 'antd/es/table';
-
-const stageColor: Record<string, string> = {
-  Pending: 'default', Smoke: 'cyan', Gray: 'gold', Freeze: 'orange', GoLive: 'green',
-  backlog: 'default', ready: 'blue', 'in-progress': 'gold', review: 'purple', done: 'green',
-};
-
-const priorityColor: Record<string, string> = {
-  Critical: 'red', High: 'orange', Medium: 'gold', Low: 'blue',
-  critical: 'red', high: 'orange', medium: 'gold', low: 'blue',
-};
+import { stageColor, priorityColor } from '../constants/colors';
+import { FullPageSpinner, NotFoundState, PageHeader, GlassCardTitle, EntityLink, EmptyDash } from '../components/shared';
+import { useEntityDetail } from '../hooks/useEntityDetail';
 
 export default function ProjectDetailPage() {
   const { id } = useParams<{ id: string }>();
 
-  const { data: project, isLoading: loadingProject } = useQuery({
-    queryKey: ['project', id],
-    queryFn: () => getProject(id!),
-    enabled: !!id,
-  });
+  const { data: project, isLoading: loadingProject } = useEntityDetail('project', id, getProject);
 
   const { data: tasks } = useQuery({
     queryKey: ['tasks', { projectId: id }],
@@ -31,11 +20,11 @@ export default function ProjectDetailPage() {
   });
 
   if (loadingProject) {
-    return <div style={{ display: 'flex', justifyContent: 'center', padding: 80 }}><Spin size="large" /></div>;
+    return <FullPageSpinner />;
   }
 
   if (!project) {
-    return <Empty description="Project not found" style={{ padding: 80 }} />;
+    return <NotFoundState entity="Project" />;
   }
 
   const taskColumns: ColumnsType<Task> = [
@@ -44,7 +33,7 @@ export default function ProjectDetailPage() {
       dataIndex: 'title',
       key: 'title',
       render: (title: string, record: Task) => (
-        <Link to={`/tasks/${record.id}`} style={{ color: '#818cf8', fontWeight: 500 }}>{title}</Link>
+        <EntityLink to={`/tasks/${record.id}`}>{title}</EntityLink>
       ),
     },
     {
@@ -66,26 +55,24 @@ export default function ProjectDetailPage() {
       dataIndex: 'assignee',
       key: 'assignee',
       width: 140,
-      render: (v: string | undefined) => v ?? <span style={{ color: 'var(--text-muted)' }}>—</span>,
+      render: (v: string | undefined) => v ?? <EmptyDash />,
     },
   ];
 
   return (
     <div>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 24 }}>
-        <div>
-          <h1 className="page-title">{project.name}</h1>
-          <p className="page-subtitle">{project.description ?? 'No description'}</p>
-        </div>
-        <Tag color="blue" style={{ fontSize: 14, padding: '4px 12px' }}>{project.status}</Tag>
-      </div>
+      <PageHeader
+        title={project.name}
+        subtitle={project.description ?? 'No description'}
+        action={<Tag color="blue" style={{ fontSize: 14, padding: '4px 12px' }}>{project.status}</Tag>}
+      />
 
       <Row gutter={[24, 24]}>
         <Col xs={24} lg={16}>
           <Card
-            title={<span style={{ fontFamily: "'Exo 2', sans-serif", fontWeight: 600 }}>Tasks</span>}
+            title={<GlassCardTitle>Tasks</GlassCardTitle>}
             className="glass-panel"
-            extra={<Link to="/tasks" style={{ color: '#818cf8', fontSize: 13 }}>View All</Link>}
+            extra={<EntityLink to="/tasks" style={{ fontSize: 13 }}>View All</EntityLink>}
             styles={{ body: { padding: 0 } }}
           >
             <Table
@@ -100,7 +87,7 @@ export default function ProjectDetailPage() {
 
         <Col xs={24} lg={8}>
           <Card
-            title={<span style={{ fontFamily: "'Exo 2', sans-serif", fontWeight: 600 }}>Details</span>}
+            title={<GlassCardTitle>Details</GlassCardTitle>}
             className="glass-panel"
           >
             <Descriptions column={1} size="small" colon={false}>
