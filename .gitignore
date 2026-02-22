@@ -11,3 +11,4 @@ coverage/
 Thumbs.db
 *.tgz
 .commitmsg
+apps/frontend/tsconfig.tsbuildinfo
