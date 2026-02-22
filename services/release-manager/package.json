@@ -1,0 +1,24 @@
+{
+  "name": "@nvidopia/release-manager",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Release management microservice for the nvidopia platform",
+  "main": "dist/index.js",
+  "scripts": {
+    "dev": "tsx watch src/index.ts",
+    "build": "tsc",
+    "start": "node dist/index.js"
+  },
+  "dependencies": {
+    "express": "^4.21.0",
+    "cors": "^2.8.5",
+    "mongoose": "^8.10.0",
+    "dotenv": "^16.4.0"
+  },
+  "devDependencies": {
+    "typescript": "^5.7.0",
+    "@types/express": "^5.0.0",
+    "@types/cors": "^2.8.17",
+    "tsx": "^4.19.0"
+  }
+}

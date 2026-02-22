@@ -1,10 +1,8 @@
-feat(phase1): add core data models, API/event contracts, and platform libraries
+feat(phase2): implement all 6 microservices with Kafka consumers and REST APIs
 
-- Add @nvidopia/data-models with 10 Mongoose schemas (Project, Task, Run, Issue, etc.)
-- Add Issue state machine enum and state transition audit model
-- Add reserved fields for auto-triage (triage_mode/hint/source) and simulation (simulation_ref/status)
-- Add OpenAPI 3.0.3 specs for all 6 microservices
-- Add AsyncAPI 2.6.0 spec for 4 Kafka topics
-- Add Dashboard-as-Code JSON schema
-- Add @nvidopia/eventing with Kafka producer, consumer (retry+DLQ), topic setup
-- Add @nvidopia/observability with structured logger, trace middleware, metrics middleware
+- BFF Gateway: JWT auth, rate limiting, Kafka ingestion, reverse proxy routing
+- Release Manager: Project/Task CRUD, release gate advancement
+- Fleet Manager: Vehicle status/telemetry Kafka consumers, vehicle-task matching, Run lifecycle
+- Issue Workflow: Issue state machine engine, audit trail, manual triage, Kafka consumer, auto-triage stub (501)
+- Traceability: Forward/backward/impact trace via MongoDB aggregation pipelines, coverage stats
+- KPI Engine: MPI, MTTR, regression pass rate, fleet utilization, issue convergence APIs
