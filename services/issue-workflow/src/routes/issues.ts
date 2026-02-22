@@ -5,6 +5,10 @@ import { executeTransition, getValidTransitions, validateTransition } from '../s
 
 const router = Router();
 
+function asSingleParam(value: string | string[]): string {
+  return Array.isArray(value) ? value[0] : value;
+}
+
 router.get('/issues', async (req: Request, res: Response) => {
   try {
     const filter: Record<string, unknown> = {};
@@ -77,7 +81,8 @@ router.put('/issues/:id/transition', async (req: Request, res: Response) => {
       return;
     }
 
-    const updated = await executeTransition(req.params.id, to_status, triggered_by, reason);
+    const issueId = asSingleParam(req.params.id);
+    const updated = await executeTransition(issueId, to_status, triggered_by, reason);
     res.json(updated);
   } catch (err: unknown) {
     const typed = err as Error & { code?: string; allowed?: IssueStatus[] };
@@ -131,8 +136,9 @@ router.post('/issues/:id/triage', async (req: Request, res: Response) => {
       }
     }
 
+    const issueId = asSingleParam(req.params.id);
     const updated = await executeTransition(
-      req.params.id,
+      issueId,
       'Assigned',
       triggered_by,
       `Triaged: assigned to ${assigned_to} (${assigned_module})`,

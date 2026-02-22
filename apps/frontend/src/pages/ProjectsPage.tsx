@@ -2,11 +2,12 @@ import { useQuery } from '@tanstack/react-query';
 import { Link } from 'react-router-dom';
 import { Plus, FolderKanban } from 'lucide-react';
 import { getProjects } from '../api/client';
+import type { Project } from '../api/client';
 
 export default function ProjectsPage() {
-  const { data: projects, isLoading, error } = useQuery({
+  const { data: projects, isLoading, error } = useQuery<Project[]>({
     queryKey: ['projects'],
-    queryFn: getProjects,
+    queryFn: () => getProjects(),
   });
 
   return (

@@ -55,6 +55,7 @@ export default function TraceabilityPage() {
 
   const traceData = tab === 'forward' ? forwardData : backwardData;
   const isLoading = tab === 'forward' ? fwdLoading : bwdLoading;
+  const traceLinks = traceData?.links ?? [];
 
   return (
     <div className="space-y-6">
@@ -137,7 +138,7 @@ export default function TraceabilityPage() {
           <div className="space-y-0">
             {traceData.nodes.map((node: Record<string, unknown>, idx: number) => {
               const nodeType = node.type as string;
-              const link = idx < traceData.links.length ? traceData.links[idx] as Record<string, unknown> : null;
+              const link = idx < traceLinks.length ? traceLinks[idx] as Record<string, unknown> : null;
               return (
                 <div key={`${nodeType}-${node.id}`}>
                   <div className="flex items-center gap-3">

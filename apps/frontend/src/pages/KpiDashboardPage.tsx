@@ -198,8 +198,8 @@ export default function KpiDashboardPage() {
   const convergencePoints: Array<{ timestamp: string; open: number; closed: number }> =
     convergenceData?.points?.map((p: Record<string, unknown>) => ({
       timestamp: p.timestamp as string,
-      open: Number(p.dimensions?.open_count ?? p.value ?? 0),
-      closed: Number(p.dimensions?.closed_count ?? 0),
+      open: Number((p.dimensions as Record<string, unknown> | undefined)?.open_count ?? p.value ?? 0),
+      closed: Number((p.dimensions as Record<string, unknown> | undefined)?.closed_count ?? 0),
     })) ?? [];
 
   const renderPanel = (panel: PanelConfig) => {
@@ -210,7 +210,8 @@ export default function KpiDashboardPage() {
           mpi: { data: mpiData },
           mttr: { data: mttrData },
         };
-        const resolved = dataMap[panel.data_targets[0]?.metric_query];
+        const metricQuery = panel.data_targets[0]?.metric_query ?? '';
+        const resolved = dataMap[metricQuery];
         return (
           <StatPanel
             key={panel.panel_id}
@@ -225,7 +226,8 @@ export default function KpiDashboardPage() {
           regression_pass_rate: { data: rprData },
           fleet_utilization: { data: fleetData },
         };
-        const resolved = dataMap[panel.data_targets[0]?.metric_query];
+        const metricQuery = panel.data_targets[0]?.metric_query ?? '';
+        const resolved = dataMap[metricQuery];
         return (
           <GaugePanel
             key={panel.panel_id}
@@ -261,7 +263,7 @@ export default function KpiDashboardPage() {
             className="rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
           >
             <option value="">Select Project</option>
-            {projectsData?.items?.map((p: Record<string, unknown>) => (
+            {projectsData?.map((p: Record<string, unknown>) => (
               <option key={p.id as string} value={p.id as string}>{p.name as string}</option>
             ))}
           </select>

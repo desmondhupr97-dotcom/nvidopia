@@ -351,8 +351,8 @@ export default function IssueDetailPage() {
                     {' at '}
                     {t.transitioned_at ? new Date(t.transitioned_at as string).toLocaleString() : '—'}
                   </p>
-                  {t.reason && (
-                    <p className="mt-0.5 text-xs text-gray-500 italic">"{t.reason as string}"</p>
+                  {Boolean(t.reason) && (
+                    <p className="mt-0.5 text-xs text-gray-500 italic">"{String(t.reason)}"</p>
                   )}
                 </div>
               </div>

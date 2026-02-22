@@ -9,6 +9,7 @@ export interface Project {
   status: string;
   createdAt: string;
   updatedAt: string;
+  [key: string]: unknown;
 }
 
 export interface Task {
@@ -21,6 +22,7 @@ export interface Task {
   assignee?: string;
   createdAt: string;
   updatedAt: string;
+  [key: string]: unknown;
 }
 
 export interface Run {
@@ -33,6 +35,7 @@ export interface Run {
   result?: string;
   createdAt: string;
   updatedAt: string;
+  [key: string]: unknown;
 }
 
 export interface Vehicle {
@@ -40,38 +43,72 @@ export interface Vehicle {
   name: string;
   status: string;
   platform?: string;
+  [key: string]: unknown;
 }
 
 export interface Issue {
   id: string;
+  issue_id?: string;
   title: string;
   description?: string;
   status: string;
   severity: string;
   runId?: string;
+  run_id?: string;
   taskId?: string;
+  task_id?: string;
   assignee?: string;
+  assigned_to?: string;
+  assigned_module?: string;
   triageResult?: string;
+  category?: string;
+  takeover_type?: string;
+  module?: string;
+  gps_lat?: number;
+  gps_lng?: number;
+  data_snapshot_uri?: string;
+  trigger_timestamp?: string;
+  fault_codes?: string[];
+  environment_tags?: string[];
+  triage_mode?: string;
+  triage_hint?: string;
   createdAt: string;
   updatedAt: string;
+  [key: string]: unknown;
 }
 
 export interface IssueTransition {
+  id?: string;
   from: string;
   to: string;
   action: string;
+  from_status?: string;
+  to_status?: string;
+  triggered_by?: string;
+  transitioned_at?: string;
+  reason?: string;
+  [key: string]: unknown;
 }
 
 export interface TraceResult {
   nodes: Array<{ id: string; type: string; label: string }>;
   edges: Array<{ source: string; target: string }>;
+  links?: Array<{ relationship?: string }>;
+  origin_id?: string;
+  [key: string]: unknown;
 }
 
 export interface CoverageResult {
   total: number;
   covered: number;
   percentage: number;
+  coverage_percentage?: number;
+  coverage_percent?: number;
+  verified?: number;
+  total_requirements?: number;
+  verified_requirements?: number;
   details: Array<{ id: string; name: string; covered: boolean }>;
+  [key: string]: unknown;
 }
 
 export interface KpiValue {
@@ -79,6 +116,12 @@ export interface KpiValue {
   unit: string;
   trend?: number;
   history?: Array<{ date: string; value: number }>;
+  points?: Array<{
+    timestamp?: string;
+    value?: number;
+    dimensions?: Record<string, unknown>;
+  }>;
+  [key: string]: unknown;
 }
 
 /* ── Fetch Helper ─────────────────────────────────────── */
@@ -116,8 +159,19 @@ async function fetchJson<T>(
 
 /* ── Projects ─────────────────────────────────────────── */
 
-export function getProjects() {
-  return fetchJson<Project[]>('/projects');
+function toQueryString(params?: Record<string, string | undefined>): string {
+  if (!params) return '';
+  const normalized = Object.fromEntries(
+    Object.entries(params).filter(([, value]) => value !== undefined && value !== ''),
+  ) as Record<string, string>;
+  const query = new URLSearchParams(normalized).toString();
+  return query ? `?${query}` : '';
+}
+
+export async function getProjects(params?: Record<string, string | undefined>) {
+  const qs = toQueryString(params);
+  const data = await fetchJson<Project[] | { items: Project[] }>(`/projects${qs}`);
+  return Array.isArray(data) ? data : data.items ?? [];
 }
 
 export function getProject(id: string) {
@@ -140,8 +194,8 @@ export function updateProject(id: string, data: Partial<Project>) {
 
 /* ── Tasks ────────────────────────────────────────────── */
 
-export function getTasks(params?: Record<string, string>) {
-  const qs = params ? '?' + new URLSearchParams(params).toString() : '';
+export function getTasks(params?: Record<string, string | undefined>) {
+  const qs = toQueryString(params);
   return fetchJson<Task[]>(`/tasks${qs}`);
 }
 
@@ -172,8 +226,8 @@ export function advanceTaskStage(id: string, stage: string) {
 
 /* ── Runs ─────────────────────────────────────────────── */
 
-export function getRuns(params?: Record<string, string>) {
-  const qs = params ? '?' + new URLSearchParams(params).toString() : '';
+export function getRuns(params?: Record<string, string | undefined>) {
+  const qs = toQueryString(params);
   return fetchJson<Run[]>(`/runs${qs}`);
 }
 
@@ -214,8 +268,8 @@ export function getVehicle(id: string) {
 
 /* ── Issues ───────────────────────────────────────────── */
 
-export function getIssues(params?: Record<string, string>) {
-  const qs = params ? '?' + new URLSearchParams(params).toString() : '';
+export function getIssues(params?: Record<string, string | undefined>) {
+  const qs = toQueryString(params);
   return fetchJson<Issue[]>(`/issues${qs}`);
 }
 
@@ -237,21 +291,33 @@ export function updateIssue(id: string, data: Partial<Issue>) {
   });
 }
 
-export function transitionIssue(id: string, action: string) {
+export function transitionIssue(
+  id: string,
+  payload: { to_status: string; triggered_by: string; reason?: string },
+) {
   return fetchJson<Issue>(`/issues/${id}/transition`, {
-    method: 'POST',
-    body: JSON.stringify({ action }),
+    method: 'PUT',
+    body: JSON.stringify(payload),
   });
 }
 
-export function triageIssue(id: string) {
+export function triageIssue(
+  id: string,
+  payload: { assignee: string; module: string; triggered_by?: string },
+) {
   return fetchJson<Issue>(`/issues/${id}/triage`, {
     method: 'POST',
+    body: JSON.stringify({
+      assigned_to: payload.assignee,
+      assigned_module: payload.module,
+      triggered_by: payload.triggered_by ?? 'ui-user',
+    }),
   });
 }
 
-export function getIssueTransitions(id: string) {
-  return fetchJson<IssueTransition[]>(`/issues/${id}/transitions`);
+export async function getIssueTransitions(id: string) {
+  const data = await fetchJson<IssueTransition[] | { items: IssueTransition[] }>(`/issues/${id}/transitions`);
+  return Array.isArray(data) ? { items: data } : data;
 }
 
 /* ── Traceability ─────────────────────────────────────── */
@@ -268,33 +334,41 @@ export function getImpactTrace(changeId: string) {
   return fetchJson<TraceResult>(`/traceability/impact/${changeId}`);
 }
 
-export function getCoverage(projectId: string) {
-  return fetchJson<CoverageResult>(`/traceability/coverage/${projectId}`);
+export function traceForward(requirementId: string) {
+  return getForwardTrace(requirementId);
+}
+
+export function traceBackward(issueId: string) {
+  return getBackwardTrace(issueId);
+}
+
+export function getCoverage(_params?: Record<string, unknown>) {
+  return fetchJson<CoverageResult>(`/traceability/coverage`);
 }
 
 /* ── KPI ──────────────────────────────────────────────── */
 
-export function getMpi(params?: Record<string, string>) {
-  const qs = params ? '?' + new URLSearchParams(params).toString() : '';
+export function getMpi(params?: Record<string, string | undefined>) {
+  const qs = toQueryString(params);
   return fetchJson<KpiValue>(`/kpi/mpi${qs}`);
 }
 
-export function getMttr(params?: Record<string, string>) {
-  const qs = params ? '?' + new URLSearchParams(params).toString() : '';
+export function getMttr(params?: Record<string, string | undefined>) {
+  const qs = toQueryString(params);
   return fetchJson<KpiValue>(`/kpi/mttr${qs}`);
 }
 
-export function getRegressionPassRate(params?: Record<string, string>) {
-  const qs = params ? '?' + new URLSearchParams(params).toString() : '';
+export function getRegressionPassRate(params?: Record<string, string | undefined>) {
+  const qs = toQueryString(params);
   return fetchJson<KpiValue>(`/kpi/regression-pass-rate${qs}`);
 }
 
-export function getFleetUtilization(params?: Record<string, string>) {
-  const qs = params ? '?' + new URLSearchParams(params).toString() : '';
+export function getFleetUtilization(params?: Record<string, string | undefined>) {
+  const qs = toQueryString(params);
   return fetchJson<KpiValue>(`/kpi/fleet-utilization${qs}`);
 }
 
-export function getIssueConvergence(params?: Record<string, string>) {
-  const qs = params ? '?' + new URLSearchParams(params).toString() : '';
+export function getIssueConvergence(params?: Record<string, string | undefined>) {
+  const qs = toQueryString(params);
   return fetchJson<KpiValue>(`/kpi/issue-convergence${qs}`);
 }
