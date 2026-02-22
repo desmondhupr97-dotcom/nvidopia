@@ -10,7 +10,8 @@
   "scripts": {
     "build": "tsc",
     "clean": "rimraf dist",
-    "prepublishOnly": "npm run build"
+    "prepublishOnly": "npm run build",
+    "test": "vitest run"
   },
   "dependencies": {
     "mongoose": "^8.10.0"
