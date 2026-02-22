@@ -1,9 +1,10 @@
-feat(phase3): implement frontend SPA with all pages, Dashboard-as-Code, and placeholder pages
+feat(phase4): add E2E integration, Dockerfiles, seed data, CI pipeline, and documentation
 
-- React + TypeScript + Vite frontend with modern dark sidebar layout
-- Core pages: Projects, Tasks, Runs, Issues (with state machine transitions), KPI Dashboard, Traceability
-- Dashboard-as-Code renderer driven by JSON config for dynamic KPI panels
-- Typed API client with full coverage of all backend endpoints
-- Issue detail page with valid state transitions and audit trail
-- AutoTriage and Simulation placeholder pages with "Coming Soon" status
-- Global CSS design system with status badges, cards, tables, responsive breakpoints
+- Full-stack Docker Compose with all services and infrastructure
+- Dockerfiles for all 7 services (multi-stage for frontend with nginx)
+- MongoDB seed data script with realistic test entities
+- E2E smoke test script covering full Issue lifecycle flow
+- GitHub Actions CI pipeline (lint/test/build)
+- Architecture documentation with Mermaid diagrams
+- Developer guide with quick start and project structure
+- Root README with module overview and links

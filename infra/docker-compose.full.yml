@@ -1,0 +1,153 @@
+version: "3.9"
+
+services:
+  # ---------------------------------------------------------------------------
+  # Infrastructure
+  # ---------------------------------------------------------------------------
+  zookeeper:
+    image: confluentinc/cp-zookeeper:7.6.0
+    container_name: nvidopia-zookeeper
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2181
+      ZOOKEEPER_TICK_TIME: 2000
+    ports:
+      - "2181:2181"
+
+  kafka:
+    image: confluentinc/cp-kafka:7.6.0
+    container_name: nvidopia-kafka
+    depends_on:
+      - zookeeper
+    ports:
+      - "9092:9092"
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:29092,PLAINTEXT_HOST://localhost:9092
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
+      KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_AUTO_CREATE_TOPICS_ENABLE: "true"
+
+  mongodb:
+    image: mongo:7.0
+    container_name: nvidopia-mongodb
+    ports:
+      - "27017:27017"
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: nvidopia
+      MONGO_INITDB_ROOT_PASSWORD: nvidopia_dev
+      MONGO_INITDB_DATABASE: nvidopia
+    volumes:
+      - mongo-data:/data/db
+
+  mongo-express:
+    image: mongo-express:1.0
+    container_name: nvidopia-mongo-express
+    depends_on:
+      - mongodb
+    ports:
+      - "8081:8081"
+    environment:
+      ME_CONFIG_MONGODB_ADMINUSERNAME: nvidopia
+      ME_CONFIG_MONGODB_ADMINPASSWORD: nvidopia_dev
+      ME_CONFIG_MONGODB_URL: mongodb://nvidopia:nvidopia_dev@mongodb:27017/
+
+  # ---------------------------------------------------------------------------
+  # Microservices
+  # ---------------------------------------------------------------------------
+  bff-gateway:
+    build: ../apps/bff-gateway
+    container_name: nvidopia-bff-gateway
+    ports:
+      - "3000:3000"
+    environment:
+      GATEWAY_PORT: 3000
+      KAFKA_BROKERS: kafka:29092
+      MONGO_URI: mongodb://nvidopia:nvidopia_dev@mongodb:27017/nvidopia?authSource=admin
+      RELEASE_MANAGER_PORT: 3001
+      FLEET_MANAGER_PORT: 3002
+      ISSUE_WORKFLOW_PORT: 3003
+      TRACEABILITY_PORT: 3004
+      KPI_ENGINE_PORT: 3005
+      JWT_SECRET: dev-secret-key
+      RELEASE_MANAGER_URL: http://release-manager:3001
+      FLEET_MANAGER_URL: http://fleet-manager:3002
+      ISSUE_WORKFLOW_URL: http://issue-workflow:3003
+      TRACEABILITY_URL: http://traceability:3004
+      KPI_ENGINE_URL: http://kpi-engine:3005
+    depends_on:
+      - kafka
+      - mongodb
+
+  release-manager:
+    build: ../services/release-manager
+    container_name: nvidopia-release-manager
+    ports:
+      - "3001:3001"
+    environment:
+      RELEASE_MANAGER_PORT: 3001
+      MONGO_URI: mongodb://nvidopia:nvidopia_dev@mongodb:27017/nvidopia?authSource=admin
+    depends_on:
+      - mongodb
+
+  fleet-manager:
+    build: ../services/fleet-manager
+    container_name: nvidopia-fleet-manager
+    ports:
+      - "3002:3002"
+    environment:
+      FLEET_MANAGER_PORT: 3002
+      MONGO_URI: mongodb://nvidopia:nvidopia_dev@mongodb:27017/nvidopia?authSource=admin
+      KAFKA_BROKERS: kafka:29092
+    depends_on:
+      - kafka
+      - mongodb
+
+  issue-workflow:
+    build: ../services/issue-workflow
+    container_name: nvidopia-issue-workflow
+    ports:
+      - "3003:3003"
+    environment:
+      ISSUE_WORKFLOW_PORT: 3003
+      MONGO_URI: mongodb://nvidopia:nvidopia_dev@mongodb:27017/nvidopia?authSource=admin
+      KAFKA_BROKERS: kafka:29092
+    depends_on:
+      - kafka
+      - mongodb
+
+  traceability:
+    build: ../services/traceability
+    container_name: nvidopia-traceability
+    ports:
+      - "3004:3004"
+    environment:
+      TRACEABILITY_PORT: 3004
+      MONGO_URI: mongodb://nvidopia:nvidopia_dev@mongodb:27017/nvidopia?authSource=admin
+    depends_on:
+      - mongodb
+
+  kpi-engine:
+    build: ../services/kpi-engine
+    container_name: nvidopia-kpi-engine
+    ports:
+      - "3005:3005"
+    environment:
+      KPI_ENGINE_PORT: 3005
+      MONGO_URI: mongodb://nvidopia:nvidopia_dev@mongodb:27017/nvidopia?authSource=admin
+      KAFKA_BROKERS: kafka:29092
+    depends_on:
+      - kafka
+      - mongodb
+
+  frontend:
+    build: ../apps/frontend
+    container_name: nvidopia-frontend
+    ports:
+      - "5173:80"
+    depends_on:
+      - bff-gateway
+
+volumes:
+  mongo-data:

@@ -1,0 +1,394 @@
+/**
+ * Seed script — populates MongoDB with realistic test data for the nvidopia platform.
+ *
+ * Usage:  npx tsx platform/data-models/src/seed.ts
+ *
+ * Env:    MONGO_URI  (default: mongodb://nvidopia:nvidopia_dev@localhost:27017/nvidopia?authSource=admin)
+ */
+
+import mongoose from 'mongoose';
+import { Project } from './project.model.js';
+import { Task } from './task.model.js';
+import { Run } from './run.model.js';
+import { Issue } from './issue.model.js';
+import { IssueStateTransition } from './issue-state-transition.model.js';
+import { Requirement } from './requirement.model.js';
+import { Commit } from './commit.model.js';
+import { Build } from './build.model.js';
+import { Vehicle } from './vehicle.model.js';
+import { KpiSnapshot } from './kpi-snapshot.model.js';
+
+const MONGO_URI =
+  process.env.MONGO_URI ??
+  'mongodb://nvidopia:nvidopia_dev@localhost:27017/nvidopia?authSource=admin';
+
+function daysAgo(n: number): Date {
+  const d = new Date();
+  d.setDate(d.getDate() - n);
+  return d;
+}
+
+async function seed(): Promise<void> {
+  await mongoose.connect(MONGO_URI);
+  console.log('[seed] Connected to MongoDB');
+
+  // Drop existing collections for idempotent re-seeding
+  const collections = [
+    'projects', 'tasks', 'runs', 'issues', 'issuestatetransitions',
+    'requirements', 'commits', 'builds', 'vehicles', 'kpisnapshots',
+  ];
+  for (const name of collections) {
+    try { await mongoose.connection.db!.dropCollection(name); } catch { /* may not exist */ }
+  }
+  console.log('[seed] Cleared existing collections');
+
+  // -------------------------------------------------------------------------
+  // Projects (2)
+  // -------------------------------------------------------------------------
+  const projects = await Project.insertMany([
+    {
+      project_id: 'PROJ-001',
+      name: 'V2.0 Urban Pilot',
+      vehicle_platform: 'ORIN-X',
+      soc_architecture: 'dual-orin-x',
+      sensor_suite_version: 'SS-4.2',
+      software_baseline_version: 'v2.0.0-rc3',
+      target_mileage_km: 500_000,
+      start_date: daysAgo(90),
+      status: 'Active',
+    },
+    {
+      project_id: 'PROJ-002',
+      name: 'V1.5 Highway Assist',
+      vehicle_platform: 'ORIN',
+      soc_architecture: 'single-orin',
+      sensor_suite_version: 'SS-3.8',
+      software_baseline_version: 'v1.5.2',
+      target_mileage_km: 250_000,
+      start_date: daysAgo(180),
+      status: 'Active',
+    },
+  ]);
+  console.log(`[seed] Inserted ${projects.length} projects`);
+
+  // -------------------------------------------------------------------------
+  // Tasks (6)
+  // -------------------------------------------------------------------------
+  const tasks = await Task.insertMany([
+    {
+      task_id: 'TASK-001',
+      project_id: 'PROJ-001',
+      name: 'Urban Daily Regression',
+      task_type: 'Daily',
+      priority: 'High',
+      target_vehicle_count: 5,
+      execution_region: 'Shanghai-Pudong',
+      status: 'InProgress',
+    },
+    {
+      task_id: 'TASK-002',
+      project_id: 'PROJ-001',
+      name: 'Urban Smoke Test',
+      task_type: 'Smoke',
+      priority: 'Critical',
+      target_vehicle_count: 2,
+      execution_region: 'Shanghai-Pudong',
+      status: 'Completed',
+    },
+    {
+      task_id: 'TASK-003',
+      project_id: 'PROJ-001',
+      name: 'Urban Gray Box Validation',
+      task_type: 'Gray',
+      priority: 'Medium',
+      target_vehicle_count: 3,
+      execution_region: 'Beijing-Haidian',
+      status: 'Pending',
+    },
+    {
+      task_id: 'TASK-004',
+      project_id: 'PROJ-002',
+      name: 'Highway Freeze Qualification',
+      task_type: 'Freeze',
+      priority: 'Critical',
+      target_vehicle_count: 4,
+      execution_region: 'G2-Highway',
+      status: 'InProgress',
+    },
+    {
+      task_id: 'TASK-005',
+      project_id: 'PROJ-002',
+      name: 'Highway Retest Campaign',
+      task_type: 'Retest',
+      priority: 'High',
+      target_vehicle_count: 3,
+      execution_region: 'G15-Highway',
+      status: 'Pending',
+    },
+    {
+      task_id: 'TASK-006',
+      project_id: 'PROJ-002',
+      name: 'Highway Daily Mileage',
+      task_type: 'Daily',
+      priority: 'Medium',
+      target_vehicle_count: 5,
+      execution_region: 'G2-Highway',
+      status: 'InProgress',
+    },
+  ]);
+  console.log(`[seed] Inserted ${tasks.length} tasks`);
+
+  // -------------------------------------------------------------------------
+  // Vehicles (5)
+  // -------------------------------------------------------------------------
+  const vehicles = await Vehicle.insertMany([
+    {
+      vin: 'VIN-ORINX-001',
+      vehicle_platform: 'ORIN-X',
+      sensor_suite_version: 'SS-4.2',
+      soc_architecture: 'dual-orin-x',
+      current_status: 'Active',
+      last_heartbeat: daysAgo(0),
+      current_location: { lat: 31.2304, lng: 121.4737 },
+      fuel_or_battery_level: 82,
+      driving_mode: 'Autonomous',
+    },
+    {
+      vin: 'VIN-ORINX-002',
+      vehicle_platform: 'ORIN-X',
+      sensor_suite_version: 'SS-4.2',
+      soc_architecture: 'dual-orin-x',
+      current_status: 'Idle',
+      last_heartbeat: daysAgo(0),
+      current_location: { lat: 31.2397, lng: 121.4998 },
+      fuel_or_battery_level: 95,
+      driving_mode: 'Standby',
+    },
+    {
+      vin: 'VIN-ORIN-003',
+      vehicle_platform: 'ORIN',
+      sensor_suite_version: 'SS-3.8',
+      soc_architecture: 'single-orin',
+      current_status: 'Active',
+      last_heartbeat: daysAgo(0),
+      current_location: { lat: 39.9042, lng: 116.4074 },
+      fuel_or_battery_level: 67,
+      driving_mode: 'Autonomous',
+    },
+    {
+      vin: 'VIN-ORIN-004',
+      vehicle_platform: 'ORIN',
+      sensor_suite_version: 'SS-3.8',
+      soc_architecture: 'single-orin',
+      current_status: 'Maintenance',
+      last_heartbeat: daysAgo(2),
+      current_location: { lat: 39.9142, lng: 116.3974 },
+      fuel_or_battery_level: 45,
+      driving_mode: 'Manual',
+    },
+    {
+      vin: 'VIN-ORINX-005',
+      vehicle_platform: 'ORIN-X',
+      sensor_suite_version: 'SS-4.2',
+      soc_architecture: 'dual-orin-x',
+      current_status: 'Idle',
+      last_heartbeat: daysAgo(1),
+      current_location: { lat: 31.2244, lng: 121.4692 },
+      fuel_or_battery_level: 100,
+      driving_mode: 'Standby',
+    },
+  ]);
+  console.log(`[seed] Inserted ${vehicles.length} vehicles`);
+
+  // -------------------------------------------------------------------------
+  // Runs (10)
+  // -------------------------------------------------------------------------
+  const runs = await Run.insertMany([
+    { run_id: 'RUN-001', task_id: 'TASK-001', vehicle_vin: 'VIN-ORINX-001', driver_id: 'DRV-A', start_time: daysAgo(5), end_time: daysAgo(5), total_auto_mileage_km: 142.3, software_version_hash: 'abc1234', status: 'Completed' },
+    { run_id: 'RUN-002', task_id: 'TASK-001', vehicle_vin: 'VIN-ORINX-002', driver_id: 'DRV-B', start_time: daysAgo(4), end_time: daysAgo(4), total_auto_mileage_km: 98.7, software_version_hash: 'abc1234', status: 'Completed' },
+    { run_id: 'RUN-003', task_id: 'TASK-002', vehicle_vin: 'VIN-ORINX-001', driver_id: 'DRV-A', start_time: daysAgo(10), end_time: daysAgo(10), total_auto_mileage_km: 55.0, software_version_hash: 'abc1234', status: 'Completed' },
+    { run_id: 'RUN-004', task_id: 'TASK-002', vehicle_vin: 'VIN-ORINX-005', driver_id: 'DRV-C', start_time: daysAgo(10), end_time: daysAgo(10), total_auto_mileage_km: 62.1, software_version_hash: 'abc1234', status: 'Completed' },
+    { run_id: 'RUN-005', task_id: 'TASK-004', vehicle_vin: 'VIN-ORIN-003', driver_id: 'DRV-D', start_time: daysAgo(7), end_time: daysAgo(7), total_auto_mileage_km: 210.5, software_version_hash: 'def5678', status: 'Completed' },
+    { run_id: 'RUN-006', task_id: 'TASK-004', vehicle_vin: 'VIN-ORIN-004', driver_id: 'DRV-E', start_time: daysAgo(6), end_time: daysAgo(6), total_auto_mileage_km: 185.2, software_version_hash: 'def5678', status: 'Completed' },
+    { run_id: 'RUN-007', task_id: 'TASK-006', vehicle_vin: 'VIN-ORIN-003', driver_id: 'DRV-D', start_time: daysAgo(3), end_time: daysAgo(3), total_auto_mileage_km: 320.0, software_version_hash: 'def5678', status: 'Completed' },
+    { run_id: 'RUN-008', task_id: 'TASK-001', vehicle_vin: 'VIN-ORINX-001', driver_id: 'DRV-A', start_time: daysAgo(1), total_auto_mileage_km: 45.0, software_version_hash: 'abc1234', status: 'Active' },
+    { run_id: 'RUN-009', task_id: 'TASK-006', vehicle_vin: 'VIN-ORIN-003', driver_id: 'DRV-D', start_time: daysAgo(1), total_auto_mileage_km: 78.3, software_version_hash: 'def5678', status: 'Active' },
+    { run_id: 'RUN-010', task_id: 'TASK-004', vehicle_vin: 'VIN-ORIN-003', driver_id: 'DRV-D', start_time: daysAgo(14), end_time: daysAgo(14), total_auto_mileage_km: 195.0, software_version_hash: 'def5678', status: 'Completed' },
+  ]);
+  console.log(`[seed] Inserted ${runs.length} runs`);
+
+  // -------------------------------------------------------------------------
+  // Requirements (3) — HARA-derived safety requirements
+  // -------------------------------------------------------------------------
+  const requirements = await Requirement.insertMany([
+    {
+      req_id: 'REQ-HARA-001',
+      asil_level: 'D',
+      description: 'The ADS shall detect stationary obstacles within 150m at all speeds up to 120km/h and initiate braking to avoid collision.',
+      source_system: 'DOORS',
+      external_id: 'HARA-SG-042',
+    },
+    {
+      req_id: 'REQ-HARA-002',
+      asil_level: 'C',
+      description: 'Lane-keeping assist shall maintain lateral position within 0.3m of lane center on highway curves with radius >= 250m.',
+      source_system: 'DOORS',
+      external_id: 'HARA-SG-078',
+    },
+    {
+      req_id: 'REQ-HARA-003',
+      asil_level: 'B',
+      description: 'The perception module shall classify vulnerable road users (pedestrians, cyclists) with >= 99.5% recall at distances up to 80m.',
+      source_system: 'DOORS',
+      external_id: 'HARA-SG-113',
+    },
+  ]);
+  console.log(`[seed] Inserted ${requirements.length} requirements`);
+
+  // -------------------------------------------------------------------------
+  // Commits (5) — linked to requirements and issues
+  // -------------------------------------------------------------------------
+  const commits = await Commit.insertMany([
+    {
+      commit_hash: 'abc1234',
+      message: 'feat(perception): improve obstacle detection recall for stationary objects',
+      author: 'alice@nvidopia.dev',
+      branch: 'main',
+      linked_req_ids: ['REQ-HARA-001', 'REQ-HARA-003'],
+      linked_issue_ids: ['ISS-001', 'ISS-003'],
+      created_at: daysAgo(30),
+    },
+    {
+      commit_hash: 'def5678',
+      message: 'fix(planning): correct lane-keeping PID gains for tight highway curves',
+      author: 'bob@nvidopia.dev',
+      branch: 'main',
+      linked_req_ids: ['REQ-HARA-002'],
+      linked_issue_ids: ['ISS-005'],
+      created_at: daysAgo(25),
+    },
+    {
+      commit_hash: 'ghi9012',
+      message: 'refactor(prediction): unify trajectory prediction for VRU and vehicles',
+      author: 'charlie@nvidopia.dev',
+      branch: 'feature/vru-prediction',
+      linked_req_ids: ['REQ-HARA-003'],
+      linked_issue_ids: [],
+      created_at: daysAgo(20),
+    },
+    {
+      commit_hash: 'jkl3456',
+      message: 'fix(chassis): increase brake actuator response timeout for emergency stops',
+      author: 'alice@nvidopia.dev',
+      branch: 'main',
+      linked_req_ids: ['REQ-HARA-001'],
+      linked_issue_ids: ['ISS-007', 'ISS-010'],
+      created_at: daysAgo(15),
+    },
+    {
+      commit_hash: 'mno7890',
+      message: 'test(regression): add coverage for night-time pedestrian detection edge cases',
+      author: 'diana@nvidopia.dev',
+      branch: 'main',
+      linked_req_ids: ['REQ-HARA-003'],
+      linked_issue_ids: ['ISS-012'],
+      created_at: daysAgo(10),
+    },
+  ]);
+  console.log(`[seed] Inserted ${commits.length} commits`);
+
+  // -------------------------------------------------------------------------
+  // Builds (2)
+  // -------------------------------------------------------------------------
+  const builds = await Build.insertMany([
+    {
+      build_hash: 'BUILD-A001',
+      version_tag: 'v2.0.0-rc3',
+      commit_hashes: ['abc1234', 'ghi9012', 'jkl3456', 'mno7890'],
+      build_time: daysAgo(12),
+    },
+    {
+      build_hash: 'BUILD-B001',
+      version_tag: 'v1.5.2',
+      commit_hashes: ['def5678', 'jkl3456'],
+      build_time: daysAgo(22),
+    },
+  ]);
+  console.log(`[seed] Inserted ${builds.length} builds`);
+
+  // -------------------------------------------------------------------------
+  // Issues (20)
+  // -------------------------------------------------------------------------
+  const issues = await Issue.insertMany([
+    { issue_id: 'ISS-001', run_id: 'RUN-001', trigger_timestamp: daysAgo(5), gps_coordinates: { lat: 31.230, lng: 121.474 }, category: 'Perception', severity: 'High', takeover_type: 'SystemFault', description: 'Missed detection of parked truck partially occluded by tree canopy', status: 'Fixed', assigned_to: 'alice@nvidopia.dev', assigned_module: 'perception', triage_mode: 'manual' },
+    { issue_id: 'ISS-002', run_id: 'RUN-001', trigger_timestamp: daysAgo(5), gps_coordinates: { lat: 31.231, lng: 121.475 }, category: 'Planning', severity: 'Medium', description: 'Unnecessary lane change triggered near intersection', status: 'InProgress', assigned_to: 'bob@nvidopia.dev', assigned_module: 'planning', triage_mode: 'manual' },
+    { issue_id: 'ISS-003', run_id: 'RUN-002', trigger_timestamp: daysAgo(4), gps_coordinates: { lat: 31.240, lng: 121.500 }, category: 'Perception', severity: 'Blocker', takeover_type: 'SystemFault', description: 'False positive ghost object on empty road segment — caused emergency brake', status: 'Closed', assigned_to: 'alice@nvidopia.dev', assigned_module: 'perception', triage_mode: 'manual' },
+    { issue_id: 'ISS-004', run_id: 'RUN-002', trigger_timestamp: daysAgo(4), category: 'System', severity: 'Low', description: 'CAN bus heartbeat delay exceeded 200ms threshold briefly', status: 'Rejected', rejection_reason: 'Transient spike within acceptable limits', triage_mode: 'manual' },
+    { issue_id: 'ISS-005', run_id: 'RUN-003', trigger_timestamp: daysAgo(10), gps_coordinates: { lat: 31.235, lng: 121.480 }, category: 'Planning', severity: 'High', takeover_type: 'Manual', description: 'Vehicle oscillated within lane on sharp urban curve (r < 50m)', status: 'Fixed', assigned_to: 'bob@nvidopia.dev', assigned_module: 'planning', fix_commit_id: 'def5678', triage_mode: 'manual' },
+    { issue_id: 'ISS-006', run_id: 'RUN-003', trigger_timestamp: daysAgo(10), category: 'Prediction', severity: 'Medium', description: 'Predicted trajectory of cyclist did not account for sudden turn', status: 'Triage', triage_mode: 'manual' },
+    { issue_id: 'ISS-007', run_id: 'RUN-004', trigger_timestamp: daysAgo(10), gps_coordinates: { lat: 31.225, lng: 121.469 }, category: 'Chassis', severity: 'Blocker', takeover_type: 'SystemFault', description: 'Brake actuator response exceeded 150ms SLA during AEB event', status: 'RegressionTracking', assigned_to: 'alice@nvidopia.dev', assigned_module: 'chassis', fix_commit_id: 'jkl3456', triage_mode: 'manual' },
+    { issue_id: 'ISS-008', run_id: 'RUN-005', trigger_timestamp: daysAgo(7), gps_coordinates: { lat: 39.905, lng: 116.408 }, category: 'Perception', severity: 'Medium', takeover_type: 'Manual', description: 'Lidar point cloud dropout under heavy rain — 3 consecutive frames', status: 'Assigned', assigned_to: 'charlie@nvidopia.dev', assigned_module: 'perception', triage_mode: 'manual' },
+    { issue_id: 'ISS-009', run_id: 'RUN-005', trigger_timestamp: daysAgo(7), category: 'Planning', severity: 'Low', description: 'Overly conservative merge gap acceptance on highway on-ramp', status: 'New', triage_mode: 'manual' },
+    { issue_id: 'ISS-010', run_id: 'RUN-005', trigger_timestamp: daysAgo(7), gps_coordinates: { lat: 39.904, lng: 116.407 }, category: 'Chassis', severity: 'High', takeover_type: 'SystemFault', description: 'Steering torque sensor drift beyond calibration tolerance', status: 'Fixed', assigned_to: 'alice@nvidopia.dev', assigned_module: 'chassis', fix_commit_id: 'jkl3456', triage_mode: 'manual' },
+    { issue_id: 'ISS-011', run_id: 'RUN-006', trigger_timestamp: daysAgo(6), category: 'System', severity: 'Medium', description: 'GPU thermal throttling observed above 85°C during sustained inference', status: 'InProgress', assigned_to: 'diana@nvidopia.dev', assigned_module: 'system', triage_mode: 'manual' },
+    { issue_id: 'ISS-012', run_id: 'RUN-006', trigger_timestamp: daysAgo(6), gps_coordinates: { lat: 39.915, lng: 116.398 }, category: 'Perception', severity: 'High', takeover_type: 'Manual', description: 'Night-time pedestrian missed at crosswalk under broken streetlight', status: 'Closed', assigned_to: 'diana@nvidopia.dev', assigned_module: 'perception', fix_commit_id: 'mno7890', triage_mode: 'manual' },
+    { issue_id: 'ISS-013', run_id: 'RUN-007', trigger_timestamp: daysAgo(3), category: 'Prediction', severity: 'Medium', description: 'Motorcycle cut-in prediction latency exceeded 300ms', status: 'Assigned', assigned_to: 'charlie@nvidopia.dev', assigned_module: 'prediction', triage_mode: 'manual' },
+    { issue_id: 'ISS-014', run_id: 'RUN-007', trigger_timestamp: daysAgo(3), gps_coordinates: { lat: 39.906, lng: 116.410 }, category: 'Planning', severity: 'Low', description: 'Unnecessary speed reduction when passing large signage near highway shoulder', status: 'New', triage_mode: 'manual' },
+    { issue_id: 'ISS-015', run_id: 'RUN-007', trigger_timestamp: daysAgo(3), category: 'Other', severity: 'Low', description: 'Map data mismatch: new construction zone not reflected in HD map', status: 'Triage', triage_mode: 'manual' },
+    { issue_id: 'ISS-016', run_id: 'RUN-008', trigger_timestamp: daysAgo(1), gps_coordinates: { lat: 31.228, lng: 121.472 }, category: 'Perception', severity: 'High', takeover_type: 'SystemFault', description: 'Camera exposure saturation in low-sun glare conditions at dusk', status: 'New', triage_mode: 'manual' },
+    { issue_id: 'ISS-017', run_id: 'RUN-008', trigger_timestamp: daysAgo(1), category: 'System', severity: 'Medium', description: 'Logging pipeline dropped telemetry packets under high throughput', status: 'New', triage_mode: 'manual' },
+    { issue_id: 'ISS-018', run_id: 'RUN-009', trigger_timestamp: daysAgo(1), gps_coordinates: { lat: 39.907, lng: 116.411 }, category: 'Prediction', severity: 'High', takeover_type: 'Manual', description: 'Adjacent vehicle lane-change intent not detected until committed', status: 'Triage', triage_mode: 'manual' },
+    { issue_id: 'ISS-019', run_id: 'RUN-010', trigger_timestamp: daysAgo(14), category: 'Planning', severity: 'Medium', description: 'Route replanning loop between two equally-weighted alternatives', status: 'Closed', assigned_to: 'bob@nvidopia.dev', assigned_module: 'planning', triage_mode: 'manual' },
+    { issue_id: 'ISS-020', run_id: 'RUN-010', trigger_timestamp: daysAgo(14), gps_coordinates: { lat: 39.903, lng: 116.405 }, category: 'Perception', severity: 'Blocker', takeover_type: 'SystemFault', description: 'Lidar-camera fusion timestamp misalignment (>50ms delta)', status: 'Reopened', assigned_to: 'charlie@nvidopia.dev', assigned_module: 'perception', triage_mode: 'manual' },
+  ]);
+  console.log(`[seed] Inserted ${issues.length} issues`);
+
+  // -------------------------------------------------------------------------
+  // KPI Snapshots (sample pre-computed values)
+  // -------------------------------------------------------------------------
+  const kpiSnapshots = await KpiSnapshot.insertMany([
+    { snapshot_id: 'KPI-001', metric_name: 'MPI', project_id: 'PROJ-001', value: 71.5, unit: 'km/intervention', window_start: daysAgo(14), window_end: daysAgo(0) },
+    { snapshot_id: 'KPI-002', metric_name: 'MTTR', project_id: 'PROJ-001', value: 18.4, unit: 'hours', window_start: daysAgo(14), window_end: daysAgo(0) },
+    { snapshot_id: 'KPI-003', metric_name: 'MPI', project_id: 'PROJ-002', value: 132.8, unit: 'km/intervention', window_start: daysAgo(14), window_end: daysAgo(0) },
+    { snapshot_id: 'KPI-004', metric_name: 'FleetUtilization', project_id: 'PROJ-001', value: 68.2, unit: 'percent', window_start: daysAgo(7), window_end: daysAgo(0) },
+    { snapshot_id: 'KPI-005', metric_name: 'IssueConvergence', project_id: 'PROJ-002', value: 0.85, unit: 'ratio', window_start: daysAgo(14), window_end: daysAgo(0) },
+  ]);
+  console.log(`[seed] Inserted ${kpiSnapshots.length} KPI snapshots`);
+
+  // -------------------------------------------------------------------------
+  // Issue State Transitions (sample audit trail)
+  // -------------------------------------------------------------------------
+  const transitions = await IssueStateTransition.insertMany([
+    { transition_id: 'TRN-001', issue_id: 'ISS-001', from_status: 'New', to_status: 'Triage', triggered_by: 'system', reason: 'Auto-triaged based on severity' },
+    { transition_id: 'TRN-002', issue_id: 'ISS-001', from_status: 'Triage', to_status: 'Assigned', triggered_by: 'lead@nvidopia.dev', reason: 'Triaged: assigned to alice@nvidopia.dev (perception)' },
+    { transition_id: 'TRN-003', issue_id: 'ISS-001', from_status: 'Assigned', to_status: 'InProgress', triggered_by: 'alice@nvidopia.dev' },
+    { transition_id: 'TRN-004', issue_id: 'ISS-001', from_status: 'InProgress', to_status: 'Fixed', triggered_by: 'alice@nvidopia.dev', reason: 'Fixed in commit abc1234' },
+    { transition_id: 'TRN-005', issue_id: 'ISS-003', from_status: 'New', to_status: 'Triage', triggered_by: 'system' },
+    { transition_id: 'TRN-006', issue_id: 'ISS-003', from_status: 'Triage', to_status: 'Assigned', triggered_by: 'lead@nvidopia.dev' },
+    { transition_id: 'TRN-007', issue_id: 'ISS-003', from_status: 'Assigned', to_status: 'InProgress', triggered_by: 'alice@nvidopia.dev' },
+    { transition_id: 'TRN-008', issue_id: 'ISS-003', from_status: 'InProgress', to_status: 'Fixed', triggered_by: 'alice@nvidopia.dev' },
+    { transition_id: 'TRN-009', issue_id: 'ISS-003', from_status: 'Fixed', to_status: 'RegressionTracking', triggered_by: 'system' },
+    { transition_id: 'TRN-010', issue_id: 'ISS-003', from_status: 'RegressionTracking', to_status: 'Closed', triggered_by: 'lead@nvidopia.dev', reason: 'Regression pass confirmed in RUN-004' },
+  ]);
+  console.log(`[seed] Inserted ${transitions.length} issue state transitions`);
+
+  console.log('\n[seed] Seeding complete!');
+  console.log('  - 2 Projects');
+  console.log('  - 6 Tasks');
+  console.log('  - 5 Vehicles');
+  console.log('  - 10 Runs');
+  console.log('  - 20 Issues');
+  console.log('  - 3 Requirements');
+  console.log('  - 5 Commits');
+  console.log('  - 2 Builds');
+  console.log('  - 5 KPI Snapshots');
+  console.log('  - 10 Issue State Transitions');
+
+  await mongoose.disconnect();
+  console.log('[seed] Disconnected from MongoDB');
+}
+
+seed().catch((err) => {
+  console.error('[seed] Fatal error:', err);
+  process.exit(1);
+});
