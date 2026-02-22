@@ -1,5 +1,5 @@
 import { Kafka, Consumer, EachMessagePayload } from 'kafkajs';
-import { Vehicle } from '../models/vehicle.model.js';
+import { Vehicle } from '@nvidopia/data-models';
 
 const TOPIC = 'ad.vehicle.status.tracking';
 const GROUP_ID = 'fleet-manager-status';
@@ -15,7 +15,6 @@ export async function startVehicleStatusConsumer(kafka: Kafka): Promise<Consumer
 
       try {
         const payload = JSON.parse(message.value.toString());
-
         const update: Record<string, unknown> = {};
         if (payload.current_status) update.current_status = payload.current_status;
         if (payload.current_location) update.current_location = payload.current_location;
