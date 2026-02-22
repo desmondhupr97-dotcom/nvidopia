@@ -1,7 +1,9 @@
 import { Router, Request, Response } from 'express';
+import express from 'express';
 import { getProducer } from '../kafka.js';
 
 const router = Router();
+router.use(express.json({ limit: '1mb' }));
 
 router.post('/api/ingest/telemetry', async (req: Request, res: Response) => {
   const { vehicle_id, ...rest } = req.body ?? {};

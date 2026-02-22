@@ -18,7 +18,10 @@ const app = express();
 
 app.use(cors());
 app.use(helmet());
-app.use(express.json({ limit: '1mb' }));
+// NOTE: express.json() is intentionally NOT applied globally.
+// It consumes the request body stream, which breaks http-proxy-middleware
+// forwarding for POST/PUT. Body parsing is applied only to routes that
+// need req.body (e.g. ingest routes).
 
 // Trace-ID injection
 app.use((req: Request, res: Response, next: NextFunction) => {
