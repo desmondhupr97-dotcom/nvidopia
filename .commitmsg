@@ -1,5 +1,6 @@
-docs: add Windows/macOS instructions, replace docker-compose with docker compose V2
+docs: add Linux (Ubuntu) platform instructions to README_zh and TESTME_zh
 
-- README_zh.md: add platform-specific install/run instructions for Windows (PowerShell) and macOS
-- TESTME_zh.md: add Windows PowerShell curl.exe notes, Git Bash/WSL guidance for bash scripts
-- Replace all docker-compose with docker compose (V2 plugin syntax) across all docs and package.json scripts
+- Add Ubuntu install commands (Node.js via NodeSource, docker.io, docker-compose-v2, git)
+- Add Linux-specific notes: docker group permissions, docker compose without sudo
+- Extend all platform tables to include Linux column
+- Add Linux docker permission troubleshooting in TESTME FAQ

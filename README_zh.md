@@ -51,13 +51,14 @@
 
 ## 前置要求
 
-| 工具 | 版本 | Windows 安装方式 | macOS 安装方式 |
-|------|------|------------------|----------------|
-| Node.js | >= 20 LTS | [nodejs.org](https://nodejs.org) 下载 .msi 安装包，或 `winget install OpenJS.NodeJS.LTS` | `brew install node@20` |
-| Docker Desktop | >= 24 | [Docker Desktop for Windows](https://docs.docker.com/desktop/install/windows-install/)（需开启 WSL2 或 Hyper-V） | `brew install --cask docker` 或从 [Docker Desktop for Mac](https://docs.docker.com/desktop/install/mac-install/) 下载 |
-| Git | >= 2.40 | [git-scm.com](https://git-scm.com/download/win) | `brew install git` |
+| 工具 | 版本 | Windows 安装方式 | macOS 安装方式 | Linux (Ubuntu) 安装方式 |
+|------|------|------------------|----------------|-------------------------|
+| Node.js | >= 20 LTS | [nodejs.org](https://nodejs.org) 下载 .msi，或 `winget install OpenJS.NodeJS.LTS` | `brew install node@20` | `curl -fsSL https://deb.nodesource.com/setup_20.x \| sudo -E bash - && sudo apt install -y nodejs` |
+| Docker | >= 24 | [Docker Desktop for Windows](https://docs.docker.com/desktop/install/windows-install/)（需开启 WSL2 或 Hyper-V） | `brew install --cask docker` 或 [Docker Desktop for Mac](https://docs.docker.com/desktop/install/mac-install/) | `sudo apt update && sudo apt install -y docker.io docker-compose-v2` |
+| Git | >= 2.40 | [git-scm.com](https://git-scm.com/download/win) | `brew install git` | `sudo apt install -y git` |
 
-> Docker Desktop 自带 `docker compose` V2 插件，无需额外安装。
+> - Windows / macOS：Docker Desktop 自带 `docker compose` V2 插件。
+> - Linux (Ubuntu)：安装 `docker-compose-v2` 包即可获得 `docker compose` 命令。安装后需将当前用户加入 docker 组：`sudo usermod -aG docker $USER`，然后重新登录。
 
 ---
 
@@ -65,7 +66,7 @@
 
 ### 方式一：Docker 全栈一键启动（推荐新手）
 
-适用于 Windows 和 macOS，只需安装好 Docker Desktop 即可。
+适用于 Windows、macOS 和 Linux，只需安装好 Docker 即可。
 
 ```bash
 # 1. 克隆仓库
@@ -94,9 +95,9 @@ docker compose -f infra/docker-compose.full.yml down
 
 ### 方式二：本地开发模式
 
-适合需要修改代码并实时调试的场景。以下分别给出 macOS 和 Windows 的操作步骤。
+适合需要修改代码并实时调试的场景。
 
-#### macOS / Linux
+#### macOS / Linux (Ubuntu)
 
 ```bash
 # 1. 克隆仓库
@@ -126,6 +127,8 @@ npm run dev -w services/traceability    # 追溯服务 :3004
 npm run dev -w services/kpi-engine      # KPI引擎 :3005
 npm run dev -w apps/frontend            # 前端 :5173
 ```
+
+> Linux 用户注意：如果 `docker compose` 命令提示权限不足，请确认已将当前用户加入 docker 组（见前置要求），或在命令前加 `sudo`。
 
 #### Windows (PowerShell)
 
@@ -158,7 +161,7 @@ npm run dev -w services/kpi-engine      # KPI引擎 :3005
 npm run dev -w apps/frontend            # 前端 :5173
 ```
 
-> Windows 上 `npm run dev` 等命令在 PowerShell 和 CMD 中均可运行，无需 Git Bash。
+> Windows 上 `npm run dev` 在 PowerShell 和 CMD 中均可运行，无需 Git Bash。
 
 所有后端服务使用 `tsx watch` 热重载，前端使用 Vite HMR。
 

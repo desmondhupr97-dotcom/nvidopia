@@ -1,25 +1,27 @@
 # TESTME - 本地测试指南
 
-本文档指导你如何在本地环境下验证 Nvidopia 各模块功能的正确性，同时覆盖 Windows 与 macOS 两种平台。
+本文档指导你如何在本地环境下验证 Nvidopia 各模块功能的正确性，覆盖 Windows、macOS 和 Linux (Ubuntu) 三种平台。
 
 ---
 
 ## 前置条件
 
-| 工具 | 版本要求 | Windows 检查 | macOS 检查 |
-|------|----------|-------------|------------|
-| Node.js | >= 20 | `node -v` | `node -v` |
-| Docker Desktop | >= 24（含 Compose V2） | `docker compose version` | `docker compose version` |
-| curl | 任意 | PowerShell 内置 `curl`（即 `Invoke-WebRequest`），或安装 [curl for Windows](https://curl.se/windows/) | 系统自带 |
-| bash | 任意 | Git Bash（随 Git for Windows 安装） 或 WSL | 系统自带 |
+| 工具 | 版本要求 | Windows 检查 | macOS 检查 | Linux (Ubuntu) 检查 |
+|------|----------|-------------|------------|---------------------|
+| Node.js | >= 20 | `node -v` | `node -v` | `node -v` |
+| Docker + Compose V2 | >= 24 | `docker compose version` | `docker compose version` | `docker compose version` |
+| curl | 任意 | PowerShell 内置 `curl`（即 `Invoke-WebRequest`），或安装 [curl for Windows](https://curl.se/windows/) | 系统自带 | 系统自带，或 `sudo apt install -y curl` |
+| bash | 任意 | Git Bash（随 Git for Windows 安装）或 WSL | 系统自带 | 系统自带 |
 
-> Windows 用户：下文中 `curl` 命令需在 **Git Bash** 或 **WSL** 中执行。如果在 PowerShell 中使用，请将 `curl` 替换为 `curl.exe`，否则会调用 PowerShell 内置的 `Invoke-WebRequest` 别名。
+**平台提示：**
+- **Windows**：`curl` 命令需在 **Git Bash** 或 **WSL** 中执行。如果在 PowerShell 中使用，请将 `curl` 替换为 `curl.exe`，否则会调用 `Invoke-WebRequest` 别名。
+- **Linux (Ubuntu)**：如果 `docker compose` 提示权限不足，请将当前用户加入 docker 组：`sudo usermod -aG docker $USER`，然后重新登录生效。
 
 ---
 
 ## 第一步：启动基础设施
 
-### 方式 A：Docker 全栈一键启动（Windows / macOS 通用）
+### 方式 A：Docker 全栈一键启动（Windows / macOS / Linux 通用）
 
 最简单的方式，所有服务一键拉起，无需本地安装 Node.js：
 
@@ -62,7 +64,7 @@ docker exec nvidopia-kafka kafka-topics --bootstrap-server localhost:9092 --list
 
 > 如果你使用了方式 A（Docker 全栈），跳过此步。
 
-### macOS / Linux
+### macOS / Linux (Ubuntu)
 
 ```bash
 npm install
@@ -102,7 +104,8 @@ npm run dev -w services/kpi-engine      # 窗口 6 — KPI :3005
 npm run dev -w apps/frontend            # 窗口 7 — 前端 :5173
 ```
 
-> Windows 上 `npm run dev` 在 PowerShell 和 CMD 中均可正常工作。
+> - Windows 上 `npm run dev` 在 PowerShell 和 CMD 中均可正常工作。
+> - Linux (Ubuntu) 操作步骤与 macOS 完全一致，使用上方 macOS / Linux 部分的命令即可。
 
 ---
 
@@ -122,7 +125,7 @@ npx tsx platform/data-models/src/seed.ts
 
 ## 第四步：服务健康检查
 
-### macOS / Linux / Git Bash
+### macOS / Linux (Ubuntu) / Git Bash
 
 ```bash
 curl http://localhost:3000/health    # 网关
@@ -150,7 +153,7 @@ curl.exe http://localhost:3005/health    # KPI 引擎
 
 ## 第五步：运行 E2E 冒烟测试脚本
 
-### macOS / Linux
+### macOS / Linux (Ubuntu)
 
 ```bash
 bash scripts/e2e-smoke.sh
@@ -193,7 +196,7 @@ bash scripts/e2e-smoke.sh
 
 ## 第六步：手动 API 测试
 
-以下 curl 示例在 macOS / Linux / Git Bash 中可直接使用。Windows PowerShell 用户请将 `curl` 替换为 `curl.exe`，并将单引号 `'...'` 替换为双引号 `"..."`（内部双引号用反引号 `` ` `` 转义）。
+以下 curl 示例在 macOS / Linux (Ubuntu) / Git Bash 中可直接使用。Windows PowerShell 用户请将 `curl` 替换为 `curl.exe`，并将单引号 `'...'` 替换为双引号 `"..."`（内部双引号用反引号 `` ` `` 转义）。
 
 ### 6.1 创建 Project
 
@@ -399,6 +402,18 @@ MONGO_URI=mongodb://nvidopia:nvidopia_dev@localhost:27017/nvidopia?authSource=ad
 ### 前端无法连接后端
 
 确认网关服务（端口 3000）正在运行，前端的 Vite 代理配置会将 `/api` 请求转发至 `http://localhost:3000`。
+
+### Linux (Ubuntu) 上 docker compose 权限不足
+
+将当前用户加入 docker 组后**重新登录**：
+
+```bash
+sudo usermod -aG docker $USER
+# 重新登录终端或执行：
+newgrp docker
+```
+
+验证：`docker compose version` 应正常输出版本号，无需 `sudo`。
 
 ### Windows 上 curl 命令输出乱码
 
