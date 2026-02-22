@@ -1,9 +1,10 @@
 import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { Card, Tabs, Input, Button, Timeline, Progress, Tag, Space, Spin, Empty } from 'antd';
+import { Card, Tabs, Input, Button, Timeline, Progress, Tag, Space, Empty } from 'antd';
 import { SearchOutlined } from '@ant-design/icons';
 import { GitBranch } from 'lucide-react';
 import { traceForward, traceBackward, getCoverage } from '../api/client';
+import { FullPageSpinner } from '../components/shared';
 
 type Tab = 'forward' | 'backward';
 
@@ -76,17 +77,17 @@ export default function TraceabilityPage() {
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: 20 }}>
             <span style={{ fontFamily: "'Orbitron', sans-serif", fontSize: 32, fontWeight: 700, color: '#6366f1' }}>
-              {coverage.coverage_percent != null ? `${Number(coverage.coverage_percent).toFixed(1)}%` : '—'}
+              {coverage.percentage != null ? `${Number(coverage.percentage).toFixed(1)}%` : '—'}
             </span>
             <div style={{ flex: 1 }}>
               <Progress
-                percent={Number(coverage.coverage_percent ?? 0)}
+                percent={Number(coverage.percentage ?? 0)}
                 showInfo={false}
                 strokeColor={{ from: '#6366f1', to: '#8b5cf6' }}
               />
             </div>
             <span style={{ fontSize: 12, color: 'var(--text-muted)', whiteSpace: 'nowrap' }}>
-              {coverage.verified ?? 0} / {coverage.total_requirements ?? 0} verified
+              {coverage.covered ?? 0} / {coverage.total ?? 0} verified
             </span>
           </div>
         </Card>
@@ -124,11 +125,7 @@ export default function TraceabilityPage() {
       </Space.Compact>
 
       {/* Loading */}
-      {isLoading && (
-        <div style={{ display: 'flex', justifyContent: 'center', padding: 48 }}>
-          <Spin size="large" />
-        </div>
-      )}
+      {isLoading && <FullPageSpinner />}
 
       {/* Results */}
       {traceData && traceData.nodes && traceData.nodes.length > 0 && (

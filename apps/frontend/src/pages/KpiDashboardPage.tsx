@@ -113,9 +113,9 @@ export default function KpiDashboardPage() {
             placeholder="Select Project"
             style={{ width: 200 }}
             allowClear
-            options={projectsData?.map((p: Record<string, unknown>) => ({
-              value: p.id as string,
-              label: p.name as string,
+            options={projectsData?.map((p) => ({
+              value: p.id,
+              label: p.name,
             }))}
           />
           <input

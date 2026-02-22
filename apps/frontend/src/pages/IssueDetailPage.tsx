@@ -110,60 +110,60 @@ export default function IssueDetailPage() {
 
         <Descriptions column={{ xs: 1, sm: 2, lg: 4 }} size="small" colon={false}>
           <Descriptions.Item label="Category">{issue.category ?? '—'}</Descriptions.Item>
-          <Descriptions.Item label="Takeover Type">{issue.takeover_type ?? '—'}</Descriptions.Item>
+          <Descriptions.Item label="Takeover Type">{issue.takeoverType ?? '—'}</Descriptions.Item>
           <Descriptions.Item label="Assignee">{issue.assignee ?? '—'}</Descriptions.Item>
           <Descriptions.Item label="Module">{issue.module ?? '—'}</Descriptions.Item>
-          {(issue.gps_lat != null && issue.gps_lng != null) && (
+          {(issue.gpsLat != null && issue.gpsLng != null) && (
             <Descriptions.Item label={<><EnvironmentOutlined /> GPS</>}>
-              <code>{Number(issue.gps_lat).toFixed(6)}, {Number(issue.gps_lng).toFixed(6)}</code>
+              <code>{Number(issue.gpsLat).toFixed(6)}, {Number(issue.gpsLng).toFixed(6)}</code>
             </Descriptions.Item>
           )}
-          {issue.data_snapshot_uri && (
+          {issue.dataSnapshotUri && (
             <Descriptions.Item label="Snapshot">
-              <a href={issue.data_snapshot_uri} target="_blank" rel="noopener noreferrer" style={{ color: '#818cf8' }}>
+              <a href={issue.dataSnapshotUri} target="_blank" rel="noopener noreferrer" style={{ color: '#818cf8' }}>
                 View <LinkOutlined />
               </a>
             </Descriptions.Item>
           )}
           <Descriptions.Item label="Run">
-            <code>{issue.run_id ? (issue.run_id as string).slice(0, 8) : '—'}</code>
+            <code>{issue.runId ? issue.runId.slice(0, 8) : '—'}</code>
           </Descriptions.Item>
           <Descriptions.Item label="Triggered At">
-            {issue.trigger_timestamp ? new Date(issue.trigger_timestamp).toLocaleString() : '—'}
+            {issue.triggerTimestamp ? new Date(issue.triggerTimestamp).toLocaleString() : '—'}
           </Descriptions.Item>
         </Descriptions>
 
-        {issue.fault_codes && issue.fault_codes.length > 0 && (
+        {issue.faultCodes && issue.faultCodes.length > 0 && (
           <div style={{ marginTop: 16 }}>
             <div style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase', marginBottom: 8 }}>Fault Codes</div>
             <Space wrap>
-              {issue.fault_codes.map((code: string) => (
+              {issue.faultCodes.map((code) => (
                 <Tag key={code} color="red" style={{ fontFamily: 'monospace' }}>{code}</Tag>
               ))}
             </Space>
           </div>
         )}
 
-        {issue.environment_tags && issue.environment_tags.length > 0 && (
+        {issue.environmentTags && issue.environmentTags.length > 0 && (
           <div style={{ marginTop: 12 }}>
             <div style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase', marginBottom: 8 }}>Environment Tags</div>
             <Space wrap>
-              {issue.environment_tags.map((tag: string) => (
+              {issue.environmentTags.map((tag) => (
                 <Tag key={tag}>{tag}</Tag>
               ))}
             </Space>
           </div>
         )}
 
-        {(issue.triage_mode || issue.triage_hint) && (
+        {(issue.triageMode || issue.triageHint) && (
           <Alert
             type="warning"
             style={{ marginTop: 16, borderRadius: 10 }}
             message="Triage Hints"
             description={
               <Space direction="vertical" size={4}>
-                {issue.triage_mode && <span>Mode: <strong>{issue.triage_mode}</strong></span>}
-                {issue.triage_hint && <span>Hint: <strong>{issue.triage_hint}</strong></span>}
+                {issue.triageMode && <span>Mode: <strong>{issue.triageMode}</strong></span>}
+                {issue.triageHint && <span>Hint: <strong>{issue.triageHint}</strong></span>}
               </Space>
             }
           />
@@ -231,27 +231,27 @@ export default function IssueDetailPage() {
           >
             {transitions?.items && transitions.items.length > 0 ? (
               <Timeline
-                items={transitions.items.map((t: Record<string, unknown>) => ({
+                items={transitions.items.map((t) => ({
                   dot: <ClockCircleOutlined style={{ color: '#6366f1' }} />,
                   children: (
                     <div>
                       <Space size={4}>
-                        <Tag color={STATUS_COLOR[t.from_status as IssueStatus] ?? 'default'} style={{ fontSize: 11 }}>
-                          {t.from_status as string}
+                        <Tag color={STATUS_COLOR[t.fromStatus] ?? 'default'} style={{ fontSize: 11 }}>
+                          {t.fromStatus}
                         </Tag>
                         <span style={{ color: 'var(--text-muted)' }}>&rarr;</span>
-                        <Tag color={STATUS_COLOR[t.to_status as IssueStatus] ?? 'default'} style={{ fontSize: 11 }}>
-                          {t.to_status as string}
+                        <Tag color={STATUS_COLOR[t.toStatus] ?? 'default'} style={{ fontSize: 11 }}>
+                          {t.toStatus}
                         </Tag>
                       </Space>
                       <div style={{ fontSize: 12, color: 'var(--text-muted)', marginTop: 4 }}>
-                        by <span style={{ color: 'var(--text-secondary)' }}>{t.triggered_by as string}</span>
+                        by <span style={{ color: 'var(--text-secondary)' }}>{t.triggeredBy}</span>
                         {' at '}
-                        {t.transitioned_at ? new Date(t.transitioned_at as string).toLocaleString() : '—'}
+                        {t.transitionedAt ? new Date(t.transitionedAt).toLocaleString() : '—'}
                       </div>
-                      {Boolean(t.reason) && (
+                      {t.reason && (
                         <div style={{ fontSize: 12, color: 'var(--text-muted)', fontStyle: 'italic', marginTop: 2 }}>
-                          &ldquo;{String(t.reason)}&rdquo;
+                          &ldquo;{t.reason}&rdquo;
                         </div>
                       )}
                     </div>
