@@ -1,8 +1,9 @@
-feat(phase2): implement all 6 microservices with Kafka consumers and REST APIs
+feat(phase3): implement frontend SPA with all pages, Dashboard-as-Code, and placeholder pages
 
-- BFF Gateway: JWT auth, rate limiting, Kafka ingestion, reverse proxy routing
-- Release Manager: Project/Task CRUD, release gate advancement
-- Fleet Manager: Vehicle status/telemetry Kafka consumers, vehicle-task matching, Run lifecycle
-- Issue Workflow: Issue state machine engine, audit trail, manual triage, Kafka consumer, auto-triage stub (501)
-- Traceability: Forward/backward/impact trace via MongoDB aggregation pipelines, coverage stats
-- KPI Engine: MPI, MTTR, regression pass rate, fleet utilization, issue convergence APIs
+- React + TypeScript + Vite frontend with modern dark sidebar layout
+- Core pages: Projects, Tasks, Runs, Issues (with state machine transitions), KPI Dashboard, Traceability
+- Dashboard-as-Code renderer driven by JSON config for dynamic KPI panels
+- Typed API client with full coverage of all backend endpoints
+- Issue detail page with valid state transitions and audit trail
+- AutoTriage and Simulation placeholder pages with "Coming Soon" status
+- Global CSS design system with status badges, cards, tables, responsive breakpoints
