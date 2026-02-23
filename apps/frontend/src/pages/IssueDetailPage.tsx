@@ -168,7 +168,7 @@ export default function IssueDetailPage() {
           <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
             <AlertTriangle size={24} style={{ color: '#6366f1' }} />
             <div>
-              <h1 style={{ fontFamily: "'Orbitron', 'Exo 2', sans-serif", fontSize: '1.25rem', fontWeight: 700, color: 'var(--text-primary)', margin: 0 }}>
+              <h1 style={{ fontFamily: "var(--font-mono)", fontSize: '1.15rem', fontWeight: 700, color: 'var(--text-primary)', margin: 0, textTransform: 'uppercase', letterSpacing: '0.02em' }}>
                 Issue {(issue.id as string).slice(0, 12)}
               </h1>
               <code style={{ fontSize: 12, color: 'var(--text-muted)' }}>{issue.id}</code>

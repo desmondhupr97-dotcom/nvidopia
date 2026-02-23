@@ -17,7 +17,7 @@ import {
 
 type MenuItem = Required<MenuProps>['items'][number];
 
-const iconStyle = { width: 16, height: 16, strokeWidth: 1.8 };
+const iconStyle = { width: 14, height: 14, strokeWidth: 1.8 };
 
 const mainItems: MenuItem[] = [
   { key: '/projects', icon: <FolderKanban {...iconStyle} />, label: 'Projects' },
@@ -43,29 +43,29 @@ const secondaryItems: MenuItem[] = [
     key: '/auto-triage',
     icon: <Sparkles {...iconStyle} />,
     label: (
-      <span style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+      <span style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
         Auto-Triage
-        <Badge count="SOON" style={{ backgroundColor: 'rgba(0,240,255,0.12)', color: '#00f0ff', fontSize: 9, fontWeight: 700, boxShadow: 'none', letterSpacing: '0.06em', fontFamily: "'Share Tech Mono', monospace" }} />
+        <Badge count="WIP" style={{ backgroundColor: 'rgba(0,255,65,0.1)', color: '#00FF41', fontSize: 8, fontWeight: 600, boxShadow: 'none', letterSpacing: '0.04em', fontFamily: "var(--font-mono)" }} />
       </span>
     ),
   },
 ];
 
 const sectionLabelStyle: React.CSSProperties = {
-  padding: '4px 24px 4px',
-  fontSize: 10,
-  color: '#00f0ff',
+  padding: '2px 20px 2px',
+  fontSize: 9,
+  color: '#00FF41',
   textTransform: 'uppercase',
-  letterSpacing: '0.12em',
-  fontFamily: "'Rajdhani', 'Orbitron', monospace",
-  fontWeight: 700,
-  opacity: 0.6,
+  letterSpacing: '0.1em',
+  fontFamily: "var(--font-mono)",
+  fontWeight: 600,
+  opacity: 0.5,
 };
 
 const dividerStyle: React.CSSProperties = {
   height: 1,
-  background: 'linear-gradient(90deg, transparent, rgba(0,240,255,0.15), transparent)',
-  margin: '12px 20px',
+  background: 'rgba(0,255,65,0.06)',
+  margin: '8px 16px',
 };
 
 export default function Sidebar() {
@@ -85,10 +85,10 @@ export default function Sidebar() {
     <div className="glass-sidebar" style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
       <div className="sidebar-brand">
         <div className="sidebar-logo">N</div>
-        <span className="sidebar-title glitch-text">NVIDOPIA</span>
+        <span className="sidebar-title">NVIDOPIA</span>
       </div>
 
-      <div style={{ flex: 1, paddingTop: 8, overflow: 'auto' }}>
+      <div style={{ flex: 1, paddingTop: 4, overflow: 'auto' }}>
         <Menu
           mode="inline"
           theme="dark"
@@ -100,7 +100,7 @@ export default function Sidebar() {
 
         <div style={dividerStyle} />
 
-        <div style={sectionLabelStyle}>Fleet</div>
+        <div style={sectionLabelStyle}>// fleet</div>
         <Menu
           mode="inline"
           theme="dark"
@@ -112,7 +112,7 @@ export default function Sidebar() {
 
         <div style={dividerStyle} />
 
-        <div style={sectionLabelStyle}>Simulation</div>
+        <div style={sectionLabelStyle}>// simulation</div>
         <Menu
           mode="inline"
           theme="dark"
@@ -136,7 +136,7 @@ export default function Sidebar() {
 
       <div className="sidebar-footer">
         <div className="sidebar-footer-text">
-          <span style={{ color: '#00f0ff' }}>&gt;</span> AD Testing Platform v0.1
+          <span style={{ color: '#00FF41' }}>$</span> nvidopia <span style={{ color: '#3d6b3d' }}>v0.1</span>
         </div>
       </div>
     </div>

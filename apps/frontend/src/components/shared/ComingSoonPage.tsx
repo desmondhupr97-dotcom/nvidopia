@@ -30,7 +30,7 @@ export default function ComingSoonPage({ icon: Icon, iconColor, title, descripti
           <Icon size={36} style={{ color: iconColor }} />
         </div>
 
-        <h1 style={{ fontFamily: "'Orbitron', 'Exo 2', sans-serif", fontSize: '1.5rem', fontWeight: 700, color: 'var(--text-primary)', margin: 0 }}>
+        <h1 style={{ fontFamily: "var(--font-mono)", fontSize: '1.3rem', fontWeight: 700, color: 'var(--text-primary)', margin: 0, textTransform: 'uppercase', letterSpacing: '0.03em' }}>
           {title}
         </h1>
         <p style={{ fontSize: 16, fontWeight: 600, color: iconColor, marginTop: 4 }}>Coming Soon</p>

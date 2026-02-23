@@ -34,24 +34,24 @@ interface KpiChartRendererProps {
 }
 
 const PALETTE = [
-  '#00f0ff', '#ff00aa', '#f0ff00', '#00ff88',
-  '#aa66ff', '#ff6644', '#44ddff', '#ff44aa',
-  '#88ff44', '#ffaa00',
+  '#00FF41', '#00cc33', '#33ff66', '#FFB000',
+  '#00c8ff', '#aa66ff', '#ff6644', '#88ff44',
+  '#44ddaa', '#ffaa00',
 ];
 
-const GRID_STROKE = 'rgba(0,240,255,0.06)';
-const TICK_FILL = '#64748b';
+const GRID_STROKE = 'rgba(0,255,65,0.04)';
+const TICK_FILL = '#3d6b3d';
 
 const tooltipStyle = {
   contentStyle: {
-    background: 'rgba(5,5,16,0.92)',
-    border: '1px solid rgba(0,240,255,0.2)',
-    borderRadius: 4,
-    backdropFilter: 'blur(10px)',
-    color: '#e2e8f0',
-    fontFamily: "'Share Tech Mono', monospace",
-    fontSize: 12,
-    boxShadow: '0 0 20px rgba(0,240,255,0.1)',
+    background: 'rgba(0,0,0,0.95)',
+    border: '1px solid rgba(0,255,65,0.15)',
+    borderRadius: 2,
+    backdropFilter: 'blur(8px)',
+    color: '#b8d4b8',
+    fontFamily: "'JetBrains Mono', monospace",
+    fontSize: 11,
+    boxShadow: '0 0 12px rgba(0,255,65,0.06)',
   },
 };
 
@@ -238,7 +238,7 @@ function PieChartInner({ data, xField, yFields }: KpiChartRendererProps) {
         innerRadius="40%"
         outerRadius="75%"
         strokeWidth={1}
-        stroke="rgba(0,240,255,0.1)"
+        stroke="rgba(0,255,65,0.06)"
         label={({ name, percent }: { name: string; percent: number }) =>
           `${name} ${(percent * 100).toFixed(0)}%`
         }
@@ -255,7 +255,7 @@ function GaugeChartInner({ data, yFields }: KpiChartRendererProps) {
   const value = Number(data[0]?.[yFields[0]?.key ?? 'value'] ?? 0);
   const maxVal = 100;
   const pct = Math.min(100, Math.max(0, (value / maxVal) * 100));
-  const color = pct >= 80 ? '#00ff88' : pct >= 50 ? '#f0ff00' : '#ff0044';
+  const color = pct >= 80 ? '#00FF41' : pct >= 50 ? '#FFB000' : '#FF0033';
 
   const gaugeData = [
     { name: 'value', value: pct },
@@ -276,12 +276,12 @@ function GaugeChartInner({ data, yFields }: KpiChartRendererProps) {
         strokeWidth={0}
       >
         <Cell fill={color} />
-        <Cell fill="rgba(0,240,255,0.06)" />
+        <Cell fill="rgba(0,255,65,0.04)" />
       </Pie>
-      <text x="50%" y="62%" textAnchor="middle" fill={color} style={{ fontSize: 28, fontFamily: "'Orbitron', monospace", fontWeight: 700 }}>
+      <text x="50%" y="62%" textAnchor="middle" fill={color} style={{ fontSize: 24, fontFamily: "'JetBrains Mono', monospace", fontWeight: 700 }}>
         {value.toFixed(1)}
       </text>
-      <text x="50%" y="78%" textAnchor="middle" fill="#64748b" style={{ fontSize: 12, fontFamily: "'Share Tech Mono', monospace" }}>
+      <text x="50%" y="78%" textAnchor="middle" fill="#3d6b3d" style={{ fontSize: 11, fontFamily: "'JetBrains Mono', monospace" }}>
         {yFields[0]?.label || 'Value'}
       </text>
     </PieChart>
@@ -345,7 +345,7 @@ function FunnelChartInner({ data, xField, yFields }: KpiChartRendererProps) {
         const color = PALETTE[i % PALETTE.length]!;
         return (
           <div key={i} style={{ display: 'flex', alignItems: 'center', marginBottom: 8, justifyContent: 'center' }}>
-            <span style={{ width: 100, textAlign: 'right', paddingRight: 12, fontSize: 12, color: TICK_FILL, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', fontFamily: "'Share Tech Mono', monospace" }}>
+            <span style={{ width: 100, textAlign: 'right', paddingRight: 12, fontSize: 11, color: TICK_FILL, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', fontFamily: "'JetBrains Mono', monospace" }}>
               {String(item[xField || 'name'] ?? `Step ${i + 1}`)}
             </span>
             <div
@@ -358,12 +358,12 @@ function FunnelChartInner({ data, xField, yFields }: KpiChartRendererProps) {
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                color: '#050510',
-                fontSize: 11,
+                color: '#000',
+                fontSize: 10,
                 fontWeight: 700,
                 opacity: 0.85,
                 transition: 'width 0.3s ease',
-                fontFamily: "'Share Tech Mono', monospace",
+                fontFamily: "'JetBrains Mono', monospace",
                 boxShadow: `0 0 8px ${color}40`,
               }}
             >
@@ -397,7 +397,7 @@ function WaterfallChartInner({ data, xField, yFields, thresholds }: KpiChartRend
       <Bar dataKey="_wf_start" stackId="wf" fill="transparent" yAxisId="left" />
       <Bar dataKey="_wf_value" stackId="wf" name={yFields[0]?.label || dataKey} yAxisId="left" radius={[2, 2, 0, 0]}>
         {waterfallData.map((entry, i) => (
-          <Cell key={i} fill={Number(entry._wf_value) >= 0 ? '#00ff88' : '#ff0044'} fillOpacity={0.85} />
+          <Cell key={i} fill={Number(entry._wf_value) >= 0 ? '#00FF41' : '#FF0033'} fillOpacity={0.85} />
         ))}
       </Bar>
     </BarChart>

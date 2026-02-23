@@ -18,9 +18,9 @@ import KpiJsonUpload from '../components/kpi/KpiJsonUpload';
 import VChartRenderer from '../components/kpi/VChartRenderer';
 
 function gaugeColor(pct: number): string {
-  if (pct >= 80) return '#00ff88';
-  if (pct >= 50) return '#f0ff00';
-  return '#ff00aa';
+  if (pct >= 80) return '#00FF41';
+  if (pct >= 50) return '#FFB000';
+  return '#FF0033';
 }
 
 function BuiltinPanels({ projectId, startDate, endDate, interval }: {
@@ -58,11 +58,11 @@ function BuiltinPanels({ projectId, startDate, endDate, interval }: {
           <Col xs={24} sm={12} lg={6} key={s.title}>
             <Card className="glass-panel hud-corners" style={{ height: '100%' }}>
               <Statistic
-                title={<span className="font-display" style={{ fontWeight: 500, fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.08em' }}>{s.title}</span>}
+                title={<span className="font-display" style={{ fontWeight: 600, fontSize: 9, textTransform: 'uppercase', letterSpacing: '0.06em' }}>{s.title}</span>}
                 value={s.value != null ? Number(s.value) : undefined}
                 precision={1}
-                suffix={<span style={{ fontSize: 14, color: 'var(--text-muted)' }}>{s.unit}</span>}
-                valueStyle={{ fontFamily: "'Orbitron', monospace", fontWeight: 700, color: '#00f0ff' }}
+                suffix={<span style={{ fontSize: 12, color: 'var(--text-muted)' }}>{s.unit}</span>}
+                valueStyle={{ fontFamily: "var(--font-mono)", fontWeight: 700, color: '#00FF41', textShadow: '0 0 8px rgba(0,255,65,0.25)' }}
               />
             </Card>
           </Col>
@@ -72,12 +72,12 @@ function BuiltinPanels({ projectId, startDate, endDate, interval }: {
           return (
             <Col xs={24} sm={12} lg={6} key={g.title}>
               <Card className="glass-panel hud-corners" style={{ height: '100%' }}>
-                <div className="font-display" style={{ fontWeight: 500, fontSize: 11, color: 'var(--text-muted)', marginBottom: 8, textTransform: 'uppercase', letterSpacing: '0.08em' }}>{g.title}</div>
-                <div style={{ fontFamily: "'Orbitron', monospace", fontSize: 32, fontWeight: 700, color: val != null ? gaugeColor(val) : 'var(--text-primary)', marginBottom: 12 }}>
+                <div className="font-display" style={{ fontWeight: 600, fontSize: 9, color: 'var(--text-muted)', marginBottom: 6, textTransform: 'uppercase', letterSpacing: '0.06em' }}>{g.title}</div>
+                <div style={{ fontFamily: "var(--font-mono)", fontSize: 24, fontWeight: 700, color: val != null ? gaugeColor(val) : 'var(--text-primary)', marginBottom: 8, textShadow: val != null ? `0 0 8px ${gaugeColor(val)}40` : 'none' }}>
                   {val != null ? val.toFixed(1) : '\u2014'}
-                  <span style={{ fontSize: 14, color: 'var(--text-muted)', marginLeft: 4 }}>{g.unit}</span>
+                  <span style={{ fontSize: 12, color: 'var(--text-muted)', marginLeft: 4 }}>{g.unit}</span>
                 </div>
-                <Progress percent={val != null ? Math.min(100, Math.max(0, val)) : 0} showInfo={false} strokeColor={val != null ? gaugeColor(val) : '#00f0ff'} size="small" />
+                <Progress percent={val != null ? Math.min(100, Math.max(0, val)) : 0} showInfo={false} strokeColor={val != null ? gaugeColor(val) : '#00FF41'} size="small" />
               </Card>
             </Col>
           );
@@ -88,16 +88,16 @@ function BuiltinPanels({ projectId, startDate, endDate, interval }: {
           <ResponsiveContainer width="100%" height={300}>
             <AreaChart data={convergencePoints}>
               <defs>
-                <linearGradient id="openGrad" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stopColor="#ff00aa" stopOpacity={0.3} /><stop offset="100%" stopColor="#ff00aa" stopOpacity={0} /></linearGradient>
-                <linearGradient id="closedGrad" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stopColor="#00f0ff" stopOpacity={0.3} /><stop offset="100%" stopColor="#00f0ff" stopOpacity={0} /></linearGradient>
+                <linearGradient id="openGrad" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stopColor="#FF0033" stopOpacity={0.2} /><stop offset="100%" stopColor="#FF0033" stopOpacity={0} /></linearGradient>
+                <linearGradient id="closedGrad" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stopColor="#00FF41" stopOpacity={0.2} /><stop offset="100%" stopColor="#00FF41" stopOpacity={0} /></linearGradient>
               </defs>
-              <CartesianGrid strokeDasharray="3 3" stroke="rgba(0,240,255,0.06)" />
-              <XAxis dataKey="timestamp" tick={{ fontSize: 11, fill: '#64748b' }} tickFormatter={(v) => new Date(v).toLocaleDateString()} stroke="rgba(0,240,255,0.06)" />
-              <YAxis tick={{ fontSize: 11, fill: '#64748b' }} stroke="rgba(0,240,255,0.06)" />
-              <Tooltip labelFormatter={(v) => new Date(v as string).toLocaleDateString()} contentStyle={{ background: 'rgba(5,5,16,0.92)', border: '1px solid rgba(0,240,255,0.2)', borderRadius: 8, color: '#e2e8f0' }} />
+              <CartesianGrid strokeDasharray="3 3" stroke="rgba(0,255,65,0.04)" />
+              <XAxis dataKey="timestamp" tick={{ fontSize: 10, fill: '#3d6b3d' }} tickFormatter={(v) => new Date(v).toLocaleDateString()} stroke="rgba(0,255,65,0.04)" />
+              <YAxis tick={{ fontSize: 10, fill: '#3d6b3d' }} stroke="rgba(0,255,65,0.04)" />
+              <Tooltip labelFormatter={(v) => new Date(v as string).toLocaleDateString()} contentStyle={{ background: 'rgba(0,0,0,0.95)', border: '1px solid rgba(0,255,65,0.15)', borderRadius: 2, color: '#b8d4b8' }} />
               <Legend />
-              <Area type="monotone" dataKey="open" stroke="#ff00aa" fill="url(#openGrad)" name="Open" strokeWidth={2} />
-              <Area type="monotone" dataKey="closed" stroke="#00f0ff" fill="url(#closedGrad)" name="Closed" strokeWidth={2} />
+              <Area type="monotone" dataKey="open" stroke="#FF0033" fill="url(#openGrad)" name="Open" strokeWidth={2} />
+              <Area type="monotone" dataKey="closed" stroke="#00FF41" fill="url(#closedGrad)" name="Closed" strokeWidth={2} />
             </AreaChart>
           </ResponsiveContainer>
         ) : (
@@ -205,7 +205,7 @@ export default function KpiDashboardPage() {
     <div>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 24, flexWrap: 'wrap', gap: 16 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-          <BarChart3 size={28} style={{ color: '#00f0ff' }} />
+          <BarChart3 size={24} style={{ color: '#00FF41' }} />
           <div>
             <h1 className="page-title">KPI Overview</h1>
             <p className="page-subtitle">Key performance indicators for autonomous driving test campaigns</p>
@@ -232,7 +232,7 @@ export default function KpiDashboardPage() {
             <Button
               icon={<Upload size={14} />}
               onClick={() => setImportOpen(true)}
-              style={{ borderColor: 'rgba(0,240,255,0.3)', color: '#00f0ff' }}
+              style={{ borderColor: 'rgba(0,255,65,0.2)', color: '#00FF41' }}
             >
               Import JSON
             </Button>
@@ -256,7 +256,7 @@ export default function KpiDashboardPage() {
 
           {grouped.size > 0 && (
             <div style={{ marginTop: 24 }}>
-              <div className="font-display" style={{ fontWeight: 600, fontSize: 14, marginBottom: 16, color: '#e2e8f0', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
+              <div className="font-display" style={{ fontWeight: 600, fontSize: 12, marginBottom: 12, color: '#b8d4b8', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
                 Custom KPIs
               </div>
 

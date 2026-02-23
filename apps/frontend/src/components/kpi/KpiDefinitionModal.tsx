@@ -130,7 +130,7 @@ const AXIS_OPTIONS = [
 ];
 
 const labelStyle: React.CSSProperties = {
-  fontFamily: "'Exo 2', sans-serif",
+  fontFamily: "var(--font-mono)",
   fontWeight: 500,
 };
 
@@ -298,7 +298,7 @@ export default function KpiDefinitionModal({ open, onClose, onSaved, editingDef 
       open={open}
       onCancel={onClose}
       title={
-        <span style={{ fontFamily: "'Exo 2', sans-serif", fontWeight: 600 }}>
+        <span className="font-display" style={{ fontWeight: 600 }}>
           {editingDef ? 'Edit KPI Definition' : 'New KPI Definition'}
         </span>
       }
@@ -486,7 +486,7 @@ export default function KpiDefinitionModal({ open, onClose, onSaved, editingDef 
                 key={`var-${v.name}`}
                 size="small"
                 type="dashed"
-                style={{ fontFamily: 'monospace', color: '#6366f1' }}
+                style={{ fontFamily: 'monospace', color: '#00FF41' }}
                 onClick={() => {
                   const current = form.getFieldValue('formula') || '';
                   form.setFieldsValue({ formula: current + v.name });
@@ -623,10 +623,10 @@ export default function KpiDefinitionModal({ open, onClose, onSaved, editingDef 
                 <span style={{ color: 'var(--danger)' }}>{previewResult.error}</span>
               ) : (
                 <div>
-                  <span style={{ fontFamily: "'Exo 2', sans-serif", color: 'var(--text-muted)', marginRight: 8 }}>
+                  <span style={{ fontFamily: "var(--font-mono)", color: 'var(--text-muted)', marginRight: 8 }}>
                     Value:
                   </span>
-                  <span style={{ fontFamily: "'Orbitron', 'Exo 2', sans-serif", fontWeight: 700, fontSize: 20 }}>
+                  <span style={{ fontFamily: "var(--font-mono)", fontWeight: 700, fontSize: 18, color: '#00FF41' }}>
                     {previewResult.value != null ? previewResult.value.toLocaleString() : '\u2014'}
                   </span>
                   {previewResult.groups && previewResult.groups.length > 0 && (

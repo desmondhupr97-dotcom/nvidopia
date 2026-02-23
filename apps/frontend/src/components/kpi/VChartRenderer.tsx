@@ -1,45 +1,45 @@
 import { useMemo, useRef, useEffect, useState } from 'react';
 import { Card, Empty, Spin } from 'antd';
 
-const CYBERPUNK_PALETTE = [
-  '#00f0ff', '#ff00aa', '#f0ff00', '#00ff88',
-  '#aa66ff', '#ff6644', '#44ddff', '#ff44aa',
-  '#88ff44', '#ffaa00',
+const HACKER_PALETTE = [
+  '#00FF41', '#00cc33', '#33ff66', '#FFB000',
+  '#00c8ff', '#aa66ff', '#ff6644', '#88ff44',
+  '#44ddaa', '#ffaa00',
 ];
 
 const VCHART_DARK_THEME = {
   background: 'transparent',
-  colorScheme: { default: CYBERPUNK_PALETTE },
+  colorScheme: { default: HACKER_PALETTE },
   series: {
     bar: { style: { fillOpacity: 0.85 } },
     line: { style: { lineWidth: 2 } },
-    area: { style: { fillOpacity: 0.25 } },
-    pie: { style: { stroke: 'rgba(0,240,255,0.1)', lineWidth: 1 } },
+    area: { style: { fillOpacity: 0.2 } },
+    pie: { style: { stroke: 'rgba(0,255,65,0.06)', lineWidth: 1 } },
   },
   component: {
     axis: {
-      domainLine: { style: { stroke: 'rgba(0,240,255,0.15)' } },
-      grid: { style: { stroke: 'rgba(0,240,255,0.08)', lineDash: [3, 3] } },
-      label: { style: { fill: '#64748b', fontSize: 11 } },
-      title: { style: { fill: '#94a3b8', fontSize: 12 } },
+      domainLine: { style: { stroke: 'rgba(0,255,65,0.1)' } },
+      grid: { style: { stroke: 'rgba(0,255,65,0.05)', lineDash: [3, 3] } },
+      label: { style: { fill: '#3d6b3d', fontSize: 10 } },
+      title: { style: { fill: '#6b9b6b', fontSize: 11 } },
     },
     legend: {
       item: {
-        label: { style: { fill: '#94a3b8', fontSize: 11 } },
+        label: { style: { fill: '#6b9b6b', fontSize: 10 } },
       },
     },
     tooltip: {
       panel: {
         style: {
-          background: 'rgba(5,5,16,0.92)',
-          border: '1px solid rgba(0,240,255,0.2)',
-          borderRadius: '8px',
-          boxShadow: '0 0 20px rgba(0,240,255,0.1)',
+          background: 'rgba(0,0,0,0.95)',
+          border: '1px solid rgba(0,255,65,0.15)',
+          borderRadius: '2px',
+          boxShadow: '0 0 12px rgba(0,255,65,0.06)',
         },
       },
-      titleLabel: { style: { fill: '#e2e8f0', fontSize: 12 } },
-      contentLabel: { style: { fill: '#94a3b8', fontSize: 11 } },
-      contentValue: { style: { fill: '#00f0ff', fontSize: 11 } },
+      titleLabel: { style: { fill: '#b8d4b8', fontSize: 11 } },
+      contentLabel: { style: { fill: '#6b9b6b', fontSize: 10 } },
+      contentValue: { style: { fill: '#00FF41', fontSize: 10 } },
     },
   },
 };
@@ -95,7 +95,7 @@ export default function VChartRenderer({ spec, data, title, height = 340, loadin
     s.height = height;
 
     if (!s.color) {
-      s.color = CYBERPUNK_PALETTE;
+      s.color = HACKER_PALETTE;
     }
     s.theme = { ...VCHART_DARK_THEME };
 

@@ -168,22 +168,22 @@ export default function SimulationDetailPage() {
       <Row gutter={[16, 16]} style={{ marginBottom: 24 }}>
         <Col xs={24} sm={6}>
           <Card className="glass-panel glow-accent-hover">
-            <Statistic title="Vehicles" value={session.fleet_config?.vehicle_count ?? session.fleet_config?.vehicles?.length ?? 0} valueStyle={{ fontFamily: "'Orbitron', sans-serif", color: '#6366f1' }} />
+            <Statistic title="Vehicles" value={session.fleet_config?.vehicle_count ?? session.fleet_config?.vehicles?.length ?? 0} valueStyle={{ fontFamily: "var(--font-mono)", color: '#00FF41' }} />
           </Card>
         </Col>
         <Col xs={24} sm={6}>
           <Card className="glass-panel glow-accent-hover">
-            <Statistic title="Telemetry Sent" value={stats?.telemetry_sent ?? 0} valueStyle={{ fontFamily: "'Orbitron', sans-serif", color: '#22c55e' }} />
+            <Statistic title="Telemetry Sent" value={stats?.telemetry_sent ?? 0} valueStyle={{ fontFamily: "var(--font-mono)", color: '#00cc33' }} />
           </Card>
         </Col>
         <Col xs={24} sm={6}>
           <Card className="glass-panel glow-accent-hover">
-            <Statistic title="Issues Reported" value={stats?.issues_sent ?? 0} valueStyle={{ fontFamily: "'Orbitron', sans-serif", color: '#f59e0b' }} />
+            <Statistic title="Issues Reported" value={stats?.issues_sent ?? 0} valueStyle={{ fontFamily: "var(--font-mono)", color: '#FFB000' }} />
           </Card>
         </Col>
         <Col xs={24} sm={6}>
           <Card className="glass-panel glow-accent-hover">
-            <Statistic title="Total Mileage" value={Number(stats?.total_mileage_km ?? 0).toFixed(1)} suffix="km" valueStyle={{ fontFamily: "'Orbitron', sans-serif", color: '#3b82f6' }} />
+            <Statistic title="Total Mileage" value={Number(stats?.total_mileage_km ?? 0).toFixed(1)} suffix="km" valueStyle={{ fontFamily: "var(--font-mono)", color: '#33ff66' }} />
           </Card>
         </Col>
       </Row>

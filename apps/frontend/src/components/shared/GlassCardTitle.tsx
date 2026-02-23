@@ -3,5 +3,5 @@ interface Props {
 }
 
 export default function GlassCardTitle({ children }: Props) {
-  return <span style={{ fontFamily: "'Exo 2', sans-serif", fontWeight: 600 }}>{children}</span>;
+  return <span className="font-display" style={{ fontWeight: 600 }}>{children}</span>;
 }

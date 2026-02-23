@@ -72,18 +72,18 @@ export default function TraceabilityPage() {
       {/* Coverage card */}
       {coverage && (
         <Card className="glass-panel" style={{ marginBottom: 24 }}>
-          <div style={{ fontFamily: "'Exo 2', sans-serif", fontWeight: 500, fontSize: 13, color: 'var(--text-muted)', marginBottom: 12 }}>
+          <div style={{ fontFamily: "var(--font-mono)", fontWeight: 500, fontSize: 11, color: 'var(--text-muted)', marginBottom: 10, textTransform: 'uppercase', letterSpacing: '0.04em' }}>
             Requirement Verification Coverage
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: 20 }}>
-            <span style={{ fontFamily: "'Orbitron', sans-serif", fontSize: 32, fontWeight: 700, color: '#6366f1' }}>
+            <span style={{ fontFamily: "var(--font-mono)", fontSize: 24, fontWeight: 700, color: '#00FF41', textShadow: '0 0 8px rgba(0,255,65,0.25)' }}>
               {coverage.percentage != null ? `${Number(coverage.percentage).toFixed(1)}%` : '—'}
             </span>
             <div style={{ flex: 1 }}>
               <Progress
                 percent={Number(coverage.percentage ?? 0)}
                 showInfo={false}
-                strokeColor={{ from: '#6366f1', to: '#8b5cf6' }}
+                strokeColor={{ from: '#00FF41', to: '#00cc33' }}
               />
             </div>
             <span style={{ fontSize: 12, color: 'var(--text-muted)', whiteSpace: 'nowrap' }}>
@@ -132,7 +132,7 @@ export default function TraceabilityPage() {
         <Card
           className="glass-panel"
           title={
-            <span style={{ fontFamily: "'Exo 2', sans-serif", fontWeight: 600 }}>
+            <span className="font-display" style={{ fontWeight: 600 }}>
               {tab === 'forward' ? 'Forward' : 'Backward'} Trace from{' '}
               <code style={{ color: '#818cf8' }}>{traceData.origin_id}</code>
             </span>
@@ -155,7 +155,7 @@ export default function TraceabilityPage() {
                     fontSize: 10,
                     fontWeight: 700,
                     color: '#fff',
-                    fontFamily: "'Exo 2', sans-serif",
+                    fontFamily: "var(--font-mono)",
                     boxShadow: `0 0 12px ${NODE_TYPE_COLORS[nodeType] ?? '#64748b'}40`,
                   }}>
                     {NODE_TYPE_LABELS[nodeType] ?? '?'}

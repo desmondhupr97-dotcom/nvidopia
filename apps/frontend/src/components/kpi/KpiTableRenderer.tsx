@@ -18,7 +18,7 @@ export default function KpiTableRenderer({ groups, title }: Props) {
     groups.forEach((row) => Object.keys(row.group).forEach((k) => groupKeys.add(k)));
 
     const groupCols: ColumnsType<GroupRow & { _key: string }> = [...groupKeys].map((k) => ({
-      title: <span style={{ fontFamily: "'Exo 2', sans-serif" }}>{k}</span>,
+      title: <span style={{ fontFamily: "var(--font-mono)" }}>{k}</span>,
       dataIndex: ['group', k],
       key: k,
       render: (v: unknown) => String(v ?? '\u2014'),
@@ -27,12 +27,12 @@ export default function KpiTableRenderer({ groups, title }: Props) {
     return [
       ...groupCols,
       {
-        title: <span style={{ fontFamily: "'Exo 2', sans-serif" }}>Value</span>,
+        title: <span style={{ fontFamily: "var(--font-mono)" }}>Value</span>,
         dataIndex: 'value',
         key: '_value',
         align: 'right' as const,
         render: (v: number) => (
-          <span style={{ fontFamily: "'Orbitron', 'Exo 2', sans-serif", fontWeight: 600 }}>
+          <span style={{ fontFamily: "var(--font-mono)", fontWeight: 600, color: '#00FF41' }}>
             {v.toLocaleString(undefined, { maximumFractionDigits: 2 })}
           </span>
         ),
@@ -50,7 +50,7 @@ export default function KpiTableRenderer({ groups, title }: Props) {
       className="glass-panel"
       title={
         title ? (
-          <span style={{ fontFamily: "'Exo 2', sans-serif", fontWeight: 600 }}>{title}</span>
+          <span className="font-display" style={{ fontWeight: 600 }}>{title}</span>
         ) : undefined
       }
     >

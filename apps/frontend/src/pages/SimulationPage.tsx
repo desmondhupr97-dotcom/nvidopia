@@ -113,7 +113,7 @@ export default function SimulationPage() {
           route_id: r.route_id,
           name: r.name,
           waypoints: r.waypoints,
-          road: r.road ? { total_distance_m: r.road.total_distance_m, total_duration_s: r.road.total_duration_s } : undefined,
+          road: r.road ? { total_distance_m: r.road.total_distance_m, total_duration_s: r.road.total_duration_s, coordinates: r.road.coordinates ?? [], segments: r.road.segments ?? [] } : undefined,
         })) : undefined,
         random_config: routeMode === 'random' ? {
           start_point: { lat: values.start_lat ?? 31.2304, lng: values.start_lng ?? 121.4737 },
