@@ -1,45 +1,44 @@
 import { useMemo, useRef, useEffect, useState } from 'react';
 import { Card, Empty, Spin } from 'antd';
 
-const HACKER_PALETTE = [
-  '#00FF41', '#00cc33', '#33ff66', '#FFB000',
-  '#00c8ff', '#aa66ff', '#ff6644', '#88ff44',
-  '#44ddaa', '#ffaa00',
+const PALETTE = [
+  '#8b929a', '#60a5fa', '#34d399', '#fbbf24', '#f87171',
+  '#a78bfa', '#fb923c', '#22d3ee', '#e879f9', '#4ade80',
 ];
 
 const VCHART_DARK_THEME = {
   background: 'transparent',
-  colorScheme: { default: HACKER_PALETTE },
+  colorScheme: { default: PALETTE },
   series: {
     bar: { style: { fillOpacity: 0.85 } },
     line: { style: { lineWidth: 2 } },
     area: { style: { fillOpacity: 0.2 } },
-    pie: { style: { stroke: 'rgba(0,255,65,0.06)', lineWidth: 1 } },
+    pie: { style: { stroke: 'rgba(255,255,255,0.06)', lineWidth: 1 } },
   },
   component: {
     axis: {
-      domainLine: { style: { stroke: 'rgba(0,255,65,0.1)' } },
-      grid: { style: { stroke: 'rgba(0,255,65,0.05)', lineDash: [3, 3] } },
-      label: { style: { fill: '#3d6b3d', fontSize: 10 } },
-      title: { style: { fill: '#6b9b6b', fontSize: 11 } },
+      domainLine: { style: { stroke: 'rgba(255,255,255,0.1)' } },
+      grid: { style: { stroke: 'rgba(255,255,255,0.05)', lineDash: [3, 3] } },
+      label: { style: { fill: '#505660', fontSize: 10 } },
+      title: { style: { fill: '#8b929a', fontSize: 11 } },
     },
     legend: {
       item: {
-        label: { style: { fill: '#6b9b6b', fontSize: 10 } },
+        label: { style: { fill: '#8b929a', fontSize: 10 } },
       },
     },
     tooltip: {
       panel: {
         style: {
-          background: 'rgba(0,0,0,0.95)',
-          border: '1px solid rgba(0,255,65,0.15)',
-          borderRadius: '2px',
-          boxShadow: '0 0 12px rgba(0,255,65,0.06)',
+          background: 'rgba(24,25,30,0.95)',
+          border: '1px solid rgba(255,255,255,0.1)',
+          borderRadius: '12px',
+          boxShadow: '0 8px 32px rgba(0,0,0,0.3)',
         },
       },
-      titleLabel: { style: { fill: '#b8d4b8', fontSize: 11 } },
-      contentLabel: { style: { fill: '#6b9b6b', fontSize: 10 } },
-      contentValue: { style: { fill: '#00FF41', fontSize: 10 } },
+      titleLabel: { style: { fill: '#e4e7eb', fontSize: 11 } },
+      contentLabel: { style: { fill: '#8b929a', fontSize: 10 } },
+      contentValue: { style: { fill: '#e4e7eb', fontSize: 10 } },
     },
   },
 };
@@ -95,7 +94,7 @@ export default function VChartRenderer({ spec, data, title, height = 340, loadin
     s.height = height;
 
     if (!s.color) {
-      s.color = HACKER_PALETTE;
+      s.color = PALETTE;
     }
     s.theme = { ...VCHART_DARK_THEME };
 
@@ -122,7 +121,7 @@ export default function VChartRenderer({ spec, data, title, height = 340, loadin
 
   if (loading || !ready) {
     return (
-      <Card className="glass-panel hud-corners">
+      <Card className="glass-panel">
         <div style={{ display: 'flex', justifyContent: 'center', padding: 40 }}>
           <Spin />
         </div>
@@ -132,7 +131,7 @@ export default function VChartRenderer({ spec, data, title, height = 340, loadin
 
   if (!spec || !spec.type) {
     return (
-      <Card className="glass-panel hud-corners">
+      <Card className="glass-panel">
         <Empty description="Invalid VChart spec" />
       </Card>
     );
@@ -140,7 +139,7 @@ export default function VChartRenderer({ spec, data, title, height = 340, loadin
 
   return (
     <Card
-      className="glass-panel hud-corners"
+      className="glass-panel"
       title={title ? <span className="font-display" style={{ fontWeight: 600 }}>{title}</span> : undefined}
     >
       <div ref={containerRef} style={{ width: '100%', height }} />

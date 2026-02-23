@@ -34,24 +34,23 @@ interface KpiChartRendererProps {
 }
 
 const PALETTE = [
-  '#00FF41', '#00cc33', '#33ff66', '#FFB000',
-  '#00c8ff', '#aa66ff', '#ff6644', '#88ff44',
-  '#44ddaa', '#ffaa00',
+  '#8b929a', '#60a5fa', '#34d399', '#fbbf24', '#f87171',
+  '#a78bfa', '#fb923c', '#22d3ee', '#e879f9', '#4ade80',
 ];
 
-const GRID_STROKE = 'rgba(0,255,65,0.04)';
-const TICK_FILL = '#3d6b3d';
+const GRID_STROKE = 'rgba(255,255,255,0.06)';
+const TICK_FILL = '#505660';
 
 const tooltipStyle = {
   contentStyle: {
-    background: 'rgba(0,0,0,0.95)',
-    border: '1px solid rgba(0,255,65,0.15)',
-    borderRadius: 2,
-    backdropFilter: 'blur(8px)',
-    color: '#b8d4b8',
-    fontFamily: "'JetBrains Mono', monospace",
+    background: 'rgba(24,25,30,0.95)',
+    border: '1px solid rgba(255,255,255,0.1)',
+    borderRadius: 12,
+    backdropFilter: 'blur(20px)',
+    color: '#e4e7eb',
+    fontFamily: "'Fira Code', monospace",
     fontSize: 11,
-    boxShadow: '0 0 12px rgba(0,255,65,0.06)',
+    boxShadow: '0 8px 32px rgba(0,0,0,0.3)',
   },
 };
 
@@ -129,7 +128,7 @@ function BarChartInner({ data, xField, yFields, thresholds }: KpiChartRendererPr
             name={yf.label || yf.key}
             fill={resolveColor(yf, i)}
             yAxisId={yf.axisId || 'left'}
-            radius={[2, 2, 0, 0]}
+            radius={[6, 6, 0, 0]}
             fillOpacity={0.85}
           />
         ))}
@@ -238,7 +237,7 @@ function PieChartInner({ data, xField, yFields }: KpiChartRendererProps) {
         innerRadius="40%"
         outerRadius="75%"
         strokeWidth={1}
-        stroke="rgba(0,255,65,0.06)"
+        stroke="rgba(255,255,255,0.06)"
         label={({ name, percent }: { name: string; percent: number }) =>
           `${name} ${(percent * 100).toFixed(0)}%`
         }
@@ -255,7 +254,7 @@ function GaugeChartInner({ data, yFields }: KpiChartRendererProps) {
   const value = Number(data[0]?.[yFields[0]?.key ?? 'value'] ?? 0);
   const maxVal = 100;
   const pct = Math.min(100, Math.max(0, (value / maxVal) * 100));
-  const color = pct >= 80 ? '#00FF41' : pct >= 50 ? '#FFB000' : '#FF0033';
+  const color = pct >= 80 ? '#34d399' : pct >= 50 ? '#fbbf24' : '#f87171';
 
   const gaugeData = [
     { name: 'value', value: pct },
@@ -276,12 +275,12 @@ function GaugeChartInner({ data, yFields }: KpiChartRendererProps) {
         strokeWidth={0}
       >
         <Cell fill={color} />
-        <Cell fill="rgba(0,255,65,0.04)" />
+        <Cell fill="rgba(255,255,255,0.06)" />
       </Pie>
-      <text x="50%" y="62%" textAnchor="middle" fill={color} style={{ fontSize: 24, fontFamily: "'JetBrains Mono', monospace", fontWeight: 700 }}>
+      <text x="50%" y="62%" textAnchor="middle" fill={color} style={{ fontSize: 24, fontFamily: "'Fira Code', monospace", fontWeight: 700 }}>
         {value.toFixed(1)}
       </text>
-      <text x="50%" y="78%" textAnchor="middle" fill="#3d6b3d" style={{ fontSize: 11, fontFamily: "'JetBrains Mono', monospace" }}>
+      <text x="50%" y="78%" textAnchor="middle" fill="#505660" style={{ fontSize: 11, fontFamily: "'Fira Code', monospace" }}>
         {yFields[0]?.label || 'Value'}
       </text>
     </PieChart>
@@ -324,7 +323,7 @@ function DualAxesChartInner({ data, xField, yFields, thresholds }: KpiChartRende
       {yFields.map((yf, i) => {
         const axisId = yf.axisId || (i === 0 ? 'left' : 'right');
         if (i === 0) {
-          return <Bar key={yf.key} dataKey={yf.key} name={yf.label || yf.key} fill={resolveColor(yf, i)} yAxisId={axisId} radius={[2, 2, 0, 0]} fillOpacity={0.85} />;
+          return <Bar key={yf.key} dataKey={yf.key} name={yf.label || yf.key} fill={resolveColor(yf, i)} yAxisId={axisId} radius={[6, 6, 0, 0]} fillOpacity={0.85} />;
         }
         return <Line key={yf.key} type="monotone" dataKey={yf.key} name={yf.label || yf.key} stroke={resolveColor(yf, i)} yAxisId={axisId} strokeWidth={2} dot={{ r: 3 }} />;
       })}
@@ -345,7 +344,7 @@ function FunnelChartInner({ data, xField, yFields }: KpiChartRendererProps) {
         const color = PALETTE[i % PALETTE.length]!;
         return (
           <div key={i} style={{ display: 'flex', alignItems: 'center', marginBottom: 8, justifyContent: 'center' }}>
-            <span style={{ width: 100, textAlign: 'right', paddingRight: 12, fontSize: 11, color: TICK_FILL, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', fontFamily: "'JetBrains Mono', monospace" }}>
+            <span style={{ width: 100, textAlign: 'right', paddingRight: 12, fontSize: 11, color: TICK_FILL, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', fontFamily: "'Fira Code', monospace" }}>
               {String(item[xField || 'name'] ?? `Step ${i + 1}`)}
             </span>
             <div
@@ -363,8 +362,7 @@ function FunnelChartInner({ data, xField, yFields }: KpiChartRendererProps) {
                 fontWeight: 700,
                 opacity: 0.85,
                 transition: 'width 0.3s ease',
-                fontFamily: "'JetBrains Mono', monospace",
-                boxShadow: `0 0 8px ${color}40`,
+                fontFamily: "'Fira Code', monospace",
               }}
             >
               {val}
@@ -395,9 +393,9 @@ function WaterfallChartInner({ data, xField, yFields, thresholds }: KpiChartRend
       <Legend />
       <ThresholdLines thresholds={thresholds} />
       <Bar dataKey="_wf_start" stackId="wf" fill="transparent" yAxisId="left" />
-      <Bar dataKey="_wf_value" stackId="wf" name={yFields[0]?.label || dataKey} yAxisId="left" radius={[2, 2, 0, 0]}>
+      <Bar dataKey="_wf_value" stackId="wf" name={yFields[0]?.label || dataKey} yAxisId="left" radius={[6, 6, 0, 0]}>
         {waterfallData.map((entry, i) => (
-          <Cell key={i} fill={Number(entry._wf_value) >= 0 ? '#00FF41' : '#FF0033'} fillOpacity={0.85} />
+          <Cell key={i} fill={Number(entry._wf_value) >= 0 ? '#34d399' : '#f87171'} fillOpacity={0.85} />
         ))}
       </Bar>
     </BarChart>
@@ -423,7 +421,7 @@ export default function KpiChartRenderer(props: KpiChartRendererProps) {
 
   if (!ChartComp || !data.length) {
     return (
-      <Card className="glass-panel hud-corners">
+      <Card className="glass-panel">
         <Empty description={data.length === 0 ? 'No data' : `Unknown chart type: ${chartType}`} />
       </Card>
     );
@@ -431,7 +429,7 @@ export default function KpiChartRenderer(props: KpiChartRendererProps) {
 
   return (
     <Card
-      className="glass-panel hud-corners"
+      className="glass-panel"
       title={
         title ? (
           <span className="font-display" style={{ fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em' }}>{title}</span>

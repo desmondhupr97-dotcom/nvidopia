@@ -32,7 +32,7 @@ export default function KpiTableRenderer({ groups, title }: Props) {
         key: '_value',
         align: 'right' as const,
         render: (v: number) => (
-          <span style={{ fontFamily: "var(--font-mono)", fontWeight: 600, color: '#00FF41' }}>
+          <span style={{ fontFamily: "var(--font-mono)", fontWeight: 600, color: 'var(--accent-strong)' }}>
             {v.toLocaleString(undefined, { maximumFractionDigits: 2 })}
           </span>
         ),

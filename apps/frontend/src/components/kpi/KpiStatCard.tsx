@@ -9,7 +9,7 @@ interface Props {
 
 export default function KpiStatCard({ title, value, unit, loading }: Props) {
   return (
-    <Card className="glass-panel hud-corners glow-accent-hover" style={{ height: '100%' }}>
+    <Card className="glass-panel" style={{ height: '100%' }}>
       {loading ? (
         <div style={{ textAlign: 'center', padding: '20px 0' }}>
           <Spin />
@@ -17,7 +17,7 @@ export default function KpiStatCard({ title, value, unit, loading }: Props) {
       ) : (
         <Statistic
           title={
-            <span className="font-display" style={{ fontWeight: 600, fontSize: 9, textTransform: 'uppercase', letterSpacing: '0.06em' }}>
+            <span className="font-display" style={{ fontWeight: 600, fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.06em' }}>
               {title}
             </span>
           }
@@ -31,8 +31,7 @@ export default function KpiStatCard({ title, value, unit, loading }: Props) {
           valueStyle={{
             fontFamily: "var(--font-mono)",
             fontWeight: 700,
-            color: '#00FF41',
-            textShadow: '0 0 8px rgba(0,255,65,0.25)',
+            color: 'var(--accent-strong)',
           }}
           formatter={(val) => (val == null ? '\u2014' : String(val))}
         />
