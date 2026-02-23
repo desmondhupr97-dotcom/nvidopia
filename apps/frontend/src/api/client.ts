@@ -50,9 +50,58 @@ export interface Run {
 
 export interface Vehicle {
   id: string;
+  vin: string;
   name: string;
   status: string;
   platform?: string;
+  plateType?: 'permanent' | 'temporary';
+  modelCode?: string;
+  socArchitecture?: string;
+  sensorSuiteVersion?: string;
+  componentVersions?: Record<string, string>;
+  currentSpeed?: number;
+  drivingMode?: string;
+  currentLocation?: { lat: number; lng: number };
+  fuelOrBatteryLevel?: number;
+  lastHeartbeat?: string;
+  updatedAt?: string;
+}
+
+export interface TrajectoryPoint {
+  vin: string;
+  run_id?: string;
+  timestamp: string;
+  location: { lat: number; lng: number };
+  speed_mps: number;
+  driving_mode: string;
+  heading_deg?: number;
+}
+
+export interface StatusDistributionItem {
+  driving_mode: string;
+  total_duration_ms: number;
+  total_mileage_km: number;
+  segment_count: number;
+}
+
+export interface FleetDistribution {
+  plate_type: Array<{ name: string; count: number }>;
+  model_code: Array<{ name: string; count: number }>;
+  soc_architecture: Array<{ name: string; count: number }>;
+  driving_mode: Array<{ name: string; count: number }>;
+  current_status: Array<{ name: string; count: number }>;
+}
+
+export interface IssueLocation {
+  issue_id: string;
+  category?: string;
+  severity: string;
+  description: string;
+  vehicle_vin?: string;
+  location?: { lat: number; lng: number };
+  triggered_at?: string;
+  run_id?: string;
+  task_id?: string;
 }
 
 export interface VehicleDynamicsSnapshot {
@@ -398,12 +447,72 @@ export function assignVehicles(runId: string, vehicleIds: string[]) {
 
 /* ── Vehicles ─────────────────────────────────────────── */
 
-export function getVehicles() {
-  return fetchJson<Vehicle[]>('/vehicles');
+function normalizeVehicle(raw: AnyRecord): Vehicle {
+  return {
+    id: str(raw.vin ?? raw._id ?? raw.id),
+    vin: str(raw.vin),
+    name: str(raw.vin ?? raw.name, 'Unknown'),
+    status: str(raw.current_status ?? raw.status, 'Offline'),
+    platform: optStr(raw.vehicle_platform ?? raw.platform),
+    plateType: optStr(raw.plate_type) as Vehicle['plateType'],
+    modelCode: optStr(raw.model_code),
+    socArchitecture: optStr(raw.soc_architecture),
+    sensorSuiteVersion: optStr(raw.sensor_suite_version),
+    componentVersions: raw.component_versions as Record<string, string> | undefined,
+    currentSpeed: optNum(raw.current_speed_mps),
+    drivingMode: optStr(raw.driving_mode),
+    currentLocation: raw.current_location as { lat: number; lng: number } | undefined,
+    fuelOrBatteryLevel: optNum(raw.fuel_or_battery_level),
+    lastHeartbeat: optStr(raw.last_heartbeat),
+    updatedAt: optStr(raw.updated_at ?? raw.updatedAt),
+  };
 }
 
-export function getVehicle(id: string) {
-  return fetchJson<Vehicle>(`/vehicles/${id}`);
+export async function getVehicles(params?: Record<string, string | undefined>) {
+  const qs = toQueryString(params);
+  const raw = await fetchJson<AnyRecord[] | { data: AnyRecord[] }>(`/vehicles${qs}`);
+  const items = Array.isArray(raw) ? raw : (raw.data ?? []);
+  return items.map((r) => normalizeVehicle(r));
+}
+
+export function getVehicle(vin: string) {
+  return fetchJson<AnyRecord>(`/vehicles/${vin}`).then(normalizeVehicle);
+}
+
+export function updateVehicle(vin: string, data: Partial<Vehicle>) {
+  return fetchJson<AnyRecord>(`/vehicles/${vin}`, { method: 'PUT', body: JSON.stringify(data) }).then(normalizeVehicle);
+}
+
+export function getVehicleStatusDistribution(vin: string, params?: Record<string, string | undefined>) {
+  return fetchJson<StatusDistributionItem[]>(`/vehicles/${vin}/status-distribution${toQueryString(params)}`);
+}
+
+export function getVehicleTrajectory(vin: string, params?: Record<string, string | undefined>) {
+  return fetchJson<{ data: TrajectoryPoint[]; total: number }>(`/vehicles/${vin}/trajectory${toQueryString(params)}`);
+}
+
+/* ── Fleet Stats ─────────────────────────────────────── */
+
+export function getFleetDistribution() {
+  return fetchJson<FleetDistribution>('/fleet/distribution');
+}
+
+export function getFleetStatusDistribution() {
+  return fetchJson<StatusDistributionItem[]>('/fleet/status-distribution');
+}
+
+export function getFleetActiveTasks() {
+  return fetchJson<Record<string, Array<{ vin: string; run_id: string; task_id: string }>>>('/fleet/active-tasks');
+}
+
+/* ── Trajectory ──────────────────────────────────────── */
+
+export function queryTrajectory(params?: Record<string, string | undefined>) {
+  return fetchJson<{ data: TrajectoryPoint[]; total: number }>(`/trajectory/query${toQueryString(params)}`);
+}
+
+export function queryIssueLocations(params?: Record<string, string | undefined>) {
+  return fetchJson<{ data: IssueLocation[]; total: number }>(`/trajectory/issues${toQueryString(params)}`);
 }
 
 /* ── Issues ───────────────────────────────────────────── */

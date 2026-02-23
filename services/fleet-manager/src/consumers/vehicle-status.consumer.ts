@@ -23,6 +23,10 @@ export async function startVehicleStatusConsumer(kafka: Kafka): Promise<Consumer
         if (payload.vehicle_platform) update.vehicle_platform = payload.vehicle_platform;
         if (payload.sensor_suite_version) update.sensor_suite_version = payload.sensor_suite_version;
         if (payload.soc_architecture) update.soc_architecture = payload.soc_architecture;
+        if (payload.plate_type) update.plate_type = payload.plate_type;
+        if (payload.model_code) update.model_code = payload.model_code;
+        if (payload.component_versions) update.component_versions = payload.component_versions;
+        if (payload.current_speed_mps != null) update.current_speed_mps = payload.current_speed_mps;
         update.last_heartbeat = payload.last_heartbeat ?? new Date();
 
         const vin = payload.vin || payload.vehicle_id;

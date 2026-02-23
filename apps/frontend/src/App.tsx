@@ -12,6 +12,10 @@ import KpiDashboardPage from './pages/KpiDashboardPage';
 import TraceabilityPage from './pages/TraceabilityPage';
 import AutoTriagePlaceholderPage from './pages/AutoTriagePlaceholderPage';
 import SimulationPlaceholderPage from './pages/SimulationPlaceholderPage';
+import FleetDashboardPage from './pages/FleetDashboardPage';
+import VehicleDetailPage from './pages/VehicleDetailPage';
+import TrajectoryMapPage from './pages/TrajectoryMapPage';
+import IssueMapPage from './pages/IssueMapPage';
 
 export default function App() {
   return (
@@ -30,6 +34,10 @@ export default function App() {
         <Route path="traceability" element={<TraceabilityPage />} />
         <Route path="auto-triage" element={<AutoTriagePlaceholderPage />} />
         <Route path="simulation" element={<SimulationPlaceholderPage />} />
+        <Route path="fleet" element={<FleetDashboardPage />} />
+        <Route path="fleet/vehicles/:vin" element={<VehicleDetailPage />} />
+        <Route path="fleet/trajectory" element={<TrajectoryMapPage />} />
+        <Route path="fleet/issues-map" element={<IssueMapPage />} />
       </Route>
     </Routes>
   );

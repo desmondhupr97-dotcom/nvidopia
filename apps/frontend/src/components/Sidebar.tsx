@@ -10,6 +10,9 @@ import {
   GitGraph,
   Sparkles,
   Monitor,
+  Truck,
+  MapPin,
+  Route,
 } from 'lucide-react';
 
 type MenuItem = Required<MenuProps>['items'][number];
@@ -23,6 +26,12 @@ const mainItems: MenuItem[] = [
   { key: '/issues', icon: <Bug {...iconStyle} />, label: 'Issues' },
   { key: '/kpi', icon: <BarChart3 {...iconStyle} />, label: 'KPI Dashboard' },
   { key: '/traceability', icon: <GitGraph {...iconStyle} />, label: 'Traceability' },
+];
+
+const fleetItems: MenuItem[] = [
+  { key: '/fleet', icon: <Truck {...iconStyle} />, label: 'Fleet Overview' },
+  { key: '/fleet/trajectory', icon: <Route {...iconStyle} />, label: 'Trajectory' },
+  { key: '/fleet/issues-map', icon: <MapPin {...iconStyle} />, label: 'Issue Map' },
 ];
 
 const secondaryItems: MenuItem[] = [
@@ -52,7 +61,10 @@ export default function Sidebar() {
   const location = useLocation();
   const navigate = useNavigate();
 
-  const currentKey = '/' + location.pathname.split('/').filter(Boolean)[0];
+  const pathParts = location.pathname.split('/').filter(Boolean);
+  const currentKey = pathParts[0] === 'fleet' && pathParts.length > 1
+    ? `/${pathParts[0]}/${pathParts[1]}`
+    : '/' + pathParts[0];
 
   const handleClick: MenuProps['onClick'] = ({ key }) => {
     navigate(key);
@@ -72,6 +84,18 @@ export default function Sidebar() {
           selectedKeys={[currentKey]}
           onClick={handleClick}
           items={mainItems}
+          style={{ borderInlineEnd: 'none' }}
+        />
+
+        <div style={{ height: 1, background: 'rgba(255,255,255,0.06)', margin: '12px 20px' }} />
+
+        <div style={{ padding: '4px 24px 4px', fontSize: 11, color: 'rgba(255,255,255,0.35)', textTransform: 'uppercase', letterSpacing: 1 }}>Fleet</div>
+        <Menu
+          mode="inline"
+          theme="dark"
+          selectedKeys={[currentKey]}
+          onClick={handleClick}
+          items={fleetItems}
           style={{ borderInlineEnd: 'none' }}
         />
 

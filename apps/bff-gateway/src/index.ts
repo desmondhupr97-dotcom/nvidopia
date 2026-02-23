@@ -9,6 +9,7 @@ import { rateLimitMiddleware } from './middleware/rate-limit.js';
 import healthRouter from './routes/health.js';
 import ingestRouter from './routes/ingest.js';
 import proxyRouter from './routes/proxy.js';
+import sseRouter from './routes/sse.js';
 import { connectProducer, disconnectProducer } from './kafka.js';
 
 const PORT = Number(process.env.GATEWAY_PORT) || 3000;
@@ -38,6 +39,7 @@ app.use(authMiddleware);
 
 app.use(healthRouter);
 app.use(ingestRouter);
+app.use(sseRouter);
 app.use(proxyRouter);
 
 // --------------- Lifecycle ---------------

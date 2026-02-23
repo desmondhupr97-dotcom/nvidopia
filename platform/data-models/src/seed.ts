@@ -19,6 +19,8 @@ import { Vehicle } from './vehicle.model.js';
 import { KpiSnapshot } from './kpi-snapshot.model.js';
 import { IssueTimeSeries } from './issue-timeseries.model.js';
 import { KpiDefinition } from './kpi-definition.model.js';
+import { VehicleTrajectory } from './vehicle-trajectory.model.js';
+import { VehicleStatusSegment } from './vehicle-status-segment.model.js';
 
 const MONGO_URI =
   process.env.MONGO_URI ??
@@ -38,7 +40,7 @@ async function seed(): Promise<void> {
   const collections = [
     'projects', 'tasks', 'runs', 'issues', 'issuestatetransitions',
     'requirements', 'commits', 'builds', 'vehicles', 'kpisnapshots',
-    'issuetimeseries', 'kpidefinitions',
+    'issuetimeseries', 'kpidefinitions', 'vehicletrajectories', 'vehiclestatussegments',
   ];
   for (const name of collections) {
     try { await mongoose.connection.db!.dropCollection(name); } catch { /* may not exist */ }
@@ -150,20 +152,28 @@ async function seed(): Promise<void> {
       vehicle_platform: 'ORIN-X',
       sensor_suite_version: 'SS-4.2',
       soc_architecture: 'dual-orin-x',
+      plate_type: 'permanent',
+      model_code: 'EP32',
+      component_versions: { lidar_fw: 'v2.1', camera_fw: 'v3.0', radar_fw: 'v1.8' },
       current_status: 'Active',
       last_heartbeat: daysAgo(0),
       current_location: { lat: 31.2304, lng: 121.4737 },
+      current_speed_mps: 12.5,
       fuel_or_battery_level: 82,
-      driving_mode: 'Autonomous',
+      driving_mode: 'UrbanPilot',
     },
     {
       vin: 'VIN-ORINX-002',
       vehicle_platform: 'ORIN-X',
       sensor_suite_version: 'SS-4.2',
       soc_architecture: 'dual-orin-x',
+      plate_type: 'temporary',
+      model_code: 'EP32',
+      component_versions: { lidar_fw: 'v2.1', camera_fw: 'v3.0', radar_fw: 'v1.8' },
       current_status: 'Idle',
       last_heartbeat: daysAgo(0),
       current_location: { lat: 31.2397, lng: 121.4998 },
+      current_speed_mps: 0,
       fuel_or_battery_level: 95,
       driving_mode: 'Standby',
     },
@@ -172,20 +182,28 @@ async function seed(): Promise<void> {
       vehicle_platform: 'ORIN',
       sensor_suite_version: 'SS-3.8',
       soc_architecture: 'single-orin',
+      plate_type: 'permanent',
+      model_code: 'ES33',
+      component_versions: { lidar_fw: 'v1.9', camera_fw: 'v2.5', radar_fw: 'v1.6' },
       current_status: 'Active',
       last_heartbeat: daysAgo(0),
       current_location: { lat: 39.9042, lng: 116.4074 },
+      current_speed_mps: 28.3,
       fuel_or_battery_level: 67,
-      driving_mode: 'Autonomous',
+      driving_mode: 'HighwayPilot',
     },
     {
       vin: 'VIN-ORIN-004',
       vehicle_platform: 'ORIN',
       sensor_suite_version: 'SS-3.8',
       soc_architecture: 'single-orin',
+      plate_type: 'temporary',
+      model_code: 'ES33',
+      component_versions: { lidar_fw: 'v1.9', camera_fw: 'v2.5' },
       current_status: 'Maintenance',
       last_heartbeat: daysAgo(2),
       current_location: { lat: 39.9142, lng: 116.3974 },
+      current_speed_mps: 0,
       fuel_or_battery_level: 45,
       driving_mode: 'Manual',
     },
@@ -194,9 +212,13 @@ async function seed(): Promise<void> {
       vehicle_platform: 'ORIN-X',
       sensor_suite_version: 'SS-4.2',
       soc_architecture: 'dual-orin-x',
+      plate_type: 'permanent',
+      model_code: 'EP32',
+      component_versions: { lidar_fw: 'v2.2', camera_fw: 'v3.1', radar_fw: 'v1.9' },
       current_status: 'Idle',
       last_heartbeat: daysAgo(1),
       current_location: { lat: 31.2244, lng: 121.4692 },
+      current_speed_mps: 0,
       fuel_or_battery_level: 100,
       driving_mode: 'Standby',
     },
@@ -486,10 +508,76 @@ async function seed(): Promise<void> {
   ]);
   console.log(`[seed] Inserted ${kpiDefs.length} custom KPI definitions`);
 
+  // -------------------------------------------------------------------------
+  // Vehicle Trajectory Points (simulated GPS data)
+  // -------------------------------------------------------------------------
+  const MODES = ['Manual', 'ACC', 'LCC', 'HighwayPilot', 'UrbanPilot'] as const;
+  const trajectoryPoints: any[] = [];
+
+  const vehicleTrajectoryConfigs = [
+    { vin: 'VIN-ORINX-001', run_id: 'RUN-008', baseLat: 31.2304, baseLng: 121.4737, count: 100 },
+    { vin: 'VIN-ORIN-003', run_id: 'RUN-009', baseLat: 39.9042, baseLng: 116.4074, count: 100 },
+    { vin: 'VIN-ORINX-002', run_id: 'RUN-002', baseLat: 31.2397, baseLng: 121.4998, count: 80 },
+    { vin: 'VIN-ORIN-004', run_id: 'RUN-006', baseLat: 39.9142, baseLng: 116.3974, count: 60 },
+    { vin: 'VIN-ORINX-005', run_id: 'RUN-004', baseLat: 31.2244, baseLng: 121.4692, count: 80 },
+  ];
+
+  for (const cfg of vehicleTrajectoryConfigs) {
+    for (let i = 0; i < cfg.count; i++) {
+      const modeIdx = Math.floor(i / 20) % MODES.length;
+      trajectoryPoints.push({
+        vin: cfg.vin,
+        run_id: cfg.run_id,
+        timestamp: new Date(Date.now() - (cfg.count - i) * 30000),
+        location: {
+          lat: cfg.baseLat + (i * 0.0005) * Math.cos(i * 0.1),
+          lng: cfg.baseLng + (i * 0.0005) * Math.sin(i * 0.1),
+        },
+        speed_mps: 5 + Math.random() * 25,
+        driving_mode: MODES[modeIdx],
+        heading_deg: (i * 3.6) % 360,
+      });
+    }
+  }
+
+  await VehicleTrajectory.insertMany(trajectoryPoints);
+  console.log(`[seed] Inserted ${trajectoryPoints.length} trajectory points`);
+
+  // -------------------------------------------------------------------------
+  // Vehicle Status Segments
+  // -------------------------------------------------------------------------
+  const statusSegments: any[] = [];
+  const segVehicles = [
+    { vin: 'VIN-ORINX-001', run_id: 'RUN-008' },
+    { vin: 'VIN-ORIN-003', run_id: 'RUN-009' },
+    { vin: 'VIN-ORINX-002', run_id: 'RUN-002' },
+  ];
+
+  for (const sv of segVehicles) {
+    let timeOffset = 0;
+    for (const mode of MODES) {
+      const duration = 600_000 + Math.floor(Math.random() * 1_800_000);
+      const mileage = (duration / 1000) * (5 + Math.random() * 20) / 1000;
+      statusSegments.push({
+        vin: sv.vin,
+        run_id: sv.run_id,
+        driving_mode: mode,
+        start_time: new Date(Date.now() - 7200000 + timeOffset),
+        end_time: new Date(Date.now() - 7200000 + timeOffset + duration),
+        duration_ms: duration,
+        mileage_km: Math.round(mileage * 100) / 100,
+      });
+      timeOffset += duration;
+    }
+  }
+
+  await VehicleStatusSegment.insertMany(statusSegments);
+  console.log(`[seed] Inserted ${statusSegments.length} status segments`);
+
   console.log('\n[seed] Seeding complete!');
   console.log('  - 2 Projects');
   console.log('  - 6 Tasks');
-  console.log('  - 5 Vehicles');
+  console.log('  - 5 Vehicles (with plate_type, model_code, component_versions)');
   console.log('  - 10 Runs');
   console.log('  - 20 Issues (2 with vehicle dynamics snapshots)');
   console.log('  - 3 Requirements');
@@ -499,6 +587,8 @@ async function seed(): Promise<void> {
   console.log('  - 10 Issue State Transitions');
   console.log('  - 3 Time-Series Channels');
   console.log('  - 3 Custom KPI Definitions');
+  console.log(`  - ${trajectoryPoints.length} Trajectory Points`);
+  console.log(`  - ${statusSegments.length} Status Segments`);
 
   await mongoose.disconnect();
   console.log('[seed] Disconnected from MongoDB');

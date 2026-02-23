@@ -48,8 +48,10 @@ const kpiEngineUrl      = () => serviceUrl('KPI_ENGINE_URL', 'KPI_ENGINE_PORT', 
 router.use('/api/projects', createProxyMiddleware(proxyOpts(releaseManagerUrl(), '/projects')));
 router.use('/api/tasks',    createProxyMiddleware(proxyOpts(releaseManagerUrl(), '/tasks')));
 
-router.use('/api/runs',     createProxyMiddleware(proxyOpts(fleetManagerUrl(), '/runs')));
-router.use('/api/vehicles', createProxyMiddleware(proxyOpts(fleetManagerUrl(), '/vehicles')));
+router.use('/api/runs',       createProxyMiddleware(proxyOpts(fleetManagerUrl(), '/runs')));
+router.use('/api/vehicles',   createProxyMiddleware(proxyOpts(fleetManagerUrl(), '/vehicles')));
+router.use('/api/fleet',      createProxyMiddleware(proxyOpts(fleetManagerUrl(), '/fleet')));
+router.use('/api/trajectory', createProxyMiddleware(proxyOpts(fleetManagerUrl(), '/trajectory')));
 
 router.use('/api/issues',   createProxyMiddleware(proxyOpts(issueWorkflowUrl(), '/api/issues')));
 

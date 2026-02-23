@@ -2,6 +2,8 @@ import { createServiceApp } from '@nvidopia/service-toolkit';
 import { Kafka } from 'kafkajs';
 import vehicleRoutes from './routes/vehicles.js';
 import runRoutes from './routes/runs.js';
+import fleetStatsRoutes from './routes/fleet-stats.js';
+import trajectoryRoutes from './routes/trajectory.js';
 import { startVehicleStatusConsumer } from './consumers/vehicle-status.consumer.js';
 import { startTelemetryConsumer } from './consumers/telemetry.consumer.js';
 
@@ -17,6 +19,8 @@ createServiceApp({
   routes: (app) => {
     app.use(vehicleRoutes);
     app.use(runRoutes);
+    app.use(fleetStatsRoutes);
+    app.use(trajectoryRoutes);
   },
   onReady: async () => {
     const kafka = new Kafka({ clientId: 'fleet-manager', brokers: KAFKA_BROKERS });

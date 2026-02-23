@@ -8,6 +8,8 @@ export { Requirement, type IRequirement, type RequirementDocument, ASIL_LEVEL, t
 export { Commit, type ICommit, type CommitDocument } from './commit.model.js';
 export { Build, type IBuild, type BuildDocument } from './build.model.js';
 export { KpiSnapshot, type IKpiSnapshot, type KpiSnapshotDocument, KPI_METRIC_NAME, type KpiMetricName } from './kpi-snapshot.model.js';
-export { Vehicle, type IVehicle, type VehicleDocument, VEHICLE_STATUS, type VehicleStatus, DRIVING_MODE, type DrivingMode } from './vehicle.model.js';
+export { Vehicle, type IVehicle, type VehicleDocument, VEHICLE_STATUS, type VehicleStatus, DRIVING_MODE, type DrivingMode, PLATE_TYPE, type PlateType } from './vehicle.model.js';
+export { VehicleTrajectory, type IVehicleTrajectoryPoint, type VehicleTrajectoryPointDocument } from './vehicle-trajectory.model.js';
+export { VehicleStatusSegment, type IVehicleStatusSegment, type VehicleStatusSegmentDocument } from './vehicle-status-segment.model.js';
 export { IssueTimeSeries, type IIssueTimeSeries, type IssueTimeSeriesDocument, CHANNEL_TYPE, type ChannelType, type ITimeSeriesDataPoint, type ITimeRange } from './issue-timeseries.model.js';
 export { KpiDefinition, type IKpiDefinition, type KpiDefinitionDocument, KPI_DATA_SOURCE, type KpiDataSource, KPI_CHART_TYPE, type KpiChartType, KPI_AGGREGATION, type KpiAggregation, KPI_FILTER_OPERATOR, type KpiFilterOperator, type IKpiFilter, type IKpiVariable, type IKpiYAxis, type IKpiVisualization } from './kpi-definition.model.js';
