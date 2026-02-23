@@ -751,10 +751,18 @@ export interface SimVehicle {
   soc_architecture: string;
 }
 
+export interface RoadRouteResult {
+  coordinates: Array<{ lat: number; lng: number }>;
+  segments: Array<{ from: { lat: number; lng: number }; to: { lat: number; lng: number }; distance_m: number; duration_s: number; heading_deg: number }>;
+  total_distance_m: number;
+  total_duration_s: number;
+}
+
 export interface SimRoute {
   route_id: string;
   name?: string;
   waypoints: Array<{ lat: number; lng: number }>;
+  road?: RoadRouteResult;
 }
 
 export interface VehicleAssignment {
@@ -845,4 +853,12 @@ export function generateSimRoutes(data: { start_point: { lat: number; lng: numbe
 
 export function generateSimFleet(data: { count?: number; template?: Partial<SimVehicle> }) {
   return fetchJson<{ vehicles: SimVehicle[] }>('/simulations/generate-fleet', { method: 'POST', body: JSON.stringify(data) });
+}
+
+export function planRoadRoute(waypoints: Array<{ lat: number; lng: number }>) {
+  return fetchJson<RoadRouteResult>('/simulations/plan-road-route', { method: 'POST', body: JSON.stringify({ waypoints }) });
+}
+
+export function snapRoutesToRoads(routes: SimRoute[]) {
+  return fetchJson<{ routes: SimRoute[] }>('/simulations/snap-routes', { method: 'POST', body: JSON.stringify({ routes }) });
 }

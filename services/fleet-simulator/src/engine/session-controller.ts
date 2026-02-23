@@ -2,6 +2,7 @@ import crypto from 'node:crypto';
 import { Project, Task, Run, Vehicle, type SimulationSessionDocument, type ISimVehicle } from '@nvidopia/data-models';
 import { generateFleet } from './fleet-generator.js';
 import { generateRoutes } from './route-generator.js';
+import { snapRoutesToRoads, type RoadRoute } from './road-router.js';
 import { VehicleRunner, type VehicleRunnerStats } from './vehicle-runner.js';
 
 const BFF_BASE_URL = process.env.BFF_URL || 'http://localhost:3000';
@@ -18,8 +19,14 @@ class SessionController {
     if (this.activeSessions.has(session.session_id)) return;
 
     const vehicles = await this.resolveVehicles(session);
-    const routes = await this.resolveRoutes(session, vehicles.length);
-    const assignments = await this.resolveAssignments(session, vehicles, routes);
+    const rawRoutes = await this.resolveRoutes(session, vehicles.length);
+
+    // Snap waypoints to real roads via OSRM
+    console.log(`[session-controller] Snapping ${rawRoutes.length} route(s) to roads via OSRM...`);
+    const snappedRoutes = await snapRoutesToRoads(rawRoutes);
+    console.log(`[session-controller] Road snapping complete.`);
+
+    const assignments = await this.resolveAssignments(session, vehicles, snappedRoutes);
 
     const runners: VehicleRunner[] = [];
 
@@ -27,12 +34,14 @@ class SessionController {
       const vehicle = vehicles.find((v) => v.vin === assignment.vin);
       if (!vehicle) continue;
 
-      const route = routes.find((r) => r.route_id === assignment.route_id);
-      const waypoints = route?.waypoints ?? routes[0]?.waypoints ?? [{ lat: 31.23, lng: 121.47 }];
+      const matched = snappedRoutes.find((r) => r.route_id === assignment.route_id);
+      const road = (matched as { road?: RoadRoute })?.road ?? undefined;
+      const waypoints = road?.coordinates ?? matched?.waypoints ?? snappedRoutes[0]?.waypoints ?? [{ lat: 31.23, lng: 121.47 }];
 
       const runner = new VehicleRunner({
         vehicle,
         waypoints,
+        road,
         reportConfig: session.report_config,
         runId: assignment.runId,
         taskId: assignment.task_id,

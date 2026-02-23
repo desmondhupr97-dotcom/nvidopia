@@ -26,10 +26,17 @@ export interface IFleetConfig {
   vehicle_template?: Partial<ISimVehicle>;
 }
 
+export interface IRoadRoute {
+  coordinates: IGpsCoordinates[];
+  total_distance_m: number;
+  total_duration_s: number;
+}
+
 export interface ISimRoute {
   route_id: string;
   name?: string;
   waypoints: IGpsCoordinates[];
+  road?: IRoadRoute;
 }
 
 export interface IRandomRouteConfig {
@@ -94,11 +101,21 @@ const SimVehicleSchema = new Schema<ISimVehicle>(
   { _id: false },
 );
 
+const RoadRouteSchema = new Schema<IRoadRoute>(
+  {
+    coordinates: { type: [GpsCoordinatesSchema], required: true },
+    total_distance_m: { type: Number, default: 0 },
+    total_duration_s: { type: Number, default: 0 },
+  },
+  { _id: false },
+);
+
 const SimRouteSchema = new Schema<ISimRoute>(
   {
     route_id: { type: String, required: true },
     name: { type: String },
     waypoints: { type: [GpsCoordinatesSchema], required: true },
+    road: { type: RoadRouteSchema },
   },
   { _id: false },
 );

@@ -113,23 +113,35 @@ export default function SimulationDetailPage() {
             <div style={{ height: 400 }}>
               <MapContainer center={center} zoom={12} style={{ height: '100%', width: '100%', borderRadius: 8 }}>
                 <TileLayer url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png" attribution='&copy; CartoDB' />
-                {routes.map((route, idx) => (
-                  <Polyline
-                    key={route.route_id}
-                    positions={route.waypoints.map((w) => [w.lat, w.lng] as [number, number])}
-                    pathOptions={{ color: ROUTE_COLORS[idx % ROUTE_COLORS.length], weight: 3, opacity: 0.8 }}
-                  />
-                ))}
-                {routes.map((route, idx) => route.waypoints.length > 0 && (
-                  <CircleMarker
-                    key={`start-${route.route_id}`}
-                    center={[route.waypoints[0]!.lat, route.waypoints[0]!.lng]}
-                    radius={6}
-                    pathOptions={{ color: ROUTE_COLORS[idx % ROUTE_COLORS.length], fillColor: ROUTE_COLORS[idx % ROUTE_COLORS.length], fillOpacity: 1 }}
-                  >
-                    <Tooltip>{route.name || route.route_id}</Tooltip>
-                  </CircleMarker>
-                ))}
+                {routes.map((route, idx) => {
+                  const color = ROUTE_COLORS[idx % ROUTE_COLORS.length]!;
+                  const roadCoords = route.road?.coordinates;
+                  const displayCoords = roadCoords ?? route.waypoints;
+                  return (
+                    <span key={route.route_id}>
+                      <Polyline
+                        positions={displayCoords.map((w) => [w.lat, w.lng] as [number, number])}
+                        pathOptions={{ color, weight: roadCoords ? 4 : 3, opacity: roadCoords ? 0.9 : 0.7, dashArray: roadCoords ? undefined : '8 4' }}
+                      />
+                      {roadCoords && (
+                        <Polyline
+                          positions={route.waypoints.map((w) => [w.lat, w.lng] as [number, number])}
+                          pathOptions={{ color, weight: 1, opacity: 0.25, dashArray: '4 4' }}
+                        />
+                      )}
+                      {displayCoords.length > 0 && (
+                        <CircleMarker center={[displayCoords[0]!.lat, displayCoords[0]!.lng]} radius={7} pathOptions={{ color: '#fff', fillColor: color, fillOpacity: 1, weight: 2 }}>
+                          <Tooltip>{route.name || route.route_id} (Start)</Tooltip>
+                        </CircleMarker>
+                      )}
+                      {displayCoords.length > 1 && (
+                        <CircleMarker center={[displayCoords[displayCoords.length - 1]!.lat, displayCoords[displayCoords.length - 1]!.lng]} radius={7} pathOptions={{ color: '#fff', fillColor: '#ef4444', fillOpacity: 1, weight: 2 }}>
+                          <Tooltip>{route.name || route.route_id} (End)</Tooltip>
+                        </CircleMarker>
+                      )}
+                    </span>
+                  );
+                })}
               </MapContainer>
             </div>
           </Card>
@@ -139,6 +151,10 @@ export default function SimulationDetailPage() {
             <Descriptions column={1} size="small" labelStyle={{ color: 'var(--text-muted)' }}>
               <Descriptions.Item label="Fleet Mode">{session.fleet_config?.mode}</Descriptions.Item>
               <Descriptions.Item label="Route Mode">{session.route_config?.mode}</Descriptions.Item>
+              <Descriptions.Item label="Routes">{routes.length} route(s){routes.some((r) => r.road) ? ' (road-planned)' : ''}</Descriptions.Item>
+              {routes.some((r) => r.road) && (
+                <Descriptions.Item label="Road Distance">{(routes.reduce((s, r) => s + (r.road?.total_distance_m ?? 0), 0) / 1000).toFixed(1)} km total</Descriptions.Item>
+              )}
               <Descriptions.Item label="Telemetry Interval">{(session.report_config?.telemetry_interval_ms ?? 3000) / 1000}s</Descriptions.Item>
               <Descriptions.Item label="Issue Interval">{((session.report_config?.issue_interval_range_ms?.[0] ?? 30000) / 1000)}s - {((session.report_config?.issue_interval_range_ms?.[1] ?? 120000) / 1000)}s</Descriptions.Item>
               <Descriptions.Item label="Mode Switch">{(session.report_config?.status_change_interval_ms ?? 60000) / 1000}s</Descriptions.Item>

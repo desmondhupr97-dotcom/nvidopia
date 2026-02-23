@@ -5,6 +5,7 @@ import { asyncHandler } from '@nvidopia/service-toolkit';
 import { generateRoutes } from '../engine/route-generator.js';
 import { generateFleet } from '../engine/fleet-generator.js';
 import { sessionController } from '../engine/session-controller.js';
+import { planRoadRoute, snapRoutesToRoads } from '../engine/road-router.js';
 
 const router = Router();
 
@@ -160,6 +161,26 @@ router.post('/simulations/generate-fleet', asyncHandler(async (req: Request, res
   const { count = 5, template } = req.body;
   const vehicles = generateFleet(count, template);
   res.json({ vehicles });
+}));
+
+router.post('/simulations/plan-road-route', asyncHandler(async (req: Request, res: Response) => {
+  const { waypoints } = req.body;
+  if (!Array.isArray(waypoints) || waypoints.length < 2) {
+    res.status(400).json({ error: 'At least 2 waypoints with lat/lng are required' });
+    return;
+  }
+  const road = await planRoadRoute(waypoints);
+  res.json(road);
+}));
+
+router.post('/simulations/snap-routes', asyncHandler(async (req: Request, res: Response) => {
+  const { routes } = req.body;
+  if (!Array.isArray(routes) || routes.length === 0) {
+    res.status(400).json({ error: 'routes array is required' });
+    return;
+  }
+  const snapped = await snapRoutesToRoads(routes);
+  res.json({ routes: snapped });
 }));
 
 export default router;
