@@ -3,7 +3,7 @@ import express from 'express';
 import { getProducer } from '../kafka.js';
 
 const router = Router();
-router.use(express.json({ limit: '1mb' }));
+const jsonParser = express.json({ limit: '1mb' });
 
 function createIngestHandler(
   topic: string,
@@ -37,19 +37,19 @@ function createIngestHandler(
   };
 }
 
-router.post('/api/ingest/telemetry', createIngestHandler(
+router.post('/api/ingest/telemetry', jsonParser, createIngestHandler(
   'ad.telemetry.mileage.realtime',
   (body) => String(body.vehicle_id ?? ''),
   (body) => body.vehicle_id ? null : 'vehicle_id is required',
 ));
 
-router.post('/api/ingest/status', createIngestHandler(
+router.post('/api/ingest/status', jsonParser, createIngestHandler(
   'ad.vehicle.status.tracking',
   (body) => String(body.vehicle_id ?? ''),
   (body) => body.vehicle_id ? null : 'vehicle_id is required',
 ));
 
-router.post('/api/ingest/issue', createIngestHandler(
+router.post('/api/ingest/issue', jsonParser, createIngestHandler(
   'ad.testing.issue.reports',
   () => null,
   (body) => (body.title || body.description) ? null : 'title or description is required',
