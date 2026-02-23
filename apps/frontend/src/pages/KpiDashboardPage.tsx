@@ -140,9 +140,10 @@ function CustomKpiPanel({ def, projectId }: { def: KpiDefinition; projectId: str
       axisId: y.axis_id,
     })) ?? [{ key: 'value', label: def.name }];
 
+    const thresholds = (def.visualization as any)?.thresholds;
     return (
       <Card className="glass-panel" title={<span style={{ fontFamily: "'Exo 2', sans-serif", fontWeight: 600 }}>{def.name}</span>}>
-        <KpiChartRenderer chartType={chartType} data={chartData} xField={xField} yFields={yFields} />
+        <KpiChartRenderer chartType={chartType} data={chartData} xField={xField} yFields={yFields} thresholds={thresholds} />
       </Card>
     );
   }

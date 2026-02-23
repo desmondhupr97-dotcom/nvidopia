@@ -64,6 +64,37 @@ async function resolveVariable(
     return values.length;
   }
 
+  if (variable.aggregation === 'stddev') {
+    const pipeline: any[] = [
+      { $match: matchStage },
+      { $group: { _id: null, result: { $stdDevPop: `$${variable.field}` } } },
+    ];
+    const results = await model.aggregate(pipeline);
+    return results.length > 0 ? Number(results[0].result ?? 0) : 0;
+  }
+
+  if (variable.aggregation.startsWith('percentile_')) {
+    const pctStr = variable.aggregation.replace('percentile_', '');
+    const pctValue = Number(pctStr) / 100;
+    const pipeline: any[] = [
+      { $match: matchStage },
+      { $sort: { [variable.field]: 1 } },
+      { $group: { _id: null, values: { $push: `$${variable.field}` } } },
+      {
+        $project: {
+          result: {
+            $arrayElemAt: [
+              '$values',
+              { $floor: { $multiply: [pctValue, { $size: '$values' }] } },
+            ],
+          },
+        },
+      },
+    ];
+    const results = await model.aggregate(pipeline);
+    return results.length > 0 ? Number(results[0].result ?? 0) : 0;
+  }
+
   const accumExpr = variable.aggregation === 'count'
     ? { $sum: 1 }
     : { [aggMap[variable.aggregation]]: `$${variable.field}` };
