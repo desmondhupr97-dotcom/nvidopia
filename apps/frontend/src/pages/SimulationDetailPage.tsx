@@ -167,23 +167,23 @@ export default function SimulationDetailPage() {
 
       <Row gutter={[16, 16]} style={{ marginBottom: 24 }}>
         <Col xs={24} sm={6}>
-          <Card className="glass-panel glow-accent-hover">
-            <Statistic title="Vehicles" value={session.fleet_config?.vehicle_count ?? session.fleet_config?.vehicles?.length ?? 0} valueStyle={{ fontFamily: "var(--font-mono)", color: '#00FF41' }} />
+          <Card className="glass-panel">
+            <Statistic title="Vehicles" value={session.fleet_config?.vehicle_count ?? session.fleet_config?.vehicles?.length ?? 0} valueStyle={{ fontFamily: "var(--font-mono)", color: 'var(--accent-strong)' }} />
           </Card>
         </Col>
         <Col xs={24} sm={6}>
-          <Card className="glass-panel glow-accent-hover">
-            <Statistic title="Telemetry Sent" value={stats?.telemetry_sent ?? 0} valueStyle={{ fontFamily: "var(--font-mono)", color: '#00cc33' }} />
+          <Card className="glass-panel">
+            <Statistic title="Telemetry Sent" value={stats?.telemetry_sent ?? 0} valueStyle={{ fontFamily: "var(--font-mono)", color: 'var(--success)' }} />
           </Card>
         </Col>
         <Col xs={24} sm={6}>
-          <Card className="glass-panel glow-accent-hover">
-            <Statistic title="Issues Reported" value={stats?.issues_sent ?? 0} valueStyle={{ fontFamily: "var(--font-mono)", color: '#FFB000' }} />
+          <Card className="glass-panel">
+            <Statistic title="Issues Reported" value={stats?.issues_sent ?? 0} valueStyle={{ fontFamily: "var(--font-mono)", color: 'var(--warning)' }} />
           </Card>
         </Col>
         <Col xs={24} sm={6}>
-          <Card className="glass-panel glow-accent-hover">
-            <Statistic title="Total Mileage" value={Number(stats?.total_mileage_km ?? 0).toFixed(1)} suffix="km" valueStyle={{ fontFamily: "var(--font-mono)", color: '#33ff66' }} />
+          <Card className="glass-panel">
+            <Statistic title="Total Mileage" value={Number(stats?.total_mileage_km ?? 0).toFixed(1)} suffix="km" valueStyle={{ fontFamily: "var(--font-mono)", color: 'var(--success)' }} />
           </Card>
         </Col>
       </Row>

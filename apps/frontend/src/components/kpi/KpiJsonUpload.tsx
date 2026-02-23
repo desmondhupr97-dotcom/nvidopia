@@ -178,7 +178,7 @@ export default function KpiJsonUpload({ open, onClose, onImported }: KpiJsonUplo
       open={open}
       title={
         <Space>
-          <FileJson size={16} style={{ color: '#00FF41' }} />
+          <FileJson size={16} style={{ color: 'var(--accent)' }} />
           <span className="font-display" style={{ fontWeight: 600 }}>Import KPI Dashboards</span>
         </Space>
       }
@@ -211,18 +211,18 @@ export default function KpiJsonUpload({ open, onClose, onImported }: KpiJsonUplo
             showUploadList={false}
             beforeUpload={handleFile}
             style={{
-              background: 'rgba(0,255,65,0.02)',
-              borderColor: 'rgba(0,255,65,0.12)',
+              background: 'var(--bg-glass)',
+              borderColor: 'var(--glass-border-light)',
               borderStyle: 'dashed',
-              borderRadius: 2,
+              borderRadius: 16,
             }}
           >
             <div style={{ padding: '20px 0' }}>
-              <UploadIcon size={32} style={{ color: '#00FF41', marginBottom: 10 }} />
-              <p style={{ color: '#b8d4b8', fontSize: 12, marginBottom: 4 }}>
+              <UploadIcon size={32} style={{ color: 'var(--accent)', marginBottom: 10 }} />
+              <p style={{ color: 'var(--text-primary)', fontSize: 12, marginBottom: 4 }}>
                 Drop JSON file here or click to browse
               </p>
-              <p style={{ color: '#3d6b3d', fontSize: 11 }}>
+              <p style={{ color: 'var(--text-muted)', fontSize: 11 }}>
                 Supports batch import of multiple dashboards with VChart specs
               </p>
             </div>
@@ -234,7 +234,7 @@ export default function KpiJsonUpload({ open, onClose, onImported }: KpiJsonUplo
               size="small"
               icon={<Download size={12} />}
               onClick={handleDownloadSample}
-              style={{ color: '#00FF41', fontSize: 11 }}
+              style={{ color: 'var(--accent-strong)', fontSize: 11 }}
             >
               Download sample JSON
             </Button>
@@ -265,12 +265,12 @@ export default function KpiJsonUpload({ open, onClose, onImported }: KpiJsonUplo
                   key: d.id,
                   label: (
                     <Space>
-                      <Text style={{ color: '#b8d4b8' }}>{d.name}</Text>
+                      <Text style={{ color: 'var(--text-primary)' }}>{d.name}</Text>
                       <Tag color="cyan">{d.kpiCount} KPIs</Tag>
                     </Space>
                   ),
                   children: (
-                    <Text style={{ color: '#3d6b3d', fontSize: 11 }}>
+                    <Text style={{ color: 'var(--text-muted)', fontSize: 11 }}>
                       Dashboard ID: <code>{d.id}</code>
                     </Text>
                   ),
@@ -291,7 +291,7 @@ export default function KpiJsonUpload({ open, onClose, onImported }: KpiJsonUplo
           />
           {importResult.results.map((r) => (
             <div key={r.dashboard_id} style={{ marginTop: 12 }}>
-              <Text strong style={{ color: '#b8d4b8' }}>{r.dashboard_id}</Text>
+              <Text strong style={{ color: 'var(--text-primary)' }}>{r.dashboard_id}</Text>
               <div style={{ marginLeft: 12, marginTop: 4 }}>
                 {r.created.length > 0 && (
                   <div>

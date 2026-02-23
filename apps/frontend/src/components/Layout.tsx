@@ -1,9 +1,9 @@
 import { Outlet, useLocation, Link } from 'react-router-dom';
 import { Layout as AntLayout, Breadcrumb } from 'antd';
-import { HomeOutlined } from '@ant-design/icons';
+import { Home } from 'lucide-react';
 import Sidebar from './Sidebar';
 
-const { Sider, Header, Content } = AntLayout;
+const { Content } = AntLayout;
 
 const routeLabels: Record<string, string> = {
   projects: 'Projects',
@@ -14,6 +14,10 @@ const routeLabels: Record<string, string> = {
   traceability: 'Traceability',
   'auto-triage': 'Auto-Triage',
   simulation: 'Simulation',
+  fleet: 'Fleet',
+  vehicles: 'Vehicle',
+  trajectory: 'Trajectory',
+  'issues-map': 'Issue Map',
 };
 
 function BreadcrumbNav() {
@@ -21,7 +25,7 @@ function BreadcrumbNav() {
   const segments = pathname.split('/').filter(Boolean);
 
   const items = [
-    { title: <Link to="/"><HomeOutlined style={{ fontSize: 14 }} /></Link> },
+    { title: <Link to="/"><Home size={15} strokeWidth={2} /></Link> },
     ...segments.map((seg, i) => {
       const path = '/' + segments.slice(0, i + 1).join('/');
       const label = routeLabels[seg] ?? seg;
@@ -37,43 +41,46 @@ function BreadcrumbNav() {
 
 export default function Layout() {
   return (
-    <AntLayout style={{ minHeight: '100vh', position: 'relative', zIndex: 1 }}>
-      <Sider
-        width={260}
+    <div style={{ display: 'flex', minHeight: '100vh', position: 'relative', zIndex: 1 }}>
+      {/* Floating Sidebar */}
+      <div
         style={{
           position: 'fixed',
-          left: 0,
-          top: 0,
-          bottom: 0,
-          zIndex: 10,
-          overflow: 'auto',
+          left: 16,
+          top: 16,
+          bottom: 16,
+          width: 260,
+          zIndex: 20,
         }}
       >
         <Sidebar />
-      </Sider>
+      </div>
 
-      <AntLayout style={{ marginLeft: 260 }}>
-        <Header
+      {/* Main Content Area */}
+      <div style={{ marginLeft: 292, flex: 1, display: 'flex', flexDirection: 'column' }}>
+        {/* Header */}
+        <header
           className="glass-header"
           style={{
             position: 'sticky',
             top: 0,
-            zIndex: 9,
+            zIndex: 10,
             display: 'flex',
             alignItems: 'center',
-            padding: '0 28px',
-            height: 64,
+            padding: '0 32px',
+            height: 56,
           }}
         >
           <BreadcrumbNav />
-        </Header>
+        </header>
 
-        <Content style={{ padding: '28px', minHeight: 'calc(100vh - 64px)' }}>
+        {/* Content */}
+        <Content style={{ padding: 32, minHeight: 'calc(100vh - 56px)' }}>
           <div className="animate-fade-in">
             <Outlet />
           </div>
         </Content>
-      </AntLayout>
-    </AntLayout>
+      </div>
+    </div>
   );
 }

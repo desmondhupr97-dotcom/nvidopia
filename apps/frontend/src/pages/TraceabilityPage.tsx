@@ -62,7 +62,7 @@ export default function TraceabilityPage() {
     <div>
       {/* Header */}
       <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 8 }}>
-        <GitBranch size={28} style={{ color: '#6366f1' }} />
+        <GitBranch size={28} style={{ color: 'var(--accent)' }} />
         <h1 className="page-title">Traceability</h1>
       </div>
       <p className="page-subtitle" style={{ marginBottom: 24 }}>
@@ -76,14 +76,14 @@ export default function TraceabilityPage() {
             Requirement Verification Coverage
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: 20 }}>
-            <span style={{ fontFamily: "var(--font-mono)", fontSize: 24, fontWeight: 700, color: '#00FF41', textShadow: '0 0 8px rgba(0,255,65,0.25)' }}>
+            <span style={{ fontFamily: "var(--font-mono)", fontSize: 24, fontWeight: 700, color: 'var(--accent-strong)' }}>
               {coverage.percentage != null ? `${Number(coverage.percentage).toFixed(1)}%` : '—'}
             </span>
             <div style={{ flex: 1 }}>
               <Progress
                 percent={Number(coverage.percentage ?? 0)}
                 showInfo={false}
-                strokeColor={{ from: '#00FF41', to: '#00cc33' }}
+                strokeColor={{ from: '#34d399', to: '#059669' }}
               />
             </div>
             <span style={{ fontSize: 12, color: 'var(--text-muted)', whiteSpace: 'nowrap' }}>
@@ -134,7 +134,7 @@ export default function TraceabilityPage() {
           title={
             <span className="font-display" style={{ fontWeight: 600 }}>
               {tab === 'forward' ? 'Forward' : 'Backward'} Trace from{' '}
-              <code style={{ color: '#818cf8' }}>{traceData.origin_id}</code>
+              <code style={{ color: 'var(--accent-strong)' }}>{traceData.origin_id}</code>
             </span>
           }
         >
@@ -156,7 +156,7 @@ export default function TraceabilityPage() {
                     fontWeight: 700,
                     color: '#fff',
                     fontFamily: "var(--font-mono)",
-                    boxShadow: `0 0 12px ${NODE_TYPE_COLORS[nodeType] ?? '#64748b'}40`,
+                    boxShadow: `0 0 12px ${NODE_TYPE_COLORS[nodeType] ?? '#64748b'}20`,
                   }}>
                     {NODE_TYPE_LABELS[nodeType] ?? '?'}
                   </div>

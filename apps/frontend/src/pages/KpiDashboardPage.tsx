@@ -18,9 +18,9 @@ import KpiJsonUpload from '../components/kpi/KpiJsonUpload';
 import VChartRenderer from '../components/kpi/VChartRenderer';
 
 function gaugeColor(pct: number): string {
-  if (pct >= 80) return '#00FF41';
-  if (pct >= 50) return '#FFB000';
-  return '#FF0033';
+  if (pct >= 80) return '#34d399';
+  if (pct >= 50) return '#fbbf24';
+  return '#f87171';
 }
 
 function BuiltinPanels({ projectId, startDate, endDate, interval }: {
@@ -56,13 +56,13 @@ function BuiltinPanels({ projectId, startDate, endDate, interval }: {
       <Row gutter={[16, 16]} style={{ marginBottom: 24 }}>
         {stats.map((s) => (
           <Col xs={24} sm={12} lg={6} key={s.title}>
-            <Card className="glass-panel hud-corners" style={{ height: '100%' }}>
+            <Card className="glass-panel" style={{ height: '100%' }}>
               <Statistic
                 title={<span className="font-display" style={{ fontWeight: 600, fontSize: 9, textTransform: 'uppercase', letterSpacing: '0.06em' }}>{s.title}</span>}
                 value={s.value != null ? Number(s.value) : undefined}
                 precision={1}
                 suffix={<span style={{ fontSize: 12, color: 'var(--text-muted)' }}>{s.unit}</span>}
-                valueStyle={{ fontFamily: "var(--font-mono)", fontWeight: 700, color: '#00FF41', textShadow: '0 0 8px rgba(0,255,65,0.25)' }}
+                valueStyle={{ fontFamily: "var(--font-mono)", fontWeight: 700, color: 'var(--accent-strong)' }}
               />
             </Card>
           </Col>
@@ -71,33 +71,33 @@ function BuiltinPanels({ projectId, startDate, endDate, interval }: {
           const val = g.value != null ? Number(g.value) : null;
           return (
             <Col xs={24} sm={12} lg={6} key={g.title}>
-              <Card className="glass-panel hud-corners" style={{ height: '100%' }}>
+              <Card className="glass-panel" style={{ height: '100%' }}>
                 <div className="font-display" style={{ fontWeight: 600, fontSize: 9, color: 'var(--text-muted)', marginBottom: 6, textTransform: 'uppercase', letterSpacing: '0.06em' }}>{g.title}</div>
-                <div style={{ fontFamily: "var(--font-mono)", fontSize: 24, fontWeight: 700, color: val != null ? gaugeColor(val) : 'var(--text-primary)', marginBottom: 8, textShadow: val != null ? `0 0 8px ${gaugeColor(val)}40` : 'none' }}>
+                <div style={{ fontFamily: "var(--font-mono)", fontSize: 24, fontWeight: 700, color: val != null ? gaugeColor(val) : 'var(--text-primary)', marginBottom: 8 }}>
                   {val != null ? val.toFixed(1) : '\u2014'}
                   <span style={{ fontSize: 12, color: 'var(--text-muted)', marginLeft: 4 }}>{g.unit}</span>
                 </div>
-                <Progress percent={val != null ? Math.min(100, Math.max(0, val)) : 0} showInfo={false} strokeColor={val != null ? gaugeColor(val) : '#00FF41'} size="small" />
+                <Progress percent={val != null ? Math.min(100, Math.max(0, val)) : 0} showInfo={false} strokeColor={val != null ? gaugeColor(val) : '#34d399'} size="small" />
               </Card>
             </Col>
           );
         })}
       </Row>
-      <Card className="glass-panel hud-corners" title={<span className="font-display" style={{ fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Issue Convergence</span>}>
+      <Card className="glass-panel" title={<span className="font-display" style={{ fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Issue Convergence</span>}>
         {convergencePoints.length > 0 ? (
           <ResponsiveContainer width="100%" height={300}>
             <AreaChart data={convergencePoints}>
               <defs>
-                <linearGradient id="openGrad" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stopColor="#FF0033" stopOpacity={0.2} /><stop offset="100%" stopColor="#FF0033" stopOpacity={0} /></linearGradient>
-                <linearGradient id="closedGrad" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stopColor="#00FF41" stopOpacity={0.2} /><stop offset="100%" stopColor="#00FF41" stopOpacity={0} /></linearGradient>
+                <linearGradient id="openGrad" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stopColor="#f87171" stopOpacity={0.2} /><stop offset="100%" stopColor="#f87171" stopOpacity={0} /></linearGradient>
+                <linearGradient id="closedGrad" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stopColor="#34d399" stopOpacity={0.2} /><stop offset="100%" stopColor="#34d399" stopOpacity={0} /></linearGradient>
               </defs>
-              <CartesianGrid strokeDasharray="3 3" stroke="rgba(0,255,65,0.04)" />
-              <XAxis dataKey="timestamp" tick={{ fontSize: 10, fill: '#3d6b3d' }} tickFormatter={(v) => new Date(v).toLocaleDateString()} stroke="rgba(0,255,65,0.04)" />
-              <YAxis tick={{ fontSize: 10, fill: '#3d6b3d' }} stroke="rgba(0,255,65,0.04)" />
-              <Tooltip labelFormatter={(v) => new Date(v as string).toLocaleDateString()} contentStyle={{ background: 'rgba(0,0,0,0.95)', border: '1px solid rgba(0,255,65,0.15)', borderRadius: 2, color: '#b8d4b8' }} />
+              <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.06)" />
+              <XAxis dataKey="timestamp" tick={{ fontSize: 10, fill: '#505660' }} tickFormatter={(v) => new Date(v).toLocaleDateString()} stroke="rgba(255,255,255,0.06)" />
+              <YAxis tick={{ fontSize: 10, fill: '#505660' }} stroke="rgba(255,255,255,0.06)" />
+              <Tooltip labelFormatter={(v) => new Date(v as string).toLocaleDateString()} contentStyle={{ background: 'rgba(24,25,30,0.95)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 12, color: '#e4e7eb' }} />
               <Legend />
-              <Area type="monotone" dataKey="open" stroke="#FF0033" fill="url(#openGrad)" name="Open" strokeWidth={2} />
-              <Area type="monotone" dataKey="closed" stroke="#00FF41" fill="url(#closedGrad)" name="Closed" strokeWidth={2} />
+              <Area type="monotone" dataKey="open" stroke="#f87171" fill="url(#openGrad)" name="Open" strokeWidth={2} />
+              <Area type="monotone" dataKey="closed" stroke="#34d399" fill="url(#closedGrad)" name="Closed" strokeWidth={2} />
             </AreaChart>
           </ResponsiveContainer>
         ) : (
@@ -144,7 +144,7 @@ function CustomKpiPanel({ def, projectId }: { def: KpiDefinition; projectId: str
 
   if (chartType === 'table' && data?.groups) {
     return (
-      <Card className="glass-panel hud-corners" title={<span className="font-display" style={{ fontWeight: 600 }}>{def.name}</span>}>
+      <Card className="glass-panel" title={<span className="font-display" style={{ fontWeight: 600 }}>{def.name}</span>}>
         <KpiTableRenderer groups={data.groups} />
       </Card>
     );
@@ -162,7 +162,7 @@ function CustomKpiPanel({ def, projectId }: { def: KpiDefinition; projectId: str
 
     const thresholds = (def.visualization as any)?.thresholds;
     return (
-      <Card className="glass-panel hud-corners" title={<span className="font-display" style={{ fontWeight: 600 }}>{def.name}</span>}>
+      <Card className="glass-panel" title={<span className="font-display" style={{ fontWeight: 600 }}>{def.name}</span>}>
         <KpiChartRenderer chartType={chartType} data={chartData} xField={xField} yFields={yFields} thresholds={thresholds} />
       </Card>
     );
@@ -205,7 +205,7 @@ export default function KpiDashboardPage() {
     <div>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 24, flexWrap: 'wrap', gap: 16 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-          <BarChart3 size={24} style={{ color: '#00FF41' }} />
+          <BarChart3 size={24} style={{ color: 'var(--text-secondary)' }} />
           <div>
             <h1 className="page-title">KPI Overview</h1>
             <p className="page-subtitle">Key performance indicators for autonomous driving test campaigns</p>
@@ -219,7 +219,7 @@ export default function KpiDashboardPage() {
         </Space>
       </div>
 
-      <Card className="glass-panel hud-corners" style={{ marginBottom: 24 }}>
+      <Card className="glass-panel" style={{ marginBottom: 24 }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 12 }}>
           <div>
             <div className="font-display" style={{ fontWeight: 600, fontSize: 13, marginBottom: 4, textTransform: 'uppercase', letterSpacing: '0.06em' }}>Panel Configuration</div>
@@ -232,7 +232,7 @@ export default function KpiDashboardPage() {
             <Button
               icon={<Upload size={14} />}
               onClick={() => setImportOpen(true)}
-              style={{ borderColor: 'rgba(0,255,65,0.2)', color: '#00FF41' }}
+              style={{ borderColor: 'var(--glass-border-light)', color: 'var(--accent-strong)' }}
             >
               Import JSON
             </Button>
@@ -244,7 +244,7 @@ export default function KpiDashboardPage() {
       </Card>
 
       {!projectId && (
-        <Card className="glass-panel hud-corners" style={{ textAlign: 'center', padding: '40px 0' }}>
+        <Card className="glass-panel" style={{ textAlign: 'center', padding: '40px 0' }}>
           <TrendingUp size={48} style={{ color: 'var(--text-muted)', opacity: 0.3, marginBottom: 16 }} />
           <p style={{ color: 'var(--text-muted)', fontSize: 14 }}>Select a project to view KPI metrics</p>
         </Card>
@@ -256,7 +256,7 @@ export default function KpiDashboardPage() {
 
           {grouped.size > 0 && (
             <div style={{ marginTop: 24 }}>
-              <div className="font-display" style={{ fontWeight: 600, fontSize: 12, marginBottom: 12, color: '#b8d4b8', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+              <div className="font-display" style={{ fontWeight: 600, fontSize: 12, marginBottom: 12, color: 'var(--text-primary)', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
                 Custom KPIs
               </div>
 

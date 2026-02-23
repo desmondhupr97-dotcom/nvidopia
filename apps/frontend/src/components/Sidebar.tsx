@@ -17,7 +17,7 @@ import {
 
 type MenuItem = Required<MenuProps>['items'][number];
 
-const iconStyle = { width: 14, height: 14, strokeWidth: 1.8 };
+const iconStyle = { width: 16, height: 16, strokeWidth: 1.8 };
 
 const mainItems: MenuItem[] = [
   { key: '/projects', icon: <FolderKanban {...iconStyle} />, label: 'Projects' },
@@ -43,28 +43,39 @@ const secondaryItems: MenuItem[] = [
     key: '/auto-triage',
     icon: <Sparkles {...iconStyle} />,
     label: (
-      <span style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+      <span style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
         Auto-Triage
-        <Badge count="WIP" style={{ backgroundColor: 'rgba(0,255,65,0.1)', color: '#00FF41', fontSize: 8, fontWeight: 600, boxShadow: 'none', letterSpacing: '0.04em', fontFamily: "var(--font-mono)" }} />
+        <Badge
+          count="WIP"
+          style={{
+            backgroundColor: 'var(--accent-soft)',
+            color: 'var(--text-secondary)',
+            fontSize: 9,
+            fontWeight: 600,
+            boxShadow: 'none',
+            letterSpacing: '0.02em',
+            fontFamily: 'var(--font-mono)',
+            borderRadius: 6,
+          }}
+        />
       </span>
     ),
   },
 ];
 
 const sectionLabelStyle: React.CSSProperties = {
-  padding: '2px 20px 2px',
-  fontSize: 9,
-  color: '#00FF41',
+  padding: '6px 24px 2px',
+  fontSize: '0.68rem',
+  color: 'var(--text-muted)',
   textTransform: 'uppercase',
-  letterSpacing: '0.1em',
-  fontFamily: "var(--font-mono)",
+  letterSpacing: '0.08em',
+  fontFamily: 'var(--font-body)',
   fontWeight: 600,
-  opacity: 0.5,
 };
 
 const dividerStyle: React.CSSProperties = {
   height: 1,
-  background: 'rgba(0,255,65,0.06)',
+  background: 'var(--glass-border)',
   margin: '8px 16px',
 };
 
@@ -82,13 +93,13 @@ export default function Sidebar() {
   };
 
   return (
-    <div className="glass-sidebar" style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
+    <div className="glass-sidebar" style={{ display: 'flex', flexDirection: 'column', height: '100%', overflow: 'hidden' }}>
       <div className="sidebar-brand">
         <div className="sidebar-logo">N</div>
-        <span className="sidebar-title">NVIDOPIA</span>
+        <span className="sidebar-title">Nvidopia</span>
       </div>
 
-      <div style={{ flex: 1, paddingTop: 4, overflow: 'auto' }}>
+      <div style={{ flex: 1, paddingTop: 6, overflow: 'auto' }}>
         <Menu
           mode="inline"
           theme="dark"
@@ -100,7 +111,7 @@ export default function Sidebar() {
 
         <div style={dividerStyle} />
 
-        <div style={sectionLabelStyle}>// fleet</div>
+        <div style={sectionLabelStyle}>Fleet</div>
         <Menu
           mode="inline"
           theme="dark"
@@ -112,7 +123,7 @@ export default function Sidebar() {
 
         <div style={dividerStyle} />
 
-        <div style={sectionLabelStyle}>// simulation</div>
+        <div style={sectionLabelStyle}>Simulation</div>
         <Menu
           mode="inline"
           theme="dark"
@@ -136,7 +147,7 @@ export default function Sidebar() {
 
       <div className="sidebar-footer">
         <div className="sidebar-footer-text">
-          <span style={{ color: '#00FF41' }}>$</span> nvidopia <span style={{ color: '#3d6b3d' }}>v0.1</span>
+          nvidopia <span style={{ color: 'var(--text-muted)' }}>v0.1</span>
         </div>
       </div>
     </div>

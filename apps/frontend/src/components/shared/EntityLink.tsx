@@ -13,9 +13,10 @@ export default function EntityLink({ to, children, mono, style }: Props) {
     <Link
       to={to}
       style={{
-        color: '#818cf8',
+        color: 'var(--text-primary)',
         fontWeight: 500,
-        ...(mono ? { fontFamily: 'monospace' } : {}),
+        transition: 'color 0.2s ease',
+        ...(mono ? { fontFamily: 'var(--font-mono)' } : {}),
         ...style,
       }}
     >

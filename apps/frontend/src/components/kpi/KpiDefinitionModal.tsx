@@ -486,7 +486,7 @@ export default function KpiDefinitionModal({ open, onClose, onSaved, editingDef 
                 key={`var-${v.name}`}
                 size="small"
                 type="dashed"
-                style={{ fontFamily: 'monospace', color: '#00FF41' }}
+                style={{ fontFamily: 'monospace', color: 'var(--accent-strong)' }}
                 onClick={() => {
                   const current = form.getFieldValue('formula') || '';
                   form.setFieldsValue({ formula: current + v.name });
@@ -626,7 +626,7 @@ export default function KpiDefinitionModal({ open, onClose, onSaved, editingDef 
                   <span style={{ fontFamily: "var(--font-mono)", color: 'var(--text-muted)', marginRight: 8 }}>
                     Value:
                   </span>
-                  <span style={{ fontFamily: "var(--font-mono)", fontWeight: 700, fontSize: 18, color: '#00FF41' }}>
+                  <span style={{ fontFamily: "var(--font-mono)", fontWeight: 700, fontSize: 18, color: 'var(--accent-strong)' }}>
                     {previewResult.value != null ? previewResult.value.toLocaleString() : '\u2014'}
                   </span>
                   {previewResult.groups && previewResult.groups.length > 0 && (
