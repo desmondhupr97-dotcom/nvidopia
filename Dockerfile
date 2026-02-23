@@ -1,31 +1,29 @@
-FROM node:20-alpine AS build
+FROM node:20-alpine
+
+RUN apk add --no-cache nginx gettext
+
 WORKDIR /app
 
 COPY package.json package-lock.json ./
-COPY apps/frontend/ apps/frontend/
+COPY platform/ platform/
+COPY apps/ apps/
+COPY services/ services/
+COPY contracts/ contracts/
 
-RUN mkdir -p apps/bff-gateway \
-    platform/data-models platform/eventing platform/observability platform/service-toolkit \
-    services/release-manager services/fleet-manager \
-    services/issue-workflow services/kpi-engine services/traceability \
-    contracts && \
-    for d in apps/bff-gateway \
-             platform/data-models platform/eventing platform/observability platform/service-toolkit \
-             services/release-manager services/fleet-manager \
-             services/issue-workflow services/kpi-engine services/traceability \
-             contracts; do \
-      printf '{"name":"stub-%s","private":true}' "$(echo $d | tr / -)" > "$d/package.json"; \
-    done
-
-RUN npm install
+RUN npm ci
 
 WORKDIR /app/apps/frontend
-RUN npm run build
+RUN npx vite build
+WORKDIR /app
 
-FROM nginx:alpine
-COPY --from=build /app/apps/frontend/dist /usr/share/nginx/html
-COPY nginx.cloudrun.conf /etc/nginx/conf.d/default.conf.template
-RUN echo '#!/bin/sh' > /docker-entrypoint.d/90-port-subst.sh && \
-    echo 'envsubst "\$PORT" < /etc/nginx/conf.d/default.conf.template > /etc/nginx/conf.d/default.conf' >> /docker-entrypoint.d/90-port-subst.sh && \
-    chmod +x /docker-entrypoint.d/90-port-subst.sh
+RUN mkdir -p /usr/share/nginx/html && \
+    cp -r apps/frontend/dist/* /usr/share/nginx/html/
+
+COPY nginx.cloudrun.conf /etc/nginx/http.d/default.conf.template
+COPY scripts/start-all.sh scripts/start-all.sh
+RUN chmod +x scripts/start-all.sh && \
+    rm -f /etc/nginx/http.d/default.conf
+
 EXPOSE 8080
+
+CMD ["scripts/start-all.sh"]

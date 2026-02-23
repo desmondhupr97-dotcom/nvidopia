@@ -1,29 +1,25 @@
-# TESTME - 本地测试指南
+# TESTME - 测试指南
 
-本文档指导你如何在本地环境下验证 Nvidopia 各模块功能的正确性，覆盖 Windows、macOS 和 Linux (Ubuntu) 三种平台。
+本文档指导你如何验证 Nvidopia 各模块功能的正确性，覆盖本地开发、Docker 全栈和 Cloud Run 三种部署方式。
 
 ---
 
 ## 前置条件
 
-| 工具 | 版本要求 | Windows 检查 | macOS 检查 | Linux (Ubuntu) 检查 |
-|------|----------|-------------|------------|---------------------|
-| Node.js | >= 20 | `node -v` | `node -v` | `node -v` |
-| Docker + Compose V2 | >= 24 | `docker compose version` | `docker compose version` | `docker compose version` |
-| curl | 任意 | PowerShell 内置 `curl`（即 `Invoke-WebRequest`），或安装 [curl for Windows](https://curl.se/windows/) | 系统自带 | 系统自带，或 `sudo apt install -y curl` |
-| bash | 任意 | Git Bash（随 Git for Windows 安装）或 WSL | 系统自带 | 系统自带 |
-
-**平台提示：**
-- **Windows**：`curl` 命令需在 **Git Bash** 或 **WSL** 中执行。如果在 PowerShell 中使用，请将 `curl` 替换为 `curl.exe`，否则会调用 `Invoke-WebRequest` 别名。
-- **Linux (Ubuntu)**：如果 `docker compose` 提示权限不足，请将当前用户加入 docker 组：`sudo usermod -aG docker $USER`，然后重新登录生效。
+| 工具 | 版本要求 | 检查命令 |
+|------|----------|----------|
+| Node.js | >= 20 | `node -v` |
+| Docker + Compose V2 | >= 24 | `docker compose version` |
+| curl | 任意 | `curl --version` |
+| gcloud（仅 Cloud Run） | latest | `gcloud version` |
 
 ---
 
-## 第一步：启动基础设施
+## 第一步：启动服务
 
-### 方式 A：Docker 全栈一键启动（Windows / macOS / Linux 通用）
+根据你的部署方式，选择以下任一方式启动。
 
-最简单的方式，所有服务一键拉起，无需本地安装 Node.js：
+### 方式 A：Docker 全栈一键启动
 
 ```bash
 git clone https://github.com/desmondhupr97-dotcom/nvidopia.git
@@ -41,8 +37,6 @@ docker compose -f infra/docker-compose.full.yml down
 
 ### 方式 B：仅启动基础设施（本地开发模式）
 
-如果你需要修改代码并实时调试，只启动 Kafka 和 MongoDB：
-
 ```bash
 docker compose -f infra/docker-compose.yml up -d
 ```
@@ -58,13 +52,33 @@ docker exec nvidopia-mongodb mongosh --eval "db.runCommand({ ping: 1 })" \
 docker exec nvidopia-kafka kafka-topics --bootstrap-server localhost:9092 --list
 ```
 
+### 方式 C：Google Cloud Run 一键上云
+
+```bash
+# 登录并设置项目
+gcloud auth login
+gcloud config set project YOUR_PROJECT_ID
+gcloud config set run/region us-central1
+
+# 部署（需要提前准备 MongoDB Atlas 连接字符串）
+gcloud run deploy nvitopia \
+  --source . \
+  --set-env-vars="MONGO_URI=mongodb+srv://user:pass@cluster.mongodb.net/nvidopia" \
+  --allow-unauthenticated \
+  --memory=1Gi \
+  --cpu=2 \
+  --timeout=300
+```
+
+部署成功后 `gcloud` 会输出服务 URL（如 `https://nvitopia-xxx-uc.a.run.app`）。后续测试中将 `http://localhost:5173` / `http://localhost:3000` 替换为该 URL 即可。
+
+> **注意：** Cloud Run 部署不含 Kafka，`/api/ingest/*` 端点不可用。其他所有 CRUD 和查询功能正常工作。
+
 ---
 
 ## 第二步：安装依赖并启动服务（仅方式 B 需要）
 
-> 如果你使用了方式 A（Docker 全栈），跳过此步。
-
-### macOS / Linux (Ubuntu)
+> 如果你使用了方式 A（Docker 全栈）或方式 C（Cloud Run），跳过此步。
 
 ```bash
 npm install
@@ -81,70 +95,43 @@ npm run dev -w services/fleet-manager   # 终端 3 — 车队调度 :3002
 npm run dev -w services/issue-workflow  # 终端 4 — Issue工作流 :3003
 npm run dev -w services/traceability    # 终端 5 — 追溯 :3004
 npm run dev -w services/kpi-engine      # 终端 6 — KPI :3005
-npm run dev -w apps/frontend            # 终端 7 — 前端 :5173
+npm run dev -w services/fleet-simulator # 终端 7 — 车队模拟器 :3006
+npm run dev -w apps/frontend            # 终端 8 — 前端 :5173
 ```
-
-### Windows (PowerShell)
-
-```powershell
-npm install
-copy infra\.env.example .env
-
-npm run build -w platform/data-models
-npm run build -w platform/eventing
-npm run build -w platform/observability
-
-# 在不同 PowerShell 窗口中启动
-npm run dev -w apps/bff-gateway        # 窗口 1 — 网关 :3000
-npm run dev -w services/release-manager # 窗口 2 — 发布管理 :3001
-npm run dev -w services/fleet-manager   # 窗口 3 — 车队调度 :3002
-npm run dev -w services/issue-workflow  # 窗口 4 — Issue工作流 :3003
-npm run dev -w services/traceability    # 窗口 5 — 追溯 :3004
-npm run dev -w services/kpi-engine      # 窗口 6 — KPI :3005
-npm run dev -w apps/frontend            # 窗口 7 — 前端 :5173
-```
-
-> - Windows 上 `npm run dev` 在 PowerShell 和 CMD 中均可正常工作。
-> - Linux (Ubuntu) 操作步骤与 macOS 完全一致，使用上方 macOS / Linux 部分的命令即可。
 
 ---
 
 ## 第三步：导入测试种子数据
 
 > 方式 A 用户需在**另一个终端窗口**执行此命令（容器保持运行）。
+> 方式 C 用户需使用 Atlas 连接字符串。
 
 ```bash
+# 本地 / Docker 模式
 npx tsx platform/data-models/src/seed.ts
+
+# Cloud Run / Atlas 模式
+MONGO_URI="mongodb+srv://user:pass@cluster.mongodb.net/nvidopia" npx tsx platform/data-models/src/seed.ts
 ```
 
 成功后会输出插入的实体数量：2 个项目、6 个任务、10 次 Run、20 个 Issue 等。
-
-> Windows 如果未安装 Node.js（全栈 Docker 模式），可通过 `docker exec` 在容器内执行种子脚本，或先本地安装 Node.js。
 
 ---
 
 ## 第四步：服务健康检查
 
-### macOS / Linux (Ubuntu) / Git Bash
-
 ```bash
+# 本地模式
 curl http://localhost:3000/health    # 网关
 curl http://localhost:3001/health    # 发布管理
 curl http://localhost:3002/health    # 车队调度
 curl http://localhost:3003/health    # Issue 工作流
 curl http://localhost:3004/health    # 追溯服务
 curl http://localhost:3005/health    # KPI 引擎
-```
+curl http://localhost:3006/health    # 车队模拟器
 
-### Windows (PowerShell)
-
-```powershell
-curl.exe http://localhost:3000/health    # 网关
-curl.exe http://localhost:3001/health    # 发布管理
-curl.exe http://localhost:3002/health    # 车队调度
-curl.exe http://localhost:3003/health    # Issue 工作流
-curl.exe http://localhost:3004/health    # 追溯服务
-curl.exe http://localhost:3005/health    # KPI 引擎
+# Cloud Run 模式
+curl https://YOUR-SERVICE-URL/health
 ```
 
 每个端点应返回类似 `{"status":"ok","service":"xxx"}` 的 JSON。
@@ -153,27 +140,11 @@ curl.exe http://localhost:3005/health    # KPI 引擎
 
 ## 第五步：运行 E2E 冒烟测试脚本
 
-### macOS / Linux (Ubuntu)
-
 ```bash
 bash scripts/e2e-smoke.sh
 ```
 
-### Windows
-
-在 **Git Bash** 中运行：
-
-```bash
-bash scripts/e2e-smoke.sh
-```
-
-或在 **WSL** 中运行：
-
-```bash
-bash scripts/e2e-smoke.sh
-```
-
-> E2E 脚本使用 bash 语法，不支持在 PowerShell/CMD 中直接运行。
+> E2E 脚本仅支持本地 / Docker 模式（依赖 localhost 端口）。
 
 ### 脚本测试的 10 个步骤
 
@@ -196,7 +167,7 @@ bash scripts/e2e-smoke.sh
 
 ## 第六步：手动 API 测试
 
-以下 curl 示例在 macOS / Linux (Ubuntu) / Git Bash 中可直接使用。Windows PowerShell 用户请将 `curl` 替换为 `curl.exe`，并将单引号 `'...'` 替换为双引号 `"..."`（内部双引号用反引号 `` ` `` 转义）。
+以下 curl 示例在 macOS / Linux / Git Bash 中可直接使用。Cloud Run 用户将 `localhost:PORT` 替换为服务 URL。
 
 ### 6.1 创建 Project
 
@@ -233,6 +204,8 @@ curl -X POST http://localhost:3001/tasks \
 ```
 
 ### 6.3 通过网关 Ingest 端点上报车辆状态
+
+> 仅限本地 / Docker 模式（需要 Kafka）
 
 ```bash
 curl -X POST http://localhost:3000/api/ingest/status \
@@ -343,21 +316,11 @@ curl http://localhost:3004/trace/impact/ISS-001
 curl http://localhost:3004/trace/coverage
 ```
 
-### 6.10 验证预留接口
-
-```bash
-# 自动 Triage（应返回 501）
-curl -X POST http://localhost:3003/issues/ISS-001/auto-triage
-
-# 自动 Triage 状态（应返回 enabled: false）
-curl http://localhost:3003/auto-triage/status
-```
-
 ---
 
 ## 第七步：前端界面验证
 
-启动前端后访问 http://localhost:5173，逐页验证：
+启动前端后访问 http://localhost:5173（Cloud Run 用服务 URL），逐页验证：
 
 | 页面 | URL | 验证要点 |
 |------|-----|----------|
@@ -368,10 +331,11 @@ curl http://localhost:3003/auto-triage/status
 | 测试过程 | `/runs` | Run 列表、状态指示灯 |
 | Issue 列表 | `/issues` | 严重度/状态标签颜色正确 |
 | Issue 详情 | `/issues/:id` | 状态机流转按钮、审计轨迹 |
-| KPI 看板 | `/kpi` | MPI/MTTR/通过率/利用率/收敛趋势图 |
+| KPI 看板 | `/kpi` | MPI/MTTR/通过率/利用率/收敛趋势图 + 自定义 KPI |
 | 追溯分析 | `/traceability` | 正反向追溯链路可视化 |
-| Auto-Triage | `/auto-triage` | 显示"Coming Soon"占位 |
-| Simulation | `/simulation` | 显示"Coming Soon"占位 |
+| 车队模拟 | `/simulation` | 模拟会话列表、创建向导（车队/路线/分配） |
+| 模拟详情 | `/simulation/:id` | 实时统计、路线地图、控制按钮 |
+| Auto-Triage | `/auto-triage` | 显示 "Coming Soon" 占位 |
 
 ---
 
@@ -385,8 +349,6 @@ curl http://localhost:3003/auto-triage/status
 docker logs nvidopia-kafka --tail 20
 ```
 
-如果看到 `Kafka Server started`，说明已就绪。
-
 ### MongoDB 认证失败
 
 检查 `.env` 中的 `MONGO_URI` 是否包含 `?authSource=admin`：
@@ -395,40 +357,22 @@ docker logs nvidopia-kafka --tail 20
 MONGO_URI=mongodb://nvidopia:nvidopia_dev@localhost:27017/nvidopia?authSource=admin
 ```
 
+### Cloud Run 部署后 Container failed to start
+
+确认 `MONGO_URI` 环境变量已正确设置。Cloud Run 容器启动时需要连接 MongoDB，如连接失败服务会退出。在 Cloud Run 控制台 → Logs 查看详细错误信息。
+
+### Cloud Run 数据接入端点返回 500
+
+Cloud Run 部署不含 Kafka。`/api/ingest/telemetry`、`/api/ingest/status`、`/api/ingest/issue` 需要 Kafka 才能工作。请直接使用各微服务的 REST API 进行 CRUD 操作。
+
 ### 端口冲突
 
 如果本地端口被占用，可通过 `.env` 修改各服务端口号，然后重启对应服务。
 
 ### 前端无法连接后端
 
-确认网关服务（端口 3000）正在运行，前端的 Vite 代理配置会将 `/api` 请求转发至 `http://localhost:3000`。
-
-### Linux (Ubuntu) 上 docker compose 权限不足
-
-将当前用户加入 docker 组后**重新登录**：
-
-```bash
-sudo usermod -aG docker $USER
-# 重新登录终端或执行：
-newgrp docker
-```
-
-验证：`docker compose version` 应正常输出版本号，无需 `sudo`。
-
-### Windows 上 curl 命令输出乱码
-
-PowerShell 默认的 `curl` 是 `Invoke-WebRequest` 的别名。请改用 `curl.exe`：
-
-```powershell
-curl.exe http://localhost:3000/health
-```
-
-### Windows 上无法运行 bash 脚本
-
-E2E 冒烟测试脚本需要 bash 环境。请通过以下方式之一运行：
-- **Git Bash**（安装 Git for Windows 时自带）
-- **WSL**（Windows Subsystem for Linux）
-- **Docker 内运行**：`docker exec -it nvidopia-bff-gateway sh`
+- **本地模式**：确认网关服务（端口 3000）正在运行，前端的 Vite 代理将 `/api` 请求转发至网关。
+- **Cloud Run**：Nginx 自动将 `/api` 代理到内部网关，无需额外配置。
 
 ---
 
@@ -443,4 +387,7 @@ docker compose -f infra/docker-compose.full.yml down
 
 # 清除 MongoDB 数据卷（会删除所有数据）
 docker compose -f infra/docker-compose.yml down -v
+
+# 删除 Cloud Run 服务
+gcloud run services delete nvitopia
 ```

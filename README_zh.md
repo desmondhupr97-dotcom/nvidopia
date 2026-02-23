@@ -14,6 +14,7 @@
 | 数据库 | MongoDB 7.0（文档存储 + `$graphLookup` 图查询） |
 | 消息队列 | Apache Kafka（Confluent 7.6） |
 | 容器化 | Docker + Docker Compose V2 |
+| 云部署 | Google Cloud Run（单容器全栈） |
 | 包管理 | npm workspaces（monorepo） |
 
 ---
@@ -36,14 +37,16 @@
 |------|------|------|------|
 | BFF 网关 | `apps/bff-gateway/` | JWT 鉴权、请求路由、Kafka 数据接入 | 3000 |
 | 前端应用 | `apps/frontend/` | SPA 界面 —— 看板、Issue 工作台、追溯可视化 | 5173 |
-| 发布管理服务 | `services/release-manager/` | Project / Task CRUD、多级发布关卡（Smoke→Gray→Freeze） | 3001 |
+| 发布管理服务 | `services/release-manager/` | Project / Task CRUD、多级发布关卡 | 3001 |
 | 车队调度服务 | `services/fleet-manager/` | 车辆资源池、Task-车辆匹配、Run 生命周期 | 3002 |
 | Issue 工作流服务 | `services/issue-workflow/` | Issue 状态机、人工分诊、审计轨迹 | 3003 |
 | 追溯服务 | `services/traceability/` | 正反向追溯（`$graphLookup`）、覆盖率统计 | 3004 |
-| KPI 引擎 | `services/kpi-engine/` | MPI、MTTR、回归通过率、车队利用率、缺陷收敛趋势 | 3005 |
+| KPI 引擎 | `services/kpi-engine/` | 内置 + 自定义 KPI、公式引擎、多图表可视化 | 3005 |
+| 车队模拟器 | `services/fleet-simulator/` | 模拟车队上报、压测、Demo 数据生成 | 3006 |
 | 数据模型 | `platform/data-models/` | 共享 Mongoose Schema 库 | - |
 | 事件平台 | `platform/eventing/` | Kafka Topic 常量、Producer/Consumer 工具、DLQ | - |
 | 可观测性 | `platform/observability/` | 结构化日志（Pino）、Trace-ID 传播 | - |
+| 服务工具集 | `platform/service-toolkit/` | Express 服务引导、健康检查、错误中间件 | - |
 | 契约管理 | `contracts/` | OpenAPI / AsyncAPI / JSON Schema | - |
 | 基础设施 | `infra/` | Docker Compose、环境变量模板 | - |
 
@@ -51,20 +54,72 @@
 
 ## 前置要求
 
-| 工具 | 版本 | Windows 安装方式 | macOS 安装方式 | Linux (Ubuntu) 安装方式 |
-|------|------|------------------|----------------|-------------------------|
-| Node.js | >= 20 LTS | [nodejs.org](https://nodejs.org) 下载 .msi，或 `winget install OpenJS.NodeJS.LTS` | `brew install node@20` | `curl -fsSL https://deb.nodesource.com/setup_20.x \| sudo -E bash - && sudo apt install -y nodejs` |
-| Docker | >= 24 | [Docker Desktop for Windows](https://docs.docker.com/desktop/install/windows-install/)（需开启 WSL2 或 Hyper-V） | `brew install --cask docker` 或 [Docker Desktop for Mac](https://docs.docker.com/desktop/install/mac-install/) | `sudo apt update && sudo apt install -y docker.io docker-compose-v2` |
-| Git | >= 2.40 | [git-scm.com](https://git-scm.com/download/win) | `brew install git` | `sudo apt install -y git` |
+### 方式一 / 方式二需要
 
-> - Windows / macOS：Docker Desktop 自带 `docker compose` V2 插件。
-> - Linux (Ubuntu)：安装 `docker-compose-v2` 包即可获得 `docker compose` 命令。安装后需将当前用户加入 docker 组：`sudo usermod -aG docker $USER`，然后重新登录。
+| 工具 | 版本 | 安装方式 |
+|------|------|----------|
+| Node.js | >= 20 LTS | [nodejs.org](https://nodejs.org) / `brew install node@20` |
+| Docker | >= 24 | [Docker Desktop](https://docs.docker.com/desktop/) / `brew install --cask docker` |
+| Git | >= 2.40 | [git-scm.com](https://git-scm.com) / `brew install git` |
+
+### 方式三额外需要
+
+| 工具 | 安装方式 |
+|------|----------|
+| Google Cloud SDK (`gcloud`) | [cloud.google.com/sdk](https://cloud.google.com/sdk/docs/install) |
+| MongoDB Atlas 账号（免费版可用） | [mongodb.com/atlas](https://www.mongodb.com/atlas) |
 
 ---
 
 ## 快速开始
 
-### 方式一：Docker 全栈一键启动（推荐新手）
+### 方式一：本地开发模式
+
+适合修改代码并实时调试的场景。
+
+```bash
+# 1. 克隆仓库
+git clone https://github.com/desmondhupr97-dotcom/nvidopia.git
+cd nvidopia
+
+# 2. 启动基础设施（Kafka + MongoDB）
+docker compose -f infra/docker-compose.yml up -d
+
+# 3. 安装依赖
+npm install
+
+# 4. 复制环境变量
+cp infra/.env.example .env
+
+# 5. 构建平台公共库
+npm run build -w platform/data-models
+npm run build -w platform/eventing
+npm run build -w platform/observability
+
+# 6. 分别启动各服务（各自开一个终端窗口）
+npm run dev -w apps/bff-gateway        # 网关 :3000
+npm run dev -w services/release-manager # 发布管理 :3001
+npm run dev -w services/fleet-manager   # 车队调度 :3002
+npm run dev -w services/issue-workflow  # Issue工作流 :3003
+npm run dev -w services/traceability    # 追溯服务 :3004
+npm run dev -w services/kpi-engine      # KPI引擎 :3005
+npm run dev -w services/fleet-simulator # 车队模拟器 :3006
+npm run dev -w apps/frontend            # 前端 :5173
+```
+
+所有后端服务使用 `tsx watch` 热重载，前端使用 Vite HMR。
+
+启动后可访问：
+
+| 服务 | 地址 |
+|------|------|
+| 前端界面 | http://localhost:5173 |
+| API 网关 | http://localhost:3000 |
+| MongoDB 管理界面 | http://localhost:8081 |
+
+---
+
+### 方式二：Docker 全栈一键启动
 
 适用于 Windows、macOS 和 Linux，只需安装好 Docker 即可。
 
@@ -93,81 +148,57 @@ docker compose -f infra/docker-compose.full.yml down
 
 ---
 
-### 方式二：本地开发模式
+### 方式三：Google Cloud Run 一键上云
 
-适合需要修改代码并实时调试的场景。
+将全栈打包为单容器部署到 Cloud Run，适合 Demo 演示和云端测试。
 
-#### macOS / Linux (Ubuntu)
+#### 前置准备
+
+1. 创建 [MongoDB Atlas](https://www.mongodb.com/atlas) 免费集群，获取连接字符串（格式：`mongodb+srv://user:pass@cluster.mongodb.net/nvidopia`）
+2. 安装并登录 `gcloud`：
 
 ```bash
-# 1. 克隆仓库
-git clone https://github.com/desmondhupr97-dotcom/nvidopia.git
-cd nvidopia
-
-# 2. 启动基础设施（Kafka + MongoDB）
-docker compose -f infra/docker-compose.yml up -d
-
-# 3. 安装依赖
-npm install
-
-# 4. 复制环境变量
-cp infra/.env.example .env
-
-# 5. 构建平台公共库
-npm run build -w platform/data-models
-npm run build -w platform/eventing
-npm run build -w platform/observability
-
-# 6. 分别启动各服务（各自开一个终端窗口）
-npm run dev -w apps/bff-gateway        # 网关 :3000
-npm run dev -w services/release-manager # 发布管理 :3001
-npm run dev -w services/fleet-manager   # 车队调度 :3002
-npm run dev -w services/issue-workflow  # Issue工作流 :3003
-npm run dev -w services/traceability    # 追溯服务 :3004
-npm run dev -w services/kpi-engine      # KPI引擎 :3005
-npm run dev -w apps/frontend            # 前端 :5173
+gcloud auth login
+gcloud config set project YOUR_PROJECT_ID
+gcloud config set run/region us-central1   # 或选择离你最近的区域
 ```
 
-> Linux 用户注意：如果 `docker compose` 命令提示权限不足，请确认已将当前用户加入 docker 组（见前置要求），或在命令前加 `sudo`。
+#### 部署
 
-#### Windows (PowerShell)
-
-```powershell
-# 1. 克隆仓库
-git clone https://github.com/desmondhupr97-dotcom/nvidopia.git
-cd nvidopia
-
-# 2. 启动基础设施（Kafka + MongoDB）
-docker compose -f infra/docker-compose.yml up -d
-
-# 3. 安装依赖
-npm install
-
-# 4. 复制环境变量
-copy infra\.env.example .env
-
-# 5. 构建平台公共库
-npm run build -w platform/data-models
-npm run build -w platform/eventing
-npm run build -w platform/observability
-
-# 6. 分别启动各服务（各自开一个终端窗口）
-npm run dev -w apps/bff-gateway        # 网关 :3000
-npm run dev -w services/release-manager # 发布管理 :3001
-npm run dev -w services/fleet-manager   # 车队调度 :3002
-npm run dev -w services/issue-workflow  # Issue工作流 :3003
-npm run dev -w services/traceability    # 追溯服务 :3004
-npm run dev -w services/kpi-engine      # KPI引擎 :3005
-npm run dev -w apps/frontend            # 前端 :5173
+```bash
+# 一行命令部署（首次会提示选择区域、是否允许未认证访问）
+gcloud run deploy nvitopia \
+  --source . \
+  --set-env-vars="MONGO_URI=mongodb+srv://user:pass@cluster.mongodb.net/nvidopia" \
+  --allow-unauthenticated \
+  --memory=1Gi \
+  --cpu=2 \
+  --timeout=300
 ```
 
-> Windows 上 `npm run dev` 在 PowerShell 和 CMD 中均可运行，无需 Git Bash。
+部署成功后，`gcloud` 会输出服务 URL（如 `https://nvitopia-xxx-uc.a.run.app`），直接在浏览器访问即可。
 
-所有后端服务使用 `tsx watch` 热重载，前端使用 Vite HMR。
+#### 更新部署
+
+修改代码后，再次运行相同命令即可更新：
+
+```bash
+gcloud run deploy nvitopia --source .
+```
+
+> **注意：** Cloud Run 部署不含 Kafka，数据接入端点（`/api/ingest/*`）在无 Kafka 时不可用。其他所有 CRUD 和查询功能正常工作。车队模拟器的 HTTP 上报路径不受影响。
+
+#### 导入种子数据到 Atlas
+
+```bash
+# 本地安装依赖后，指定 Atlas 连接字符串运行种子脚本
+npm install
+MONGO_URI="mongodb+srv://user:pass@cluster.mongodb.net/nvidopia" npx tsx platform/data-models/src/seed.ts
+```
 
 ---
 
-### 导入种子数据
+## 导入种子数据
 
 启动服务后，导入示例数据：
 
@@ -179,7 +210,7 @@ npx tsx platform/data-models/src/seed.ts
 
 ---
 
-## 容器列表
+## 容器列表（Docker Compose 模式）
 
 | 容器 | 端口 | 说明 |
 |------|------|------|
@@ -193,6 +224,7 @@ npx tsx platform/data-models/src/seed.ts
 | nvidopia-issue-workflow | 3003 | Issue 工作流微服务 |
 | nvidopia-traceability | 3004 | 追溯查询微服务 |
 | nvidopia-kpi-engine | 3005 | KPI 引擎微服务 |
+| nvidopia-fleet-simulator | 3006 | 车队模拟器微服务 |
 | nvidopia-frontend | 5173 | 前端 SPA（Nginx 托管） |
 
 ---
@@ -204,7 +236,6 @@ npx tsx platform/data-models/src/seed.ts
 | 变量 | 默认值 | 用途 |
 |------|--------|------|
 | `MONGO_URI` | `mongodb://nvidopia:nvidopia_dev@localhost:27017/nvidopia?authSource=admin` | 所有微服务 |
-| `MONGO_DB_NAME` | `nvidopia` | 所有微服务 |
 | `KAFKA_BROKERS` | `localhost:9092` | 网关、Fleet Manager、Issue Workflow、KPI Engine |
 | `GATEWAY_PORT` | `3000` | BFF 网关 |
 | `JWT_SECRET` | `change-me-in-production` | BFF 网关（JWT 签名密钥） |
@@ -213,14 +244,13 @@ npx tsx platform/data-models/src/seed.ts
 | `ISSUE_WORKFLOW_PORT` | `3003` | Issue 工作流服务 |
 | `TRACEABILITY_PORT` | `3004` | 追溯服务 |
 | `KPI_ENGINE_PORT` | `3005` | KPI 引擎 |
-| `VITE_API_BASE_URL` | `http://localhost:3000/api` | 前端 |
+| `FLEET_SIMULATOR_PORT` | `3006` | 车队模拟器 |
+| `VITE_API_BASE_URL` | `/api` | 前端 |
 | `LOG_LEVEL` | `debug` | 所有服务（日志级别） |
 
 ---
 
 ## 核心数据模型
-
-系统围绕四个核心领域实体构建严格的父子层级：
 
 ```
 Project（测试项目）
@@ -255,15 +285,6 @@ New → Triage → Assigned → InProgress → Fixed → RegressionTracking → 
 
 ---
 
-## 预留扩展点
-
-| 能力 | 当前状态 | 扩展方式 |
-|------|----------|----------|
-| 自动 Triage | 桩接口（返回 501） | 对接规则引擎或 ML 分类模型 |
-| 仿真测试 | 预留字段 `simulation_ref` / `simulation_status` | 对接仿真执行器，写回结果至 Kafka 管道 |
-
----
-
 ## 停止与清理
 
 ```bash
@@ -275,6 +296,9 @@ docker compose -f infra/docker-compose.full.yml down
 
 # 清除 MongoDB 数据卷（会删除所有数据）
 docker compose -f infra/docker-compose.yml down -v
+
+# 删除 Cloud Run 服务
+gcloud run services delete nvitopia
 ```
 
 ---

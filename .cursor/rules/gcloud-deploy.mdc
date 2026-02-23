@@ -1,0 +1,59 @@
+---
+description: 所有服务使用 gcloud run deploy 部署到 Google Cloud Run
+alwaysApply: true
+---
+
+# Google Cloud Run 部署规则（全项目生效）
+
+本项目所有服务统一通过 `gcloud run deploy nvitopia --source .` 部署到 Google Cloud Run。
+
+## 架构约束
+
+- 所有微服务（BFF 网关、6 个后端服务、前端）打包在**同一个 Docker 容器**中运行。
+- 根目录 `Dockerfile` 是 Cloud Run 部署专用镜像，必须包含全部服务。
+- `scripts/start-all.sh` 负责在容器内启动所有后端服务和 Nginx。
+- `nginx.cloudrun.conf` 配置 Nginx 在 `$PORT` 上同时提供前端静态文件和 `/api` 反向代理。
+- 各服务 Dockerfile（`apps/*/Dockerfile`、`services/*/Dockerfile`）仅用于 Docker Compose 模式。
+
+## 部署命令
+
+```bash
+gcloud run deploy nvitopia \
+  --source . \
+  --set-env-vars="MONGO_URI=<atlas-connection-string>" \
+  --allow-unauthenticated \
+  --memory=1Gi \
+  --cpu=2 \
+  --timeout=300
+```
+
+## 环境变量
+
+- `MONGO_URI`（必须）：MongoDB Atlas 连接字符串，作为 Cloud Run 环境变量设置。
+- `PORT`：Cloud Run 自动注入，Nginx 监听此端口。
+- `KAFKA_BROKERS`：Cloud Run 环境中不设置此变量（无 Kafka），服务会优雅降级。
+
+## 新增 / 修改服务的必要更新
+
+当新增或修改微服务时，必须同步更新以下文件：
+
+1. **`Dockerfile`（根目录）**：确保 `COPY` 指令包含新服务的源码目录。
+2. **`scripts/start-all.sh`**：添加新服务的启动命令（`npx tsx services/<name>/src/index.ts &`）。
+3. **`apps/bff-gateway/src/routes/proxy.ts`**：添加新服务的代理路由。
+4. **`infra/docker-compose.full.yml`**：添加新服务的容器定义（Docker Compose 模式）。
+5. **`.dockerignore` / `.gcloudignore`**：确认新目录未被忽略。
+
+## 验证检查清单
+
+部署前确认：
+
+- [ ] `Dockerfile` 能成功构建（`docker build -t nvitopia .`）
+- [ ] 容器能在本地运行（`docker run -e MONGO_URI=... -p 8080:8080 nvitopia`）
+- [ ] `/health` 端点正常返回
+- [ ] 前端页面可访问且 API 调用正常
+
+## 注意事项
+
+- Cloud Run 无 Kafka，`/api/ingest/*` 端点不可用，其他 CRUD 和查询功能正常。
+- Cloud Run 单容器最大 8GB 内存、8 vCPU，默认配置 1Gi/2CPU 可满足 Demo 需求。
+- 数据库使用 MongoDB Atlas（免费版可用于 Demo），不要在容器内运行 MongoDB。
