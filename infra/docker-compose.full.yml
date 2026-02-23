@@ -76,6 +76,7 @@ services:
       ISSUE_WORKFLOW_URL: http://issue-workflow:3003
       TRACEABILITY_URL: http://traceability:3004
       KPI_ENGINE_URL: http://kpi-engine:3005
+      FLEET_SIMULATOR_URL: http://fleet-simulator:3006
     depends_on:
       - kafka
       - mongodb
@@ -150,6 +151,21 @@ services:
     depends_on:
       - kafka
       - mongodb
+
+  fleet-simulator:
+    build:
+      context: ..
+      dockerfile: services/fleet-simulator/Dockerfile
+    container_name: nvidopia-fleet-simulator
+    ports:
+      - "3006:3006"
+    environment:
+      FLEET_SIMULATOR_PORT: 3006
+      MONGO_URI: mongodb://nvidopia:nvidopia_dev@mongodb:27017/nvidopia?authSource=admin
+      BFF_URL: http://bff-gateway:3000
+    depends_on:
+      - mongodb
+      - bff-gateway
 
   frontend:
     build:

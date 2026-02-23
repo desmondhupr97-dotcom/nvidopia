@@ -685,9 +685,15 @@ export interface KpiDefinition {
   variables: Array<{ name: string; source_entity: string; field: string; aggregation: string }>;
   visualization: {
     chart_type: string;
-    x_axis?: { field: string; label?: string };
+    x_axis?: { field: string; label?: string; type?: 'category' | 'time' };
     y_axes?: Array<{ variable: string; label?: string; color?: string; axis_id?: string }>;
     dimensions?: string[];
+    thresholds?: Array<{ value: number; label?: string; color?: string }>;
+    color_ranges?: Array<{ min: number; max: number; color: string }>;
+    sort?: { field: string; order: 'asc' | 'desc' };
+    limit?: number;
+    format?: { precision?: number; prefix?: string; suffix?: string; notation?: string };
+    size?: 'small' | 'medium' | 'large';
   };
   display_order?: number;
   enabled: boolean;
@@ -732,4 +738,111 @@ export function evaluateKpi(id: string, params?: Record<string, string | undefin
 
 export function previewKpiFormula(data: { formula: string; variables: KpiDefinition['variables']; filters?: KpiDefinition['filters']; group_by?: string[]; runtime_filters?: Record<string, unknown> }) {
   return fetchJson<KpiEvalResult>('/kpi/custom/preview', { method: 'POST', body: JSON.stringify(data) });
+}
+
+/* ── Simulation ──────────────────────────────────────── */
+
+export interface SimVehicle {
+  vin: string;
+  plate_type: 'permanent' | 'temporary';
+  model_code: string;
+  vehicle_platform: string;
+  sensor_suite_version: string;
+  soc_architecture: string;
+}
+
+export interface SimRoute {
+  route_id: string;
+  name?: string;
+  waypoints: Array<{ lat: number; lng: number }>;
+}
+
+export interface VehicleAssignment {
+  vin: string;
+  project_id: string;
+  task_id: string;
+  route_id?: string;
+}
+
+export interface SimulationSession {
+  session_id: string;
+  name: string;
+  status: 'Draft' | 'Running' | 'Paused' | 'Completed' | 'Aborted';
+  fleet_config: {
+    mode: 'random' | 'custom';
+    vehicle_count: number;
+    vehicles?: SimVehicle[];
+    vehicle_template?: Partial<SimVehicle>;
+  };
+  route_config: {
+    mode: 'random' | 'custom';
+    routes?: SimRoute[];
+    random_config?: {
+      start_point: { lat: number; lng: number };
+      radius_km: number;
+      min_waypoints: number;
+      max_waypoints: number;
+    };
+  };
+  report_config: {
+    telemetry_interval_ms: number;
+    issue_interval_range_ms: [number, number];
+    status_change_interval_ms: number;
+    speed_range_mps: [number, number];
+  };
+  assignments: VehicleAssignment[];
+  started_at?: string;
+  stopped_at?: string;
+  stats: { telemetry_sent: number; issues_sent: number; total_mileage_km: number };
+  live_stats?: { telemetry_sent: number; issues_sent: number; total_mileage_km: number; vehicle_count: number };
+  created_at?: string;
+  updated_at?: string;
+}
+
+export function getSimulations(params?: Record<string, string | undefined>) {
+  return fetchJson<SimulationSession[]>(`/simulations${toQueryString(params)}`);
+}
+
+export function getSimulation(id: string) {
+  return fetchJson<SimulationSession>(`/simulations/${id}`);
+}
+
+export function createSimulation(data: Partial<SimulationSession>) {
+  return fetchJson<SimulationSession>('/simulations', { method: 'POST', body: JSON.stringify(data) });
+}
+
+export function updateSimulation(id: string, data: Partial<SimulationSession>) {
+  return fetchJson<SimulationSession>(`/simulations/${id}`, { method: 'PUT', body: JSON.stringify(data) });
+}
+
+export function deleteSimulation(id: string) {
+  return fetchJson<{ deleted: boolean }>(`/simulations/${id}`, { method: 'DELETE' });
+}
+
+export function startSimulation(id: string) {
+  return fetchJson<{ started: boolean }>(`/simulations/${id}/start`, { method: 'POST' });
+}
+
+export function pauseSimulation(id: string) {
+  return fetchJson<{ paused: boolean }>(`/simulations/${id}/pause`, { method: 'POST' });
+}
+
+export function resumeSimulation(id: string) {
+  return fetchJson<{ resumed: boolean }>(`/simulations/${id}/resume`, { method: 'POST' });
+}
+
+export function stopSimulation(id: string) {
+  return fetchJson<{ stopped: boolean; stats: SimulationSession['stats'] }>(`/simulations/${id}/stop`, { method: 'POST' });
+}
+
+export function getSimulationStats(id: string) {
+  return fetchJson<SimulationSession['stats'] & { vehicle_count?: number }>(`/simulations/${id}/stats`);
+}
+
+export function generateSimRoutes(data: { start_point: { lat: number; lng: number }; radius_km?: number; count?: number; min_waypoints?: number; max_waypoints?: number }) {
+  return fetchJson<{ routes: SimRoute[] }>('/simulations/generate-routes', { method: 'POST', body: JSON.stringify(data) });
+}
+
+export function generateSimFleet(data: { count?: number; template?: Partial<SimVehicle> }) {
+  return fetchJson<{ vehicles: SimVehicle[] }>('/simulations/generate-fleet', { method: 'POST', body: JSON.stringify(data) });
 }

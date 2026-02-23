@@ -11,7 +11,8 @@ import IssueDetailPage from './pages/IssueDetailPage';
 import KpiDashboardPage from './pages/KpiDashboardPage';
 import TraceabilityPage from './pages/TraceabilityPage';
 import AutoTriagePlaceholderPage from './pages/AutoTriagePlaceholderPage';
-import SimulationPlaceholderPage from './pages/SimulationPlaceholderPage';
+import SimulationPage from './pages/SimulationPage';
+import SimulationDetailPage from './pages/SimulationDetailPage';
 import FleetDashboardPage from './pages/FleetDashboardPage';
 import VehicleDetailPage from './pages/VehicleDetailPage';
 import TrajectoryMapPage from './pages/TrajectoryMapPage';
@@ -33,7 +34,8 @@ export default function App() {
         <Route path="kpi" element={<KpiDashboardPage />} />
         <Route path="traceability" element={<TraceabilityPage />} />
         <Route path="auto-triage" element={<AutoTriagePlaceholderPage />} />
-        <Route path="simulation" element={<SimulationPlaceholderPage />} />
+        <Route path="simulation" element={<SimulationPage />} />
+        <Route path="simulation/:id" element={<SimulationDetailPage />} />
         <Route path="fleet" element={<FleetDashboardPage />} />
         <Route path="fleet/vehicles/:vin" element={<VehicleDetailPage />} />
         <Route path="fleet/trajectory" element={<TrajectoryMapPage />} />

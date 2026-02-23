@@ -39,11 +39,12 @@ function proxyOpts(target: string, upstreamBasePath: string): Options {
   };
 }
 
-const releaseManagerUrl = () => serviceUrl('RELEASE_MANAGER_URL', 'RELEASE_MANAGER_PORT', 3010);
-const fleetManagerUrl   = () => serviceUrl('FLEET_MANAGER_URL', 'FLEET_MANAGER_PORT', 3020);
-const issueWorkflowUrl  = () => serviceUrl('ISSUE_WORKFLOW_URL', 'ISSUE_WORKFLOW_PORT', 3030);
-const traceabilityUrl   = () => serviceUrl('TRACEABILITY_URL', 'TRACEABILITY_PORT', 3040);
-const kpiEngineUrl      = () => serviceUrl('KPI_ENGINE_URL', 'KPI_ENGINE_PORT', 3050);
+const releaseManagerUrl  = () => serviceUrl('RELEASE_MANAGER_URL', 'RELEASE_MANAGER_PORT', 3010);
+const fleetManagerUrl    = () => serviceUrl('FLEET_MANAGER_URL', 'FLEET_MANAGER_PORT', 3020);
+const issueWorkflowUrl   = () => serviceUrl('ISSUE_WORKFLOW_URL', 'ISSUE_WORKFLOW_PORT', 3030);
+const traceabilityUrl    = () => serviceUrl('TRACEABILITY_URL', 'TRACEABILITY_PORT', 3040);
+const kpiEngineUrl       = () => serviceUrl('KPI_ENGINE_URL', 'KPI_ENGINE_PORT', 3050);
+const fleetSimulatorUrl  = () => serviceUrl('FLEET_SIMULATOR_URL', 'FLEET_SIMULATOR_PORT', 3060);
 
 router.use('/api/projects', createProxyMiddleware(proxyOpts(releaseManagerUrl(), '/projects')));
 router.use('/api/tasks',    createProxyMiddleware(proxyOpts(releaseManagerUrl(), '/tasks')));
@@ -59,5 +60,7 @@ router.use('/api/traceability', createProxyMiddleware(proxyOpts(traceabilityUrl(
 
 router.use('/api/schema',   createProxyMiddleware(proxyOpts(kpiEngineUrl(), '/schema')));
 router.use('/api/kpi',      createProxyMiddleware(proxyOpts(kpiEngineUrl(), '/kpi')));
+
+router.use('/api/simulations', createProxyMiddleware(proxyOpts(fleetSimulatorUrl(), '/simulations')));
 
 export default router;

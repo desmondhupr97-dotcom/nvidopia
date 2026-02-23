@@ -34,6 +34,10 @@ const fleetItems: MenuItem[] = [
   { key: '/fleet/issues-map', icon: <MapPin {...iconStyle} />, label: 'Issue Map' },
 ];
 
+const simulationItems: MenuItem[] = [
+  { key: '/simulation', icon: <Monitor {...iconStyle} />, label: 'Simulation' },
+];
+
 const secondaryItems: MenuItem[] = [
   {
     key: '/auto-triage',
@@ -41,16 +45,6 @@ const secondaryItems: MenuItem[] = [
     label: (
       <span style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
         Auto-Triage
-        <Badge count="Soon" style={{ backgroundColor: 'rgba(99,102,241,0.2)', color: '#818cf8', fontSize: 10, fontWeight: 600, boxShadow: 'none' }} />
-      </span>
-    ),
-  },
-  {
-    key: '/simulation',
-    icon: <Monitor {...iconStyle} />,
-    label: (
-      <span style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-        Simulation
         <Badge count="Soon" style={{ backgroundColor: 'rgba(99,102,241,0.2)', color: '#818cf8', fontSize: 10, fontWeight: 600, boxShadow: 'none' }} />
       </span>
     ),
@@ -96,6 +90,18 @@ export default function Sidebar() {
           selectedKeys={[currentKey]}
           onClick={handleClick}
           items={fleetItems}
+          style={{ borderInlineEnd: 'none' }}
+        />
+
+        <div style={{ height: 1, background: 'rgba(255,255,255,0.06)', margin: '12px 20px' }} />
+
+        <div style={{ padding: '4px 24px 4px', fontSize: 11, color: 'rgba(255,255,255,0.35)', textTransform: 'uppercase', letterSpacing: 1 }}>Simulation</div>
+        <Menu
+          mode="inline"
+          theme="dark"
+          selectedKeys={[currentKey]}
+          onClick={handleClick}
+          items={simulationItems}
           style={{ borderInlineEnd: 'none' }}
         />
 
