@@ -5,7 +5,6 @@ import { generateRoutes } from './route-generator.js';
 import { snapRoutesToRoads, type RoadRoute } from './road-router.js';
 import { VehicleRunner, type VehicleRunnerStats } from './vehicle-runner.js';
 
-const BFF_BASE_URL = process.env.BFF_URL || 'http://localhost:3000';
 
 interface ActiveSession {
   sessionId: string;
@@ -46,7 +45,6 @@ class SessionController {
         runId: assignment.runId,
         taskId: assignment.task_id,
         projectId: assignment.project_id,
-        ingestBaseUrl: BFF_BASE_URL,
       });
 
       runner.start();

@@ -1,11 +1,14 @@
+import crypto from 'node:crypto';
 import type { IGpsCoordinates, ISimVehicle, IReportConfig } from '@nvidopia/data-models';
-import type { RoadRoute, RoadSegment } from './road-router.js';
+import { Issue, Run, Vehicle, VehicleTrajectory, VehicleStatusSegment } from '@nvidopia/data-models';
+import type { RoadRoute } from './road-router.js';
 import { haversineDistance, bearingBetween } from './route-generator.js';
 
 const DRIVING_MODES = ['Manual', 'ACC', 'LCC', 'HighwayPilot', 'UrbanPilot'] as const;
 const ISSUE_CATEGORIES = ['Perception', 'Prediction', 'Planning', 'Chassis', 'System', 'Other'] as const;
 const ISSUE_SEVERITIES = ['Low', 'Medium', 'High', 'Blocker'] as const;
 const TAKEOVER_TYPES = ['Manual', 'SystemFault', 'Environmental', 'Other'] as const;
+const ISSUE_STATUSES_FOR_TRIAGE = ['New', 'Triaged'] as const;
 
 function pick<T>(arr: readonly T[]): T {
   return arr[Math.floor(Math.random() * arr.length)]!;
@@ -34,7 +37,6 @@ export interface VehicleRunnerConfig {
   runId: string;
   taskId: string;
   projectId: string;
-  ingestBaseUrl: string;
 }
 
 export interface VehicleRunnerStats {
@@ -43,10 +45,6 @@ export interface VehicleRunnerStats {
   mileageKm: number;
 }
 
-/**
- * Precomputed per-point metadata used by the dynamics model to produce
- * realistic speed, acceleration, and yaw data along a road-based route.
- */
 interface PointMeta {
   pos: IGpsCoordinates;
   heading_deg: number;
@@ -79,7 +77,7 @@ export class VehicleRunner {
     this.startTelemetry();
     this.scheduleNextIssue();
     this.startModeSwitch();
-    this.sendStatus('Active');
+    this.writeVehicleStatus('Active');
   }
 
   pause(): void { this.clearTimers(); }
@@ -87,7 +85,7 @@ export class VehicleRunner {
   async stop(): Promise<VehicleRunnerStats> {
     this.stopped = true;
     this.clearTimers();
-    await this.sendStatus('Idle');
+    await this.writeVehicleStatus('Idle');
     return { ...this.stats };
   }
 
@@ -119,10 +117,7 @@ export class VehicleRunner {
       const hOut = i < coords.length - 1 ? bearingBetween(curr, next) : hIn;
       const headingChange = Math.abs(angleDiff(hIn, hOut));
 
-      // curvature: 0 = straight, 1 = sharp turn (≥90°)
       const curvature = clamp(headingChange / 90, 0, 1);
-
-      // Speed model: fast on straight, slow on curves
       const curveSlowdown = 1 - curvature * 0.7;
       const baseSpeed = minSpd + (maxSpd - minSpd) * curveSlowdown;
       const jitter = randBetween(-1, 1);
@@ -156,7 +151,7 @@ export class VehicleRunner {
   private startTelemetry(): void {
     this.telemetryTimer = setInterval(() => {
       if (this.stopped) return;
-      this.emitTelemetry();
+      this.writeTelemetry();
     }, this.config.reportConfig.telemetry_interval_ms);
   }
 
@@ -172,7 +167,7 @@ export class VehicleRunner {
     const [min, max] = this.config.reportConfig.issue_interval_range_ms;
     this.issueTimer = setTimeout(() => {
       if (this.stopped) return;
-      this.emitIssue();
+      this.writeIssue();
       this.scheduleNextIssue();
     }, randBetween(min, max));
   }
@@ -200,22 +195,12 @@ export class VehicleRunner {
   } {
     const dt = this.config.reportConfig.telemetry_interval_ms / 1000;
     const speed = pt.segment_speed_mps;
-
-    // Smooth acceleration (avoid jumps)
     const rawAccel = (speed - this.prevSpeed) / dt;
     const acceleration = clamp(rawAccel, -4, 3);
-
-    // Heading-based yaw rate
     const headingDelta = angleDiff(this.prevHeading, pt.heading_deg);
     const yawRate = dt > 0 ? headingDelta / dt : 0;
-
-    // Lateral acceleration from curvature: a_lat = v² / R ≈ v² * κ
     const lateralAccel = speed * speed * pt.curvature * 0.01 * Math.sign(headingDelta);
-
-    // Steering angle ~ proportional to curvature
     const steeringAngle = clamp(headingDelta * 0.8, -35, 35);
-
-    // Throttle/brake from longitudinal acceleration
     const throttle = acceleration >= 0 ? clamp(acceleration / 3 * 100, 0, 100) : 0;
     const brake = acceleration < 0 ? clamp(-acceleration / 4 * 80, 0, 80) : 0;
 
@@ -234,93 +219,146 @@ export class VehicleRunner {
     };
   }
 
-  // ── Telemetry emission ──────────────────────────────────────────────
+  // ── Direct MongoDB writes (replaces Kafka pipeline) ─────────────────
 
-  private async emitTelemetry(): Promise<void> {
+  private async writeTelemetry(): Promise<void> {
     const pt = this.advance();
     const dynamics = this.computeDynamics(pt);
 
-    // Mileage from actual road distance between adjacent points
+    let mileageDelta = 0;
     if (this.posIndex > 1 && this.points.length > 1) {
       const prevPt = this.points[(this.posIndex - 2 + this.points.length) % this.points.length]!;
-      const distKm = haversineDistance(prevPt.pos, pt.pos);
-      this.stats.mileageKm += distKm;
+      mileageDelta = haversineDistance(prevPt.pos, pt.pos);
+      this.stats.mileageKm += mileageDelta;
     }
 
-    const payload = {
-      vehicle_id: this.config.vehicle.vin,
-      timestamp: new Date().toISOString(),
-      lat: pt.pos.lat,
-      lng: pt.pos.lng,
-      speed_mps: dynamics.speed_mps,
-      heading_deg: dynamics.heading_deg,
-      mileage_km: Number((this.stats.mileageKm).toFixed(4)),
-      driving_mode: this.currentMode,
-      acceleration_mps2: dynamics.acceleration_mps2,
-      yaw_rate_dps: dynamics.yaw_rate_dps,
-    };
+    const vin = this.config.vehicle.vin;
+    const ts = new Date();
 
     try {
-      await fetch(`${this.config.ingestBaseUrl}/api/ingest/telemetry`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload),
+      // 1. Write trajectory point
+      await VehicleTrajectory.create({
+        vin,
+        run_id: this.config.runId,
+        timestamp: ts,
+        location: { lat: pt.pos.lat, lng: pt.pos.lng },
+        speed_mps: dynamics.speed_mps,
+        driving_mode: this.currentMode,
+        heading_deg: dynamics.heading_deg,
       });
+
+      // 2. Update Vehicle real-time fields
+      await Vehicle.findOneAndUpdate(
+        { vin },
+        {
+          $set: {
+            last_heartbeat: ts,
+            current_location: { lat: pt.pos.lat, lng: pt.pos.lng },
+            current_speed_mps: dynamics.speed_mps,
+            driving_mode: this.currentMode,
+          },
+        },
+      );
+
+      // 3. Update Run mileage
+      if (mileageDelta > 0) {
+        await Run.updateOne(
+          { run_id: this.config.runId },
+          { $inc: { total_auto_mileage_km: mileageDelta } },
+        );
+      }
+
+      // 4. Handle driving-mode status segments
+      await this.updateStatusSegment(vin, this.currentMode, ts, mileageDelta);
+
       this.stats.telemetrySent++;
-    } catch { /* ignore network errors */ }
+    } catch (err) {
+      console.error(`[vehicle-runner] telemetry write error for ${vin}:`, (err as Error).message);
+    }
   }
 
-  private async emitIssue(): Promise<void> {
+  private async updateStatusSegment(vin: string, drivingMode: string, ts: Date, mileageDelta: number): Promise<void> {
+    const openSegment = await VehicleStatusSegment.findOne({ vin, end_time: null }).sort({ start_time: -1 });
+
+    if (openSegment && openSegment.driving_mode !== drivingMode) {
+      const durationMs = ts.getTime() - new Date(openSegment.start_time).getTime();
+      await VehicleStatusSegment.updateOne(
+        { _id: openSegment._id },
+        { $set: { end_time: ts, duration_ms: durationMs }, $inc: { mileage_km: mileageDelta } },
+      );
+      await VehicleStatusSegment.create({
+        vin,
+        run_id: this.config.runId,
+        driving_mode: drivingMode,
+        start_time: ts,
+        mileage_km: 0,
+      });
+    } else if (openSegment) {
+      if (mileageDelta > 0) {
+        await VehicleStatusSegment.updateOne(
+          { _id: openSegment._id },
+          { $inc: { mileage_km: mileageDelta } },
+        );
+      }
+    } else {
+      await VehicleStatusSegment.create({
+        vin,
+        run_id: this.config.runId,
+        driving_mode: drivingMode,
+        start_time: ts,
+        mileage_km: mileageDelta > 0 ? mileageDelta : 0,
+      });
+    }
+  }
+
+  private async writeIssue(): Promise<void> {
     const pt = this.advance();
     const dynamics = this.computeDynamics(pt);
-
-    const payload = {
-      run_id: this.config.runId,
-      project_id: this.config.projectId,
-      task_id: this.config.taskId,
-      trigger_timestamp: new Date().toISOString(),
-      gps_lat: pt.pos.lat,
-      gps_lng: pt.pos.lng,
-      category: pick(ISSUE_CATEGORIES),
-      severity: pick(ISSUE_SEVERITIES),
-      takeover_type: pick(TAKEOVER_TYPES),
-      data_snapshot_uri: `sim://snapshot/${this.config.vehicle.vin}/${Date.now()}`,
-      environment_tags: ['simulation'],
-      description: `[SIM] Auto-generated issue from vehicle ${this.config.vehicle.vin}`,
-      vehicle_dynamics: dynamics,
-    };
+    const issueId = `ISS-${crypto.randomUUID().slice(0, 8)}`;
 
     try {
-      await fetch(`${this.config.ingestBaseUrl}/api/ingest/issue`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload),
+      await Issue.create({
+        issue_id: issueId,
+        run_id: this.config.runId,
+        trigger_timestamp: new Date(),
+        gps_coordinates: { lat: pt.pos.lat, lng: pt.pos.lng },
+        category: pick(ISSUE_CATEGORIES),
+        severity: pick(ISSUE_SEVERITIES),
+        takeover_type: pick(TAKEOVER_TYPES),
+        data_snapshot_url: `sim://snapshot/${this.config.vehicle.vin}/${Date.now()}`,
+        environment_tags: ['simulation'],
+        description: `[SIM] Auto-generated issue from vehicle ${this.config.vehicle.vin}`,
+        status: pick(ISSUE_STATUSES_FOR_TRIAGE),
+        vehicle_dynamics: dynamics,
       });
+
       this.stats.issuesSent++;
-    } catch { /* ignore */ }
+    } catch (err) {
+      console.error(`[vehicle-runner] issue write error:`, (err as Error).message);
+    }
   }
 
-  private async sendStatus(status: string): Promise<void> {
+  private async writeVehicleStatus(status: string): Promise<void> {
     const pt = this.points[this.posIndex % Math.max(1, this.points.length)];
     const pos = pt?.pos ?? { lat: 0, lng: 0 };
-    const payload = {
-      vehicle_id: this.config.vehicle.vin,
-      timestamp: new Date().toISOString(),
-      status,
-      software_version: 'SIM-v1.0',
-      hardware_version: 'SIM-HW-1.0',
-      fuel_or_battery_level: Math.floor(randBetween(20, 100)),
-      driving_mode: this.currentMode,
-      lat: pos.lat,
-      lng: pos.lng,
-    };
+    const vin = this.config.vehicle.vin;
 
     try {
-      await fetch(`${this.config.ingestBaseUrl}/api/ingest/status`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload),
-      });
-    } catch { /* ignore */ }
+      await Vehicle.findOneAndUpdate(
+        { vin },
+        {
+          $set: {
+            current_status: status,
+            last_heartbeat: new Date(),
+            driving_mode: this.currentMode,
+            current_location: { lat: pos.lat, lng: pos.lng },
+            fuel_or_battery_level: Math.floor(randBetween(20, 100)),
+          },
+        },
+        { upsert: true },
+      );
+    } catch (err) {
+      console.error(`[vehicle-runner] status write error for ${vin}:`, (err as Error).message);
+    }
   }
 }

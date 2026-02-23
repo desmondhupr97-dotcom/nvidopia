@@ -21,15 +21,19 @@ function createIngestHandler(
 
     const key = keyExtractor(body);
 
-    await getProducer().send({
-      topic,
-      messages: [{
-        key: key ? String(key) : undefined,
-        value: JSON.stringify({ ...body, ingested_at: Date.now() }),
-      }],
-    });
-
-    res.status(202).json({ accepted: true, topic });
+    try {
+      const producer = getProducer();
+      await producer.send({
+        topic,
+        messages: [{
+          key: key ? String(key) : undefined,
+          value: JSON.stringify({ ...body, ingested_at: Date.now() }),
+        }],
+      });
+      res.status(202).json({ accepted: true, topic });
+    } catch {
+      res.status(503).json({ error: 'Kafka unavailable – ingestion is offline' });
+    }
   };
 }
 
