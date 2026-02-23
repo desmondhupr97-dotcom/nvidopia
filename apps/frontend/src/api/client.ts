@@ -888,7 +888,7 @@ export function getSimulationVehicles(id: string, tail = 30) {
   return fetchJson<SimVehiclePosition[]>(`/simulations/${id}/vehicles?tail=${tail}`);
 }
 
-export function generateSimRoutes(data: { start_point: { lat: number; lng: number }; radius_km?: number; count?: number; min_waypoints?: number; max_waypoints?: number }) {
+export function generateSimRoutes(data: { start_point: { lat: number; lng: number }; radius_km?: number; count?: number; min_waypoints?: number; max_waypoints?: number; target_distance_km?: number }) {
   return fetchJson<{ routes: SimRoute[] }>('/simulations/generate-routes', { method: 'POST', body: JSON.stringify(data) });
 }
 

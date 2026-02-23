@@ -178,7 +178,7 @@ router.get('/simulations/:id/vehicles', asyncHandler(async (req: Request, res: R
 }));
 
 router.post('/simulations/generate-routes', asyncHandler(async (req: Request, res: Response) => {
-  const { start_point, radius_km = 10, count = 5, min_waypoints = 5, max_waypoints = 15, snap_to_roads = true } = req.body;
+  const { start_point, radius_km = 10, count = 5, min_waypoints = 5, max_waypoints = 15, snap_to_roads = true, target_distance_km } = req.body;
   if (!start_point?.lat || !start_point?.lng) {
     res.status(400).json({ error: 'start_point with lat/lng is required' });
     return;
@@ -189,6 +189,7 @@ router.post('/simulations/generate-routes', asyncHandler(async (req: Request, re
     count,
     minWaypoints: min_waypoints,
     maxWaypoints: max_waypoints,
+    targetDistanceKm: target_distance_km,
   });
 
   if (snap_to_roads) {

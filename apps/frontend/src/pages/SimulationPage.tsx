@@ -82,7 +82,7 @@ export default function SimulationPage() {
   });
 
   const genRoutesMut = useMutation({
-    mutationFn: (data: { start_point: { lat: number; lng: number }; radius_km?: number; count?: number; min_waypoints?: number; max_waypoints?: number }) => generateSimRoutes(data),
+    mutationFn: (data: { start_point: { lat: number; lng: number }; radius_km?: number; count?: number; min_waypoints?: number; max_waypoints?: number; target_distance_km?: number }) => generateSimRoutes(data),
     onSuccess: (data) => {
       setRoutes(data.routes);
       const roadPlanned = data.routes.some((r: SimRoute) => r.road);
@@ -244,15 +244,16 @@ export default function SimulationPage() {
           {routeMode === 'random' ? (
             <>
               <Row gutter={16}>
-                <Col span={8}><Form.Item label="Start Lat" name="start_lat" initialValue={31.2304}><InputNumber style={{ width: '100%' }} step={0.001} /></Form.Item></Col>
-                <Col span={8}><Form.Item label="Start Lng" name="start_lng" initialValue={121.4737}><InputNumber style={{ width: '100%' }} step={0.001} /></Form.Item></Col>
-                <Col span={8}><Form.Item label="Radius (km)" name="radius_km" initialValue={10}><InputNumber min={1} max={50} style={{ width: '100%' }} /></Form.Item></Col>
+                <Col span={6}><Form.Item label="Start Lat" name="start_lat" initialValue={31.2304}><InputNumber style={{ width: '100%' }} step={0.001} /></Form.Item></Col>
+                <Col span={6}><Form.Item label="Start Lng" name="start_lng" initialValue={121.4737}><InputNumber style={{ width: '100%' }} step={0.001} /></Form.Item></Col>
+                <Col span={6}><Form.Item label="Target Distance (km)" name="target_distance_km" initialValue={500} tooltip="Total road distance target. Set 0 to use radius mode."><InputNumber min={0} max={2000} style={{ width: '100%' }} /></Form.Item></Col>
+                <Col span={6}><Form.Item label="Radius (km)" name="radius_km" initialValue={10} tooltip="Only used when Target Distance is 0"><InputNumber min={1} max={500} style={{ width: '100%' }} /></Form.Item></Col>
               </Row>
               <Row gutter={16}>
-                <Col span={12}><Form.Item label="Min Waypoints" name="min_waypoints" initialValue={5}><InputNumber min={2} max={50} style={{ width: '100%' }} /></Form.Item></Col>
-                <Col span={12}><Form.Item label="Max Waypoints" name="max_waypoints" initialValue={15}><InputNumber min={2} max={50} style={{ width: '100%' }} /></Form.Item></Col>
+                <Col span={12}><Form.Item label="Min Waypoints" name="min_waypoints" initialValue={3}><InputNumber min={2} max={10} style={{ width: '100%' }} /></Form.Item></Col>
+                <Col span={12}><Form.Item label="Max Waypoints" name="max_waypoints" initialValue={8}><InputNumber min={2} max={10} style={{ width: '100%' }} /></Form.Item></Col>
               </Row>
-              <Button onClick={() => genRoutesMut.mutate({ start_point: { lat: form.getFieldValue('start_lat') ?? 31.2304, lng: form.getFieldValue('start_lng') ?? 121.4737 }, radius_km: form.getFieldValue('radius_km') ?? 10, count: vehicles.length || form.getFieldValue('vehicle_count') || 5, min_waypoints: form.getFieldValue('min_waypoints') ?? 5, max_waypoints: form.getFieldValue('max_waypoints') ?? 15 })} loading={genRoutesMut.isPending}>
+              <Button onClick={() => genRoutesMut.mutate({ start_point: { lat: form.getFieldValue('start_lat') ?? 31.2304, lng: form.getFieldValue('start_lng') ?? 121.4737 }, radius_km: form.getFieldValue('radius_km') ?? 10, count: vehicles.length || form.getFieldValue('vehicle_count') || 5, min_waypoints: form.getFieldValue('min_waypoints') ?? 3, max_waypoints: form.getFieldValue('max_waypoints') ?? 8, target_distance_km: form.getFieldValue('target_distance_km') ?? 500 })} loading={genRoutesMut.isPending}>
                 Generate Routes
               </Button>
             </>

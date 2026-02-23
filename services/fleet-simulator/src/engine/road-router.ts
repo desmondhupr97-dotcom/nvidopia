@@ -1,9 +1,9 @@
 import type { IGpsCoordinates } from '@nvidopia/data-models';
 
 const OSRM_BASE = 'https://router.project-osrm.org/route/v1/driving';
-const OSRM_TIMEOUT_MS = 15_000;
+const OSRM_TIMEOUT_MS = 30_000;
 const MAX_CONCURRENT = 3;
-const MAX_ROAD_COORDS = 300;
+const MAX_ROAD_COORDS = 800;
 
 export interface RoadSegment {
   from: IGpsCoordinates;

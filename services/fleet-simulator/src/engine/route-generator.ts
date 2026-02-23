@@ -48,12 +48,10 @@ function randBetween(min: number, max: number): number {
 }
 
 /**
- * Generate a single route with realistic road-like waypoints.
- * Starts from the given point, picks a random initial heading,
- * then varies heading within +-60 deg at each step to avoid
- * sharp reversals while keeping points within the radius.
+ * Radius-bounded route: waypoints stay within a circle.
+ * Good for short routes (< 100km).
  */
-function generateSingleRoute(
+function generateRadiusRoute(
   startPoint: IGpsCoordinates,
   radiusKm: number,
   waypointCount: number,
@@ -80,8 +78,39 @@ function generateSingleRoute(
 }
 
 /**
+ * Long-distance corridor route: waypoints spread along a path that
+ * covers the target distance. Heading drifts gently (±25°) to simulate
+ * a realistic highway journey while keeping the total straight-line
+ * distance close to target_distance_km.
+ *
+ * With OSRM snap-to-roads, the actual road distance will typically be
+ * 15-40% longer than the straight-line distance due to road curvature,
+ * so we target ~75% of the desired distance as straight-line to
+ * compensate.
+ */
+function generateLongDistanceRoute(
+  startPoint: IGpsCoordinates,
+  targetDistanceKm: number,
+  waypointCount: number,
+): IGpsCoordinates[] {
+  const waypoints: IGpsCoordinates[] = [startPoint];
+  let heading = Math.random() * 360;
+
+  const straightLineFactor = 0.72;
+  const segmentKm = (targetDistanceKm * straightLineFactor) / Math.max(1, waypointCount - 1);
+
+  for (let i = 1; i < waypointCount; i++) {
+    heading = (heading + randBetween(-25, 25) + 360) % 360;
+    const dist = segmentKm * randBetween(0.85, 1.15);
+    const next = destinationPoint(waypoints[waypoints.length - 1]!, heading, dist);
+    waypoints.push(next);
+  }
+
+  return waypoints;
+}
+
+/**
  * Interpolate additional points between waypoints for smooth GPS trails.
- * Returns points spaced approximately `stepKm` apart.
  */
 export function interpolateRoute(waypoints: IGpsCoordinates[], stepKm: number): IGpsCoordinates[] {
   if (waypoints.length < 2) return [...waypoints];
@@ -109,13 +138,20 @@ export interface GenerateRoutesOptions {
   count: number;
   minWaypoints: number;
   maxWaypoints: number;
+  targetDistanceKm?: number;
 }
 
 export function generateRoutes(opts: GenerateRoutesOptions): ISimRoute[] {
   const routes: ISimRoute[] = [];
+  const useLongDistance = opts.targetDistanceKm && opts.targetDistanceKm > 0;
+
   for (let i = 0; i < opts.count; i++) {
     const wpCount = Math.floor(randBetween(opts.minWaypoints, opts.maxWaypoints + 1));
-    const waypoints = generateSingleRoute(opts.startPoint, opts.radiusKm, wpCount);
+
+    const waypoints = useLongDistance
+      ? generateLongDistanceRoute(opts.startPoint, opts.targetDistanceKm!, wpCount)
+      : generateRadiusRoute(opts.startPoint, opts.radiusKm, wpCount);
+
     routes.push({
       route_id: `ROUTE-${crypto.randomUUID().slice(0, 8)}`,
       name: `Route ${i + 1}`,
