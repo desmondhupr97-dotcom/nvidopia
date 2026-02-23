@@ -39,9 +39,27 @@ export default function SimulationPage() {
   const { data: projectsData } = useQuery({ queryKey: ['projects'], queryFn: () => getProjects({}) });
   const { data: tasksData } = useQuery({ queryKey: ['tasks'], queryFn: () => getTasks({}) });
 
+  const [autoStart, setAutoStart] = useState(false);
+
   const createMut = useMutation({
     mutationFn: (data: Partial<SimulationSession>) => createSimulation(data),
-    onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['simulations'] }); setWizardOpen(false); resetWizard(); message.success('Simulation created'); },
+    onSuccess: async (session) => {
+      queryClient.invalidateQueries({ queryKey: ['simulations'] });
+      setWizardOpen(false);
+      resetWizard();
+      if (autoStart && session.session_id) {
+        try {
+          await startSimulation(session.session_id);
+          queryClient.invalidateQueries({ queryKey: ['simulations'] });
+          message.success('Simulation created & started');
+        } catch {
+          message.warning('Created but failed to start — start it manually');
+        }
+      } else {
+        message.success('Simulation saved as draft');
+      }
+      setAutoStart(false);
+    },
   });
 
   const deleteMut = useMutation({
@@ -61,7 +79,12 @@ export default function SimulationPage() {
 
   const genRoutesMut = useMutation({
     mutationFn: (data: { start_point: { lat: number; lng: number }; radius_km?: number; count?: number; min_waypoints?: number; max_waypoints?: number }) => generateSimRoutes(data),
-    onSuccess: (data) => setRoutes(data.routes),
+    onSuccess: (data) => {
+      setRoutes(data.routes);
+      const roadPlanned = data.routes.some((r: SimRoute) => r.road);
+      message.success(`${data.routes.length} route(s) generated${roadPlanned ? ' with road planning' : ''}`);
+    },
+    onError: (err) => message.error(`Route generation failed: ${(err as Error).message}`),
   });
 
   function resetWizard() {
@@ -312,8 +335,8 @@ export default function SimulationPage() {
               {step < wizardSteps.length - 1 && <Button type="primary" onClick={() => setStep(step + 1)}>Next</Button>}
               {step === wizardSteps.length - 1 && (
                 <>
-                  <Button onClick={handleCreate} loading={createMut.isPending}>Save as Draft</Button>
-                  <Button type="primary" onClick={() => { handleCreate(); }} loading={createMut.isPending}>Create & Start</Button>
+                  <Button onClick={() => { setAutoStart(false); handleCreate(); }} loading={createMut.isPending && !autoStart}>Save as Draft</Button>
+                  <Button type="primary" onClick={() => { setAutoStart(true); handleCreate(); }} loading={createMut.isPending && autoStart}>Create & Start</Button>
                 </>
               )}
             </Space>
