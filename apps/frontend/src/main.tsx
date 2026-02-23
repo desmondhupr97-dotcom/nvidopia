@@ -2,7 +2,7 @@ import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 import { BrowserRouter } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { ConfigProvider, theme } from 'antd';
+import { ConfigProvider, App as AntdApp, theme } from 'antd';
 import App from './App';
 import { ErrorBoundary } from './components/shared';
 import './styles/global.css';
@@ -125,9 +125,11 @@ createRoot(document.getElementById('root')!).render(
     <BrowserRouter>
       <QueryClientProvider client={queryClient}>
         <ConfigProvider theme={nvidopiaTheme}>
-          <ErrorBoundary>
-            <App />
-          </ErrorBoundary>
+          <AntdApp>
+            <ErrorBoundary>
+              <App />
+            </ErrorBoundary>
+          </AntdApp>
         </ConfigProvider>
       </QueryClientProvider>
     </BrowserRouter>

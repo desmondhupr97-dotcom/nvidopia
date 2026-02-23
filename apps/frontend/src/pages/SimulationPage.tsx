@@ -60,6 +60,10 @@ export default function SimulationPage() {
       }
       setAutoStart(false);
     },
+    onError: (err) => {
+      message.error(`Failed to create simulation: ${(err as Error).message}`);
+      setAutoStart(false);
+    },
   });
 
   const deleteMut = useMutation({
@@ -105,7 +109,12 @@ export default function SimulationPage() {
       },
       route_config: {
         mode: routeMode,
-        routes: routes.length > 0 ? routes : undefined,
+        routes: routes.length > 0 ? routes.map((r) => ({
+          route_id: r.route_id,
+          name: r.name,
+          waypoints: r.waypoints,
+          road: r.road ? { total_distance_m: r.road.total_distance_m, total_duration_s: r.road.total_duration_s } : undefined,
+        })) : undefined,
         random_config: routeMode === 'random' ? {
           start_point: { lat: values.start_lat ?? 31.2304, lng: values.start_lng ?? 121.4737 },
           radius_km: values.radius_km ?? 10,

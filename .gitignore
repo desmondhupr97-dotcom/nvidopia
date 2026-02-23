@@ -11,7 +11,7 @@ coverage/
 Thumbs.db
 *.tgz
 .commitmsg
-apps/frontend/tsconfig.tsbuildinfo
+*.tsbuildinfo
 screenshots/
 FRONTEND_VERIFICATION_REPORT.md
 apps/frontend/vite.config.d.ts

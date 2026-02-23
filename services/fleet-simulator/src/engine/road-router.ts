@@ -1,6 +1,9 @@
 import type { IGpsCoordinates } from '@nvidopia/data-models';
 
 const OSRM_BASE = 'https://router.project-osrm.org/route/v1/driving';
+const OSRM_TIMEOUT_MS = 15_000;
+const MAX_CONCURRENT = 3;
+const MAX_ROAD_COORDS = 300;
 
 export interface RoadSegment {
   from: IGpsCoordinates;
@@ -41,13 +44,29 @@ function heading(a: IGpsCoordinates, b: IGpsCoordinates): number {
   return (toDeg(Math.atan2(y, x)) + 360) % 360;
 }
 
-function haversine(a: IGpsCoordinates, b: IGpsCoordinates): number {
+export function haversine(a: IGpsCoordinates, b: IGpsCoordinates): number {
   const R = 6371000;
   const toRad = (d: number) => (d * Math.PI) / 180;
   const dLat = toRad(b.lat - a.lat);
   const dLng = toRad(b.lng - a.lng);
   const h = Math.sin(dLat / 2) ** 2 + Math.cos(toRad(a.lat)) * Math.cos(toRad(b.lat)) * Math.sin(dLng / 2) ** 2;
   return 2 * R * Math.asin(Math.sqrt(h));
+}
+
+/**
+ * Downsample a coordinate array using the Ramer–Douglas–Peucker algorithm,
+ * keeping the route shape but limiting point count for payload size.
+ */
+function downsample(coords: IGpsCoordinates[], maxPoints: number): IGpsCoordinates[] {
+  if (coords.length <= maxPoints) return coords;
+
+  const step = (coords.length - 1) / (maxPoints - 1);
+  const result: IGpsCoordinates[] = [];
+  for (let i = 0; i < maxPoints - 1; i++) {
+    result.push(coords[Math.round(i * step)]!);
+  }
+  result.push(coords[coords.length - 1]!);
+  return result;
 }
 
 function buildSegments(coords: IGpsCoordinates[], totalDuration: number, totalDistance: number): RoadSegment[] {
@@ -78,10 +97,6 @@ function buildSegments(coords: IGpsCoordinates[], totalDuration: number, totalDi
   return segments;
 }
 
-/**
- * Call OSRM public API to snap waypoints to actual roads and return the full
- * road geometry with per-segment distance/duration/heading.
- */
 export async function planRoadRoute(waypoints: IGpsCoordinates[]): Promise<RoadRoute> {
   if (waypoints.length < 2) {
     return { coordinates: [...waypoints], segments: [], total_distance_m: 0, total_duration_s: 0 };
@@ -90,16 +105,12 @@ export async function planRoadRoute(waypoints: IGpsCoordinates[]): Promise<RoadR
   const coords = waypoints.map((w) => `${w.lng},${w.lat}`).join(';');
   const url = `${OSRM_BASE}/${coords}?overview=full&geometries=polyline6&steps=false`;
 
-  const resp = await fetch(url, { signal: AbortSignal.timeout(15000) });
+  const resp = await fetch(url, { signal: AbortSignal.timeout(OSRM_TIMEOUT_MS) });
   if (!resp.ok) throw new Error(`OSRM returned ${resp.status}`);
 
   const data = await resp.json() as {
     code: string;
-    routes?: Array<{
-      geometry: string;
-      distance: number;
-      duration: number;
-    }>;
+    routes?: Array<{ geometry: string; distance: number; duration: number }>;
   };
 
   if (data.code !== 'Ok' || !data.routes?.length) {
@@ -107,7 +118,8 @@ export async function planRoadRoute(waypoints: IGpsCoordinates[]): Promise<RoadR
   }
 
   const route = data.routes[0]!;
-  const coordinates = decodePoly6(route.geometry);
+  const fullCoordinates = decodePoly6(route.geometry);
+  const coordinates = downsample(fullCoordinates, MAX_ROAD_COORDS);
   const segments = buildSegments(coordinates, route.duration, route.distance);
 
   return {
@@ -118,33 +130,38 @@ export async function planRoadRoute(waypoints: IGpsCoordinates[]): Promise<RoadR
   };
 }
 
-/**
- * Snap multiple ISimRoute waypoints to real roads. Returns new routes with
- * road-following coordinates replacing the original straight-line waypoints.
- */
-export async function snapRoutesToRoads(
-  routes: Array<{ route_id: string; name?: string; waypoints: IGpsCoordinates[] }>,
-): Promise<Array<{ route_id: string; name?: string; waypoints: IGpsCoordinates[]; road?: RoadRoute }>> {
-  const results: Array<{ route_id: string; name?: string; waypoints: IGpsCoordinates[]; road?: RoadRoute }> = [];
+async function runWithConcurrency<T, R>(
+  items: T[],
+  limit: number,
+  fn: (item: T) => Promise<R>,
+): Promise<R[]> {
+  const results: R[] = new Array(items.length);
+  let nextIdx = 0;
 
-  for (const route of routes) {
-    if (route.waypoints.length < 2) {
-      results.push({ ...route });
-      continue;
-    }
-    try {
-      const road = await planRoadRoute(route.waypoints);
-      results.push({
-        route_id: route.route_id,
-        name: route.name,
-        waypoints: route.waypoints,
-        road,
-      });
-    } catch (err) {
-      console.warn(`[road-router] Failed to snap route ${route.route_id}, using raw waypoints:`, (err as Error).message);
-      results.push({ ...route });
+  async function worker() {
+    while (nextIdx < items.length) {
+      const idx = nextIdx++;
+      results[idx] = await fn(items[idx]!);
     }
   }
 
+  await Promise.all(Array.from({ length: Math.min(limit, items.length) }, () => worker()));
   return results;
+}
+
+export async function snapRoutesToRoads(
+  routes: Array<{ route_id: string; name?: string; waypoints: IGpsCoordinates[] }>,
+): Promise<Array<{ route_id: string; name?: string; waypoints: IGpsCoordinates[]; road?: RoadRoute }>> {
+  return runWithConcurrency(routes, MAX_CONCURRENT, async (route) => {
+    if (route.waypoints.length < 2) {
+      return { ...route };
+    }
+    try {
+      const road = await planRoadRoute(route.waypoints);
+      return { route_id: route.route_id, name: route.name, waypoints: route.waypoints, road };
+    } catch (err) {
+      console.warn(`[road-router] Failed to snap route ${route.route_id}:`, (err as Error).message);
+      return { ...route };
+    }
+  });
 }
