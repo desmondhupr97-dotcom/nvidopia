@@ -8,7 +8,7 @@ const DRIVING_MODES = ['Manual', 'ACC', 'LCC', 'HighwayPilot', 'UrbanPilot'] as 
 const ISSUE_CATEGORIES = ['Perception', 'Prediction', 'Planning', 'Chassis', 'System', 'Other'] as const;
 const ISSUE_SEVERITIES = ['Low', 'Medium', 'High', 'Blocker'] as const;
 const TAKEOVER_TYPES = ['Manual', 'SystemFault', 'Environmental', 'Other'] as const;
-const ISSUE_STATUSES_FOR_TRIAGE = ['New', 'Triaged'] as const;
+const ISSUE_STATUSES_FOR_CREATE = ['New', 'Triage'] as const;
 
 function pick<T>(arr: readonly T[]): T {
   return arr[Math.floor(Math.random() * arr.length)]!;
@@ -328,7 +328,7 @@ export class VehicleRunner {
         data_snapshot_url: `sim://snapshot/${this.config.vehicle.vin}/${Date.now()}`,
         environment_tags: ['simulation'],
         description: `[SIM] Auto-generated issue from vehicle ${this.config.vehicle.vin}`,
-        status: pick(ISSUE_STATUSES_FOR_TRIAGE),
+        status: pick(ISSUE_STATUSES_FOR_CREATE),
         vehicle_dynamics: dynamics,
       });
 
