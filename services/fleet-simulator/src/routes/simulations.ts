@@ -1,6 +1,6 @@
 import { Router, type Request, type Response } from 'express';
 import crypto from 'node:crypto';
-import { SimulationSession } from '@nvidopia/data-models';
+import { SimulationSession, Run, VehicleTrajectory } from '@nvidopia/data-models';
 import { asyncHandler } from '@nvidopia/service-toolkit';
 import { generateRoutes } from '../engine/route-generator.js';
 import { generateFleet } from '../engine/fleet-generator.js';
@@ -141,20 +141,62 @@ router.get('/simulations/:id/stats', asyncHandler(async (req: Request, res: Resp
   res.json(liveStats);
 }));
 
+router.get('/simulations/:id/vehicles', asyncHandler(async (req: Request, res: Response) => {
+  const id = paramId(req);
+  const tailSize = Math.min(Number(req.query.tail) || 30, 200);
+
+  const runs = await Run.find({ simulation_ref: id }).lean();
+  if (runs.length === 0) { res.json([]); return; }
+
+  const vehicles = await Promise.all(
+    runs.map(async (run) => {
+      const points = await VehicleTrajectory.find({ run_id: run.run_id })
+        .sort({ timestamp: -1 })
+        .limit(tailSize)
+        .lean();
+
+      const trail = points.reverse().map((p) => ({
+        lat: p.location.lat,
+        lng: p.location.lng,
+        speed_mps: p.speed_mps,
+        heading_deg: p.heading_deg,
+        driving_mode: p.driving_mode,
+        timestamp: p.timestamp,
+      }));
+
+      const latest = trail[trail.length - 1];
+      return {
+        vin: run.vehicle_vin,
+        run_id: run.run_id,
+        current: latest ?? null,
+        trail,
+      };
+    }),
+  );
+
+  res.json(vehicles);
+}));
+
 router.post('/simulations/generate-routes', asyncHandler(async (req: Request, res: Response) => {
-  const { start_point, radius_km = 10, count = 5, min_waypoints = 5, max_waypoints = 15 } = req.body;
+  const { start_point, radius_km = 10, count = 5, min_waypoints = 5, max_waypoints = 15, snap_to_roads = true } = req.body;
   if (!start_point?.lat || !start_point?.lng) {
     res.status(400).json({ error: 'start_point with lat/lng is required' });
     return;
   }
-  const routes = generateRoutes({
+  const rawRoutes = generateRoutes({
     startPoint: start_point,
     radiusKm: radius_km,
     count,
     minWaypoints: min_waypoints,
     maxWaypoints: max_waypoints,
   });
-  res.json({ routes });
+
+  if (snap_to_roads) {
+    const snapped = await snapRoutesToRoads(rawRoutes);
+    res.json({ routes: snapped });
+  } else {
+    res.json({ routes: rawRoutes });
+  }
 }));
 
 router.post('/simulations/generate-fleet', asyncHandler(async (req: Request, res: Response) => {

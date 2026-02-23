@@ -1,18 +1,82 @@
 import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Card, Button, Space, Tag, Row, Col, Statistic, Descriptions, message } from 'antd';
+import { Card, Button, Space, Tag, Row, Col, Statistic, Descriptions, Table, message } from 'antd';
 import { ArrowLeft, Play, Pause, Square } from 'lucide-react';
-import { MapContainer, TileLayer, Polyline, CircleMarker, Tooltip } from 'react-leaflet';
+import { MapContainer, TileLayer, Polyline, CircleMarker, Tooltip, useMap } from 'react-leaflet';
+import { useEffect, useRef } from 'react';
+import L from 'leaflet';
 import {
-  getSimulation, getSimulationStats, startSimulation, pauseSimulation,
-  resumeSimulation, stopSimulation,
+  getSimulation, getSimulationStats, getSimulationVehicles, startSimulation,
+  pauseSimulation, resumeSimulation, stopSimulation,
+  type SimVehiclePosition,
 } from '../api/client';
 
 const statusColor: Record<string, string> = {
   Draft: 'default', Running: 'processing', Paused: 'warning', Completed: 'success', Aborted: 'error',
 };
 
+const VEHICLE_COLORS = ['#22c55e', '#3b82f6', '#f59e0b', '#ef4444', '#ec4899', '#14b8a6', '#a855f7', '#6366f1'];
 const ROUTE_COLORS = ['#6366f1', '#22c55e', '#f59e0b', '#ef4444', '#3b82f6', '#ec4899', '#14b8a6', '#a855f7'];
+
+function carIcon(color: string, heading: number) {
+  return L.divIcon({
+    className: '',
+    html: `<div style="width:22px;height:22px;display:flex;align-items:center;justify-content:center;transform:rotate(${heading}deg)">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="${color}" stroke="#fff" stroke-width="1.5">
+        <path d="M12 2L6 12l6 4 6-4z"/>
+      </svg>
+    </div>`,
+    iconSize: [22, 22],
+    iconAnchor: [11, 11],
+  });
+}
+
+function VehicleMarkers({ vehicles }: { vehicles: SimVehiclePosition[] }) {
+  const map = useMap();
+  const markersRef = useRef<Map<string, L.Marker>>(new Map());
+
+  useEffect(() => {
+    const currentVins = new Set<string>();
+
+    vehicles.forEach((v, idx) => {
+      if (!v.current) return;
+      currentVins.add(v.vin);
+      const color = VEHICLE_COLORS[idx % VEHICLE_COLORS.length]!;
+      const pos = L.latLng(v.current.lat, v.current.lng);
+      const heading = v.current.heading_deg ?? 0;
+
+      const existing = markersRef.current.get(v.vin);
+      if (existing) {
+        existing.setLatLng(pos);
+        existing.setIcon(carIcon(color, heading));
+      } else {
+        const marker = L.marker(pos, { icon: carIcon(color, heading) })
+          .bindTooltip(`${v.vin}<br/>${(v.current.speed_mps * 3.6).toFixed(0)} km/h · ${v.current.driving_mode}`, { direction: 'top', offset: [0, -12] })
+          .addTo(map);
+        markersRef.current.set(v.vin, marker);
+      }
+
+      const m = markersRef.current.get(v.vin)!;
+      m.setTooltipContent(`${v.vin}<br/>${(v.current.speed_mps * 3.6).toFixed(0)} km/h · ${v.current.driving_mode}`);
+    });
+
+    markersRef.current.forEach((marker, vin) => {
+      if (!currentVins.has(vin)) {
+        marker.remove();
+        markersRef.current.delete(vin);
+      }
+    });
+  }, [vehicles, map]);
+
+  useEffect(() => {
+    return () => {
+      markersRef.current.forEach((m) => m.remove());
+      markersRef.current.clear();
+    };
+  }, []);
+
+  return null;
+}
 
 export default function SimulationDetailPage() {
   const { id } = useParams<{ id: string }>();
@@ -25,7 +89,7 @@ export default function SimulationDetailPage() {
     enabled: !!id,
     refetchInterval: (query) => {
       const s = query.state.data;
-      return s?.status === 'Running' ? 3000 : false;
+      return s?.status === 'Running' ? 5000 : false;
     },
   });
 
@@ -36,9 +100,20 @@ export default function SimulationDetailPage() {
     refetchInterval: 3000,
   });
 
+  const isRunning = session?.status === 'Running';
+  const isCompleted = session?.status === 'Completed';
+
+  const { data: vehiclePositions } = useQuery({
+    queryKey: ['simulation-vehicles', id],
+    queryFn: () => getSimulationVehicles(id!, 50),
+    enabled: !!id && (isRunning || isCompleted),
+    refetchInterval: isRunning ? 3000 : false,
+  });
+
   const invalidate = () => {
     queryClient.invalidateQueries({ queryKey: ['simulation', id] });
     queryClient.invalidateQueries({ queryKey: ['simulation-stats', id] });
+    queryClient.invalidateQueries({ queryKey: ['simulation-vehicles', id] });
     queryClient.invalidateQueries({ queryKey: ['simulations'] });
   };
 
@@ -54,9 +129,15 @@ export default function SimulationDetailPage() {
   const stats = liveStats ?? session.stats;
   const routes = session.route_config?.routes ?? [];
   const startPoint = session.route_config?.random_config?.start_point;
-  const center: [number, number] = routes.length > 0 && routes[0]!.waypoints.length > 0
-    ? [routes[0]!.waypoints[0]!.lat, routes[0]!.waypoints[0]!.lng]
-    : startPoint ? [startPoint.lat, startPoint.lng] : [31.23, 121.47];
+  const vehicles = vehiclePositions ?? [];
+
+  const center: [number, number] = (() => {
+    const firstVehicle = vehicles.find((v) => v.current);
+    if (firstVehicle?.current) return [firstVehicle.current.lat, firstVehicle.current.lng];
+    if (routes.length > 0 && routes[0]!.waypoints.length > 0) return [routes[0]!.waypoints[0]!.lat, routes[0]!.waypoints[0]!.lng];
+    if (startPoint) return [startPoint.lat, startPoint.lng];
+    return [31.23, 121.47];
+  })() as [number, number];
 
   return (
     <div>
@@ -109,45 +190,66 @@ export default function SimulationDetailPage() {
 
       <Row gutter={[16, 16]}>
         <Col xs={24} lg={14}>
-          <Card className="glass-panel" title="Route Map" style={{ height: 480 }}>
-            <div style={{ height: 400 }}>
-              <MapContainer center={center} zoom={12} style={{ height: '100%', width: '100%', borderRadius: 8 }}>
+          <Card className="glass-panel" title={isRunning ? 'Live Vehicle Map' : 'Route Map'} style={{ height: 520 }}>
+            <div style={{ height: 440 }}>
+              <MapContainer center={center} zoom={11} style={{ height: '100%', width: '100%', borderRadius: 8 }}>
                 <TileLayer url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png" attribution='&copy; CartoDB' />
+
+                {/* Planned routes as dim background */}
                 {routes.map((route, idx) => {
                   const color = ROUTE_COLORS[idx % ROUTE_COLORS.length]!;
                   const roadCoords = route.road?.coordinates;
                   const displayCoords = roadCoords ?? route.waypoints;
                   return (
-                    <span key={route.route_id}>
-                      <Polyline
-                        positions={displayCoords.map((w) => [w.lat, w.lng] as [number, number])}
-                        pathOptions={{ color, weight: roadCoords ? 4 : 3, opacity: roadCoords ? 0.9 : 0.7, dashArray: roadCoords ? undefined : '8 4' }}
-                      />
-                      {roadCoords && (
-                        <Polyline
-                          positions={route.waypoints.map((w) => [w.lat, w.lng] as [number, number])}
-                          pathOptions={{ color, weight: 1, opacity: 0.25, dashArray: '4 4' }}
-                        />
-                      )}
+                    <Polyline
+                      key={`route-${route.route_id}`}
+                      positions={displayCoords.map((w) => [w.lat, w.lng] as [number, number])}
+                      pathOptions={{
+                        color,
+                        weight: vehicles.length > 0 ? 2 : 4,
+                        opacity: vehicles.length > 0 ? 0.25 : 0.8,
+                        dashArray: roadCoords ? undefined : '8 4',
+                      }}
+                    />
+                  );
+                })}
+
+                {/* Real-time vehicle trails */}
+                {vehicles.map((v, idx) => {
+                  const color = VEHICLE_COLORS[idx % VEHICLE_COLORS.length]!;
+                  if (v.trail.length < 2) return null;
+                  return (
+                    <Polyline
+                      key={`trail-${v.vin}`}
+                      positions={v.trail.map((p) => [p.lat, p.lng] as [number, number])}
+                      pathOptions={{ color, weight: 4, opacity: 0.9 }}
+                    />
+                  );
+                })}
+
+                {/* Start/End markers for routes (only when no live vehicles) */}
+                {vehicles.length === 0 && routes.map((route, idx) => {
+                  const color = ROUTE_COLORS[idx % ROUTE_COLORS.length]!;
+                  const displayCoords = route.road?.coordinates ?? route.waypoints;
+                  return (
+                    <span key={`markers-${route.route_id}`}>
                       {displayCoords.length > 0 && (
-                        <CircleMarker center={[displayCoords[0]!.lat, displayCoords[0]!.lng]} radius={7} pathOptions={{ color: '#fff', fillColor: color, fillOpacity: 1, weight: 2 }}>
+                        <CircleMarker center={[displayCoords[0]!.lat, displayCoords[0]!.lng]} radius={6} pathOptions={{ color: '#fff', fillColor: color, fillOpacity: 1, weight: 2 }}>
                           <Tooltip>{route.name || route.route_id} (Start)</Tooltip>
-                        </CircleMarker>
-                      )}
-                      {displayCoords.length > 1 && (
-                        <CircleMarker center={[displayCoords[displayCoords.length - 1]!.lat, displayCoords[displayCoords.length - 1]!.lng]} radius={7} pathOptions={{ color: '#fff', fillColor: '#ef4444', fillOpacity: 1, weight: 2 }}>
-                          <Tooltip>{route.name || route.route_id} (End)</Tooltip>
                         </CircleMarker>
                       )}
                     </span>
                   );
                 })}
+
+                {/* Animated vehicle markers */}
+                <VehicleMarkers vehicles={vehicles} />
               </MapContainer>
             </div>
           </Card>
         </Col>
         <Col xs={24} lg={10}>
-          <Card className="glass-panel" title="Configuration">
+          <Card className="glass-panel" title="Configuration" style={{ marginBottom: 16 }}>
             <Descriptions column={1} size="small" labelStyle={{ color: 'var(--text-muted)' }}>
               <Descriptions.Item label="Fleet Mode">{session.fleet_config?.mode}</Descriptions.Item>
               <Descriptions.Item label="Route Mode">{session.route_config?.mode}</Descriptions.Item>
@@ -161,6 +263,37 @@ export default function SimulationDetailPage() {
               <Descriptions.Item label="Speed Range">{Math.round((session.report_config?.speed_range_mps?.[0] ?? 8) * 3.6)} - {Math.round((session.report_config?.speed_range_mps?.[1] ?? 33) * 3.6)} km/h</Descriptions.Item>
             </Descriptions>
           </Card>
+
+          {vehicles.length > 0 && (
+            <Card className="glass-panel" title="Vehicle Status">
+              <Table
+                size="small"
+                dataSource={vehicles}
+                rowKey="vin"
+                pagination={false}
+                columns={[
+                  {
+                    title: '', width: 12, render: (_: unknown, _r: SimVehiclePosition, idx: number) => (
+                      <div style={{ width: 8, height: 8, borderRadius: '50%', background: VEHICLE_COLORS[idx % VEHICLE_COLORS.length] }} />
+                    ),
+                  },
+                  { title: 'VIN', dataIndex: 'vin', ellipsis: true, render: (v: string) => <span style={{ fontSize: 11, fontFamily: 'monospace' }}>{v}</span> },
+                  {
+                    title: 'Speed', render: (_: unknown, r: SimVehiclePosition) =>
+                      r.current ? `${(r.current.speed_mps * 3.6).toFixed(0)} km/h` : '-',
+                  },
+                  {
+                    title: 'Mode', render: (_: unknown, r: SimVehiclePosition) =>
+                      r.current ? <Tag color="blue" style={{ fontSize: 10 }}>{r.current.driving_mode}</Tag> : '-',
+                  },
+                  {
+                    title: 'Trail', render: (_: unknown, r: SimVehiclePosition) =>
+                      <span style={{ fontSize: 11, color: 'var(--text-muted)' }}>{r.trail.length} pts</span>,
+                  },
+                ]}
+              />
+            </Card>
+          )}
         </Col>
       </Row>
     </div>

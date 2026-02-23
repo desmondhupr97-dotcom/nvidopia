@@ -847,6 +847,26 @@ export function getSimulationStats(id: string) {
   return fetchJson<SimulationSession['stats'] & { vehicle_count?: number }>(`/simulations/${id}/stats`);
 }
 
+export interface VehicleTrailPoint {
+  lat: number;
+  lng: number;
+  speed_mps: number;
+  heading_deg?: number;
+  driving_mode: string;
+  timestamp: string;
+}
+
+export interface SimVehiclePosition {
+  vin: string;
+  run_id: string;
+  current: VehicleTrailPoint | null;
+  trail: VehicleTrailPoint[];
+}
+
+export function getSimulationVehicles(id: string, tail = 30) {
+  return fetchJson<SimVehiclePosition[]>(`/simulations/${id}/vehicles?tail=${tail}`);
+}
+
 export function generateSimRoutes(data: { start_point: { lat: number; lng: number }; radius_km?: number; count?: number; min_waypoints?: number; max_waypoints?: number }) {
   return fetchJson<{ routes: SimRoute[] }>('/simulations/generate-routes', { method: 'POST', body: JSON.stringify(data) });
 }
