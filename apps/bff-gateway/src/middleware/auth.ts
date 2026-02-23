@@ -3,6 +3,7 @@ import jwt from 'jsonwebtoken';
 
 const JWT_SECRET = process.env.JWT_SECRET ?? 'dev-secret-change-me';
 const IS_PRODUCTION = process.env.NODE_ENV === 'production';
+const ALLOW_ANONYMOUS = process.env.ALLOW_ANONYMOUS === 'true' || !IS_PRODUCTION;
 
 const WHITELIST: RegExp[] = [
   /^\/health$/,
@@ -25,8 +26,7 @@ export function authMiddleware(req: AuthenticatedRequest, res: Response, next: N
 
   const header = req.headers.authorization;
   if (!header?.startsWith('Bearer ')) {
-    // Keep local demo/development usable without wiring a full login flow.
-    if (!IS_PRODUCTION) {
+    if (ALLOW_ANONYMOUS) {
       req.user = { role: 'anonymous' };
       next();
       return;

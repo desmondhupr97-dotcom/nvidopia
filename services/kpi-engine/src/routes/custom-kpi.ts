@@ -1,8 +1,55 @@
 import { Router, type Request, type Response } from 'express';
 import crypto from 'node:crypto';
+import Ajv from 'ajv';
 import { KpiDefinition } from '@nvidopia/data-models';
 import { asyncHandler } from '@nvidopia/service-toolkit';
 import { evaluateFormula, validateFormula } from '../formula-engine.js';
+
+const ajv = new Ajv({ allErrors: true, strict: false });
+
+const BATCH_IMPORT_SCHEMA = {
+  type: 'object',
+  required: ['dashboards'],
+  properties: {
+    dashboards: {
+      type: 'array',
+      minItems: 1,
+      items: {
+        type: 'object',
+        required: ['dashboard_id', 'name', 'kpis'],
+        properties: {
+          dashboard_id: { type: 'string' },
+          name: { type: 'string' },
+          description: { type: 'string' },
+          kpis: {
+            type: 'array',
+            minItems: 1,
+            items: {
+              type: 'object',
+              required: ['name', 'data_source', 'variables', 'formula'],
+              properties: {
+                kpi_id: { type: 'string' },
+                name: { type: 'string' },
+                data_source: { type: 'string', enum: ['project', 'task', 'run', 'issue', 'cross'] },
+                variables: { type: 'array', minItems: 1 },
+                formula: { type: 'string' },
+                formula_format: { type: 'string', enum: ['mathjs'] },
+                vchart_spec: { type: 'object' },
+                visualization: { type: 'object' },
+                filters: { type: 'array' },
+                group_by: { type: 'array' },
+                display_order: { type: 'integer' },
+                enabled: { type: 'boolean' },
+              },
+            },
+          },
+        },
+      },
+    },
+  },
+} as const;
+
+const validateBatchImport = ajv.compile(BATCH_IMPORT_SCHEMA);
 
 const router = Router();
 
@@ -96,6 +143,8 @@ router.get('/custom/:id/evaluate', asyncHandler(async (req: Request, res: Respon
     name: def.name,
     ...result,
     visualization: def.visualization,
+    vchart_spec: (def as any).vchart_spec ?? null,
+    renderer: (def as any).renderer ?? 'recharts',
     computed_at: new Date().toISOString(),
   });
 }));
@@ -121,6 +170,85 @@ router.post('/custom/preview', asyncHandler(async (req: Request, res: Response) 
   });
 
   res.json({ ...result, preview: true, computed_at: new Date().toISOString() });
+}));
+
+router.post('/definitions/import', asyncHandler(async (req: Request, res: Response) => {
+  if (!validateBatchImport(req.body)) {
+    res.status(400).json({
+      error: 'Invalid batch import JSON',
+      details: validateBatchImport.errors,
+    });
+    return;
+  }
+
+  const { dashboards } = req.body;
+  const results: Array<{
+    dashboard_id: string;
+    created: string[];
+    updated: string[];
+    failed: Array<{ kpi_id?: string; name: string; error: string }>;
+  }> = [];
+
+  for (const dashboard of dashboards) {
+    const created: string[] = [];
+    const updated: string[] = [];
+    const failed: Array<{ kpi_id?: string; name: string; error: string }> = [];
+
+    for (const kpi of dashboard.kpis) {
+      const formulaCheck = validateFormula(kpi.formula);
+      if (!formulaCheck.valid) {
+        failed.push({ kpi_id: kpi.kpi_id, name: kpi.name, error: `Invalid formula: ${formulaCheck.error}` });
+        continue;
+      }
+
+      const kpiId = kpi.kpi_id ?? `KPI-${crypto.randomUUID().slice(0, 8)}`;
+      const hasVChartSpec = kpi.vchart_spec && typeof kpi.vchart_spec === 'object';
+
+      const doc = {
+        kpi_id: kpiId,
+        name: kpi.name,
+        description: kpi.description,
+        data_source: kpi.data_source,
+        variables: kpi.variables,
+        formula: kpi.formula,
+        formula_format: kpi.formula_format ?? 'mathjs',
+        filters: kpi.filters ?? [],
+        group_by: kpi.group_by ?? [],
+        visualization: kpi.visualization ?? { chart_type: 'stat' },
+        vchart_spec: hasVChartSpec ? kpi.vchart_spec : undefined,
+        renderer: hasVChartSpec ? 'vchart' : 'recharts',
+        dashboard_id: dashboard.dashboard_id,
+        dashboard_name: dashboard.name,
+        display_order: kpi.display_order ?? 0,
+        enabled: kpi.enabled !== false,
+      };
+
+      try {
+        const existing = await KpiDefinition.findOne({ kpi_id: kpiId });
+        if (existing) {
+          await KpiDefinition.updateOne({ kpi_id: kpiId }, { $set: doc });
+          updated.push(kpiId);
+        } else {
+          await KpiDefinition.create(doc);
+          created.push(kpiId);
+        }
+      } catch (err) {
+        const msg = err instanceof Error ? err.message : 'Unknown error';
+        failed.push({ kpi_id: kpiId, name: kpi.name, error: msg });
+      }
+    }
+
+    results.push({ dashboard_id: dashboard.dashboard_id, created, updated, failed });
+  }
+
+  const totalCreated = results.reduce((s, r) => s + r.created.length, 0);
+  const totalUpdated = results.reduce((s, r) => s + r.updated.length, 0);
+  const totalFailed = results.reduce((s, r) => s + r.failed.length, 0);
+
+  res.status(totalFailed > 0 && totalCreated === 0 && totalUpdated === 0 ? 400 : 201).json({
+    summary: { dashboards: results.length, created: totalCreated, updated: totalUpdated, failed: totalFailed },
+    results,
+  });
 }));
 
 export default router;

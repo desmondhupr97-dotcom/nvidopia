@@ -1,0 +1,252 @@
+{
+  "dashboards": [
+    {
+      "dashboard_id": "quality-metrics",
+      "name": "Quality Metrics Dashboard",
+      "description": "Issue quality analysis with multi-dimensional views",
+      "kpis": [
+        {
+          "kpi_id": "quality-severity-pie",
+          "name": "Issues by Severity",
+          "data_source": "issue",
+          "variables": [
+            {
+              "name": "count",
+              "source_entity": "issue",
+              "field": "issue_id",
+              "aggregation": "count"
+            }
+          ],
+          "formula": "count",
+          "group_by": ["severity"],
+          "vchart_spec": {
+            "type": "pie",
+            "categoryField": "severity",
+            "valueField": "value",
+            "outerRadius": 0.8,
+            "innerRadius": 0.5,
+            "legends": { "visible": true, "orient": "right" },
+            "label": {
+              "visible": true,
+              "position": "outside",
+              "style": { "fill": "#94a3b8", "fontSize": 11 }
+            },
+            "tooltip": { "mark": { "content": [{ "key": "severity", "value": "value" }] } }
+          }
+        },
+        {
+          "kpi_id": "quality-category-bar",
+          "name": "Issues by Category",
+          "data_source": "issue",
+          "variables": [
+            {
+              "name": "total",
+              "source_entity": "issue",
+              "field": "issue_id",
+              "aggregation": "count"
+            }
+          ],
+          "formula": "total",
+          "group_by": ["category"],
+          "vchart_spec": {
+            "type": "bar",
+            "xField": "category",
+            "yField": "value",
+            "seriesField": "category",
+            "label": {
+              "visible": true,
+              "position": "top",
+              "style": { "fill": "#e2e8f0", "fontSize": 11 }
+            },
+            "axes": [
+              {
+                "orient": "bottom",
+                "label": { "style": { "fill": "#64748b" } }
+              },
+              {
+                "orient": "left",
+                "label": { "style": { "fill": "#64748b" } },
+                "grid": { "style": { "stroke": "rgba(0,240,255,0.06)" } }
+              }
+            ]
+          }
+        },
+        {
+          "kpi_id": "quality-status-rose",
+          "name": "Issue Status Distribution",
+          "data_source": "issue",
+          "variables": [
+            {
+              "name": "cnt",
+              "source_entity": "issue",
+              "field": "issue_id",
+              "aggregation": "count"
+            }
+          ],
+          "formula": "cnt",
+          "group_by": ["status"],
+          "vchart_spec": {
+            "type": "rose",
+            "categoryField": "status",
+            "valueField": "value",
+            "outerRadius": 0.85,
+            "legends": {
+              "visible": true,
+              "orient": "bottom",
+              "item": {
+                "label": { "style": { "fill": "#94a3b8" } }
+              }
+            }
+          }
+        },
+        {
+          "kpi_id": "quality-resolution-rate",
+          "name": "Resolution Rate (%)",
+          "description": "Percentage of issues resolved (Fixed + Closed) out of total",
+          "data_source": "issue",
+          "variables": [
+            {
+              "name": "resolved",
+              "source_entity": "issue",
+              "field": "issue_id",
+              "aggregation": "count"
+            },
+            {
+              "name": "total_issues",
+              "source_entity": "issue",
+              "field": "issue_id",
+              "aggregation": "count"
+            }
+          ],
+          "formula": "resolved / total_issues * 100",
+          "filters": [
+            { "field": "status", "operator": "in", "value": ["Fixed", "Closed"] }
+          ],
+          "visualization": { "chart_type": "stat" }
+        }
+      ]
+    },
+    {
+      "dashboard_id": "fleet-analytics",
+      "name": "Fleet Analytics Dashboard",
+      "description": "Vehicle fleet performance and utilization metrics",
+      "kpis": [
+        {
+          "kpi_id": "fleet-mileage-by-status",
+          "name": "Mileage by Run Status",
+          "data_source": "run",
+          "variables": [
+            {
+              "name": "mileage",
+              "source_entity": "run",
+              "field": "total_auto_mileage_km",
+              "aggregation": "sum"
+            }
+          ],
+          "formula": "mileage",
+          "group_by": ["status"],
+          "vchart_spec": {
+            "type": "bar",
+            "xField": "status",
+            "yField": "value",
+            "seriesField": "status",
+            "label": { "visible": true, "position": "top" },
+            "axes": [
+              { "orient": "bottom" },
+              { "orient": "left", "title": { "visible": true, "text": "Mileage (km)" } }
+            ]
+          }
+        },
+        {
+          "kpi_id": "fleet-run-count-scatter",
+          "name": "Run Duration vs Mileage",
+          "data_source": "run",
+          "variables": [
+            {
+              "name": "mileage",
+              "source_entity": "run",
+              "field": "total_auto_mileage_km",
+              "aggregation": "avg"
+            }
+          ],
+          "formula": "mileage",
+          "group_by": ["vehicle_vin"],
+          "vchart_spec": {
+            "type": "scatter",
+            "xField": "vehicle_vin",
+            "yField": "value",
+            "legends": { "visible": false },
+            "axes": [
+              { "orient": "bottom", "title": { "visible": true, "text": "Vehicle" } },
+              { "orient": "left", "title": { "visible": true, "text": "Avg Mileage (km)" } }
+            ]
+          }
+        },
+        {
+          "kpi_id": "fleet-task-type-funnel",
+          "name": "Task Progression Funnel",
+          "data_source": "task",
+          "variables": [
+            {
+              "name": "task_count",
+              "source_entity": "task",
+              "field": "task_id",
+              "aggregation": "count"
+            }
+          ],
+          "formula": "task_count",
+          "group_by": ["status"],
+          "vchart_spec": {
+            "type": "funnel",
+            "categoryField": "status",
+            "valueField": "value",
+            "label": {
+              "visible": true,
+              "style": { "fill": "#e2e8f0" }
+            },
+            "legends": { "visible": true, "orient": "bottom" }
+          }
+        }
+      ]
+    },
+    {
+      "dashboard_id": "heatmap-demo",
+      "name": "Heatmap Demo",
+      "description": "Demonstrates VChart heatmap capabilities",
+      "kpis": [
+        {
+          "kpi_id": "heatmap-severity-category",
+          "name": "Severity x Category Heatmap",
+          "data_source": "issue",
+          "variables": [
+            {
+              "name": "cnt",
+              "source_entity": "issue",
+              "field": "issue_id",
+              "aggregation": "count"
+            }
+          ],
+          "formula": "cnt",
+          "group_by": ["severity", "category"],
+          "vchart_spec": {
+            "type": "common",
+            "series": [
+              {
+                "type": "scatter",
+                "xField": "severity",
+                "yField": "category",
+                "sizeField": "value",
+                "size": { "type": "linear", "range": [10, 50] }
+              }
+            ],
+            "axes": [
+              { "orient": "bottom", "type": "band" },
+              { "orient": "left", "type": "band" }
+            ],
+            "legends": { "visible": false }
+          }
+        }
+      ]
+    }
+  ]
+}

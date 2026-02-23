@@ -6,18 +6,14 @@ WORKDIR /app
 
 COPY package.json package-lock.json ./
 COPY platform/ platform/
-COPY apps/ apps/
+COPY apps/bff-gateway/ apps/bff-gateway/
 COPY services/ services/
 COPY contracts/ contracts/
 
 RUN npm ci
 
-WORKDIR /app/apps/frontend
-RUN npx vite build
-WORKDIR /app
-
-RUN mkdir -p /usr/share/nginx/html && \
-    cp -r apps/frontend/dist/* /usr/share/nginx/html/
+# Frontend pre-built locally via `npm run build -w @nvidopia/frontend`
+COPY apps/frontend/dist /usr/share/nginx/html
 
 COPY nginx.cloudrun.conf /etc/nginx/http.d/default.conf.template
 COPY scripts/start-all.sh scripts/start-all.sh

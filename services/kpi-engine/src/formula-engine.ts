@@ -182,11 +182,22 @@ export async function evaluateFormula(
   }
 }
 
-const DANGEROUS_PATTERNS = /\b(require|eval|Function|import|process|globalThis)\s*\(/;
+const DANGEROUS_PATTERNS = /\b(require|eval|Function|import|process|globalThis|constructor|__proto__|prototype|window|document|fetch|XMLHttpRequest|setTimeout|setInterval)\b/;
+const ALLOWED_FORMULA_CHARS = /^[a-zA-Z0-9_\s+\-*/().,%^!=<>|&~]+$/;
+const MAX_FORMULA_LENGTH = 500;
 
 export function validateFormula(formula: string): { valid: boolean; error?: string } {
+  if (!formula || typeof formula !== 'string') {
+    return { valid: false, error: 'Formula must be a non-empty string' };
+  }
+  if (formula.length > MAX_FORMULA_LENGTH) {
+    return { valid: false, error: `Formula exceeds maximum length of ${MAX_FORMULA_LENGTH} characters` };
+  }
   if (DANGEROUS_PATTERNS.test(formula)) {
     return { valid: false, error: 'Formula contains disallowed patterns' };
+  }
+  if (!ALLOWED_FORMULA_CHARS.test(formula)) {
+    return { valid: false, error: 'Formula contains disallowed characters' };
   }
   try {
     math.parse(formula);

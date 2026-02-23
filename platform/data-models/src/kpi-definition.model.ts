@@ -64,6 +64,9 @@ export interface IKpiVisualization {
   size?: 'small' | 'medium' | 'large';
 }
 
+export const KPI_RENDERER = ['recharts', 'vchart'] as const;
+export type KpiRenderer = (typeof KPI_RENDERER)[number];
+
 export interface IKpiDefinition {
   kpi_id: string;
   name: string;
@@ -72,8 +75,13 @@ export interface IKpiDefinition {
   filters?: IKpiFilter[];
   group_by?: string[];
   formula: string;
+  formula_format?: 'mathjs';
   variables: IKpiVariable[];
   visualization: IKpiVisualization;
+  vchart_spec?: Record<string, unknown>;
+  renderer: KpiRenderer;
+  dashboard_id?: string;
+  dashboard_name?: string;
   display_order?: number;
   enabled: boolean;
   created_by?: string;
@@ -154,8 +162,13 @@ const KpiDefinitionSchema = new Schema<KpiDefinitionDocument>(
     filters: { type: [KpiFilterSchema], default: [] },
     group_by: { type: [String], default: [] },
     formula: { type: String, required: true },
+    formula_format: { type: String, enum: ['mathjs'], default: 'mathjs' },
     variables: { type: [KpiVariableSchema], required: true },
     visualization: { type: KpiVisualizationSchema, required: true },
+    vchart_spec: { type: Schema.Types.Mixed },
+    renderer: { type: String, enum: KPI_RENDERER, default: 'recharts' },
+    dashboard_id: String,
+    dashboard_name: String,
     display_order: { type: Number, default: 0 },
     enabled: { type: Boolean, default: true },
     created_by: String,
@@ -169,6 +182,7 @@ const KpiDefinitionSchema = new Schema<KpiDefinitionDocument>(
 KpiDefinitionSchema.index({ kpi_id: 1 }, { unique: true });
 KpiDefinitionSchema.index({ enabled: 1, display_order: 1 });
 KpiDefinitionSchema.index({ data_source: 1 });
+KpiDefinitionSchema.index({ dashboard_id: 1 });
 
 export const KpiDefinition: Model<KpiDefinitionDocument> =
   model<KpiDefinitionDocument>('KpiDefinition', KpiDefinitionSchema);

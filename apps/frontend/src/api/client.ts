@@ -682,6 +682,7 @@ export interface KpiDefinition {
   filters?: Array<{ field: string; operator: string; value: unknown }>;
   group_by?: string[];
   formula: string;
+  formula_format?: 'mathjs';
   variables: Array<{ name: string; source_entity: string; field: string; aggregation: string }>;
   visualization: {
     chart_type: string;
@@ -695,6 +696,10 @@ export interface KpiDefinition {
     format?: { precision?: number; prefix?: string; suffix?: string; notation?: string };
     size?: 'small' | 'medium' | 'large';
   };
+  vchart_spec?: Record<string, unknown>;
+  renderer?: 'recharts' | 'vchart';
+  dashboard_id?: string;
+  dashboard_name?: string;
   display_order?: number;
   enabled: boolean;
   created_by?: string;
@@ -709,7 +714,19 @@ export interface KpiEvalResult {
   groups?: Array<{ group: Record<string, unknown>; value: number }>;
   error?: string;
   visualization?: KpiDefinition['visualization'];
+  vchart_spec?: Record<string, unknown>;
+  renderer?: 'recharts' | 'vchart';
   computed_at: string;
+}
+
+export interface BatchImportResult {
+  summary: { dashboards: number; created: number; updated: number; failed: number };
+  results: Array<{
+    dashboard_id: string;
+    created: string[];
+    updated: string[];
+    failed: Array<{ kpi_id?: string; name: string; error: string }>;
+  }>;
 }
 
 export function getKpiDefinitions() {
@@ -738,6 +755,10 @@ export function evaluateKpi(id: string, params?: Record<string, string | undefin
 
 export function previewKpiFormula(data: { formula: string; variables: KpiDefinition['variables']; filters?: KpiDefinition['filters']; group_by?: string[]; runtime_filters?: Record<string, unknown> }) {
   return fetchJson<KpiEvalResult>('/kpi/custom/preview', { method: 'POST', body: JSON.stringify(data) });
+}
+
+export function importKpiDashboards(data: unknown) {
+  return fetchJson<BatchImportResult>('/kpi/definitions/import', { method: 'POST', body: JSON.stringify(data) });
 }
 
 /* ── Simulation ──────────────────────────────────────── */

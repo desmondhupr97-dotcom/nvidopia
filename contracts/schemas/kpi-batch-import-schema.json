@@ -1,0 +1,254 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://nvidopia.dev/schemas/kpi-batch-import/v1",
+  "title": "Nvidopia KPI Batch Import",
+  "description": "JSON Schema for batch-importing custom KPI dashboard definitions. Visualization specs follow the VChart Spec format.",
+  "type": "object",
+  "required": ["dashboards"],
+  "properties": {
+    "dashboards": {
+      "type": "array",
+      "description": "One or more dashboard groups, each containing multiple KPI definitions",
+      "items": { "$ref": "#/definitions/Dashboard" },
+      "minItems": 1
+    }
+  },
+  "definitions": {
+    "Dashboard": {
+      "type": "object",
+      "required": ["dashboard_id", "name", "kpis"],
+      "properties": {
+        "dashboard_id": {
+          "type": "string",
+          "description": "Unique identifier for this dashboard group",
+          "pattern": "^[a-zA-Z0-9_-]+$"
+        },
+        "name": {
+          "type": "string",
+          "description": "Human-readable dashboard name"
+        },
+        "description": {
+          "type": "string"
+        },
+        "kpis": {
+          "type": "array",
+          "items": { "$ref": "#/definitions/KpiDefinition" },
+          "minItems": 1
+        }
+      }
+    },
+    "KpiDefinition": {
+      "type": "object",
+      "required": ["name", "data_source", "variables", "formula", "vchart_spec"],
+      "properties": {
+        "kpi_id": {
+          "type": "string",
+          "description": "Optional unique KPI identifier. Auto-generated if omitted."
+        },
+        "name": {
+          "type": "string",
+          "description": "Display name for this KPI"
+        },
+        "description": {
+          "type": "string"
+        },
+        "data_source": {
+          "type": "string",
+          "description": "Primary entity collection to query",
+          "enum": ["project", "task", "run", "issue", "cross"]
+        },
+        "variables": {
+          "type": "array",
+          "description": "Variable definitions that map database fields to formula variables",
+          "items": { "$ref": "#/definitions/Variable" },
+          "minItems": 1
+        },
+        "formula": {
+          "type": "string",
+          "description": "Math.js expression combining variables. Examples: 'resolved / total * 100', 'avg_mileage', 'a + b - c'"
+        },
+        "formula_format": {
+          "type": "string",
+          "description": "Formula engine identifier for forward compatibility",
+          "enum": ["mathjs"],
+          "default": "mathjs"
+        },
+        "filters": {
+          "type": "array",
+          "description": "Static filters applied before aggregation",
+          "items": { "$ref": "#/definitions/Filter" }
+        },
+        "group_by": {
+          "type": "array",
+          "description": "Fields to group results by (produces multi-row chart data)",
+          "items": { "type": "string" }
+        },
+        "vchart_spec": {
+          "type": "object",
+          "description": "VChart specification object. Passed directly to VChart for rendering. See https://www.visactor.io/vchart/guide/tutorial_docs/Chart_Concepts/Understanding_VChart for full spec reference.",
+          "required": ["type"],
+          "properties": {
+            "type": {
+              "type": "string",
+              "description": "VChart chart type",
+              "enum": [
+                "bar", "line", "area", "pie", "rose", "radar",
+                "scatter", "histogram", "waterfall", "funnel",
+                "gauge", "heatmap", "treemap", "sunburst",
+                "wordCloud", "sankey", "sequence", "circularProgress",
+                "linearProgress", "boxPlot", "map", "common"
+              ]
+            },
+            "data": {
+              "description": "Data configuration. Usually injected at runtime from formula evaluation; can provide static fallback.",
+              "oneOf": [
+                { "$ref": "#/definitions/VChartDataConfig" },
+                {
+                  "type": "array",
+                  "items": { "$ref": "#/definitions/VChartDataConfig" }
+                }
+              ]
+            },
+            "xField": {
+              "description": "Field(s) mapped to X axis",
+              "oneOf": [{ "type": "string" }, { "type": "array", "items": { "type": "string" } }]
+            },
+            "yField": {
+              "description": "Field(s) mapped to Y axis",
+              "oneOf": [{ "type": "string" }, { "type": "array", "items": { "type": "string" } }]
+            },
+            "seriesField": {
+              "type": "string",
+              "description": "Field used to split data into series"
+            },
+            "categoryField": {
+              "type": "string",
+              "description": "Category field (for pie, funnel, etc.)"
+            },
+            "valueField": {
+              "type": "string",
+              "description": "Value field (for pie, funnel, etc.)"
+            },
+            "color": {
+              "description": "Color configuration",
+              "oneOf": [
+                { "type": "string" },
+                { "type": "array", "items": { "type": "string" } },
+                { "type": "object" }
+              ]
+            },
+            "axes": {
+              "type": "array",
+              "description": "Axis configurations",
+              "items": { "type": "object" }
+            },
+            "legends": {
+              "description": "Legend configuration",
+              "oneOf": [
+                { "type": "object" },
+                { "type": "array", "items": { "type": "object" } }
+              ]
+            },
+            "tooltip": {
+              "type": "object",
+              "description": "Tooltip configuration"
+            },
+            "title": {
+              "type": "object",
+              "description": "Chart title configuration"
+            },
+            "label": {
+              "type": "object",
+              "description": "Label configuration"
+            },
+            "background": {
+              "description": "Chart background",
+              "oneOf": [{ "type": "string" }, { "type": "object" }]
+            },
+            "padding": {
+              "description": "Chart padding",
+              "oneOf": [
+                { "type": "number" },
+                { "type": "object" }
+              ]
+            },
+            "animationAppear": {
+              "type": "object",
+              "description": "Appear animation config"
+            }
+          },
+          "additionalProperties": true
+        },
+        "display_order": {
+          "type": "integer",
+          "description": "Sort order within dashboard",
+          "default": 0
+        },
+        "enabled": {
+          "type": "boolean",
+          "default": true
+        }
+      }
+    },
+    "Variable": {
+      "type": "object",
+      "required": ["name", "source_entity", "field", "aggregation"],
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "Variable name used in formula expressions",
+          "pattern": "^[a-zA-Z_][a-zA-Z0-9_]*$"
+        },
+        "source_entity": {
+          "type": "string",
+          "description": "MongoDB collection / entity to query",
+          "enum": ["project", "task", "run", "issue"]
+        },
+        "field": {
+          "type": "string",
+          "description": "Document field to aggregate"
+        },
+        "aggregation": {
+          "type": "string",
+          "description": "Aggregation function to apply",
+          "enum": [
+            "sum", "avg", "count", "min", "max",
+            "distinct_count", "raw",
+            "percentile_50", "percentile_90", "percentile_99",
+            "stddev"
+          ]
+        }
+      }
+    },
+    "Filter": {
+      "type": "object",
+      "required": ["field", "operator", "value"],
+      "properties": {
+        "field": {
+          "type": "string",
+          "description": "Document field to filter on"
+        },
+        "operator": {
+          "type": "string",
+          "enum": ["eq", "ne", "gt", "gte", "lt", "lte", "in", "nin", "regex"]
+        },
+        "value": {
+          "description": "Filter value (type depends on operator)"
+        }
+      }
+    },
+    "VChartDataConfig": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Data source identifier"
+        },
+        "values": {
+          "type": "array",
+          "description": "Static data values (overridden at runtime by formula evaluation)"
+        }
+      }
+    }
+  }
+}

@@ -17,7 +17,7 @@ import {
 
 type MenuItem = Required<MenuProps>['items'][number];
 
-const iconStyle = { width: 18, height: 18, strokeWidth: 1.8 };
+const iconStyle = { width: 16, height: 16, strokeWidth: 1.8 };
 
 const mainItems: MenuItem[] = [
   { key: '/projects', icon: <FolderKanban {...iconStyle} />, label: 'Projects' },
@@ -45,11 +45,28 @@ const secondaryItems: MenuItem[] = [
     label: (
       <span style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
         Auto-Triage
-        <Badge count="Soon" style={{ backgroundColor: 'rgba(99,102,241,0.2)', color: '#818cf8', fontSize: 10, fontWeight: 600, boxShadow: 'none' }} />
+        <Badge count="SOON" style={{ backgroundColor: 'rgba(0,240,255,0.12)', color: '#00f0ff', fontSize: 9, fontWeight: 700, boxShadow: 'none', letterSpacing: '0.06em', fontFamily: "'Share Tech Mono', monospace" }} />
       </span>
     ),
   },
 ];
+
+const sectionLabelStyle: React.CSSProperties = {
+  padding: '4px 24px 4px',
+  fontSize: 10,
+  color: '#00f0ff',
+  textTransform: 'uppercase',
+  letterSpacing: '0.12em',
+  fontFamily: "'Rajdhani', 'Orbitron', monospace",
+  fontWeight: 700,
+  opacity: 0.6,
+};
+
+const dividerStyle: React.CSSProperties = {
+  height: 1,
+  background: 'linear-gradient(90deg, transparent, rgba(0,240,255,0.15), transparent)',
+  margin: '12px 20px',
+};
 
 export default function Sidebar() {
   const location = useLocation();
@@ -67,8 +84,8 @@ export default function Sidebar() {
   return (
     <div className="glass-sidebar" style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
       <div className="sidebar-brand">
-        <div className="sidebar-logo animate-pulse-glow">N</div>
-        <span className="sidebar-title">NVIDOPIA</span>
+        <div className="sidebar-logo">N</div>
+        <span className="sidebar-title glitch-text">NVIDOPIA</span>
       </div>
 
       <div style={{ flex: 1, paddingTop: 8, overflow: 'auto' }}>
@@ -81,9 +98,9 @@ export default function Sidebar() {
           style={{ borderInlineEnd: 'none' }}
         />
 
-        <div style={{ height: 1, background: 'rgba(255,255,255,0.06)', margin: '12px 20px' }} />
+        <div style={dividerStyle} />
 
-        <div style={{ padding: '4px 24px 4px', fontSize: 11, color: 'rgba(255,255,255,0.35)', textTransform: 'uppercase', letterSpacing: 1 }}>Fleet</div>
+        <div style={sectionLabelStyle}>Fleet</div>
         <Menu
           mode="inline"
           theme="dark"
@@ -93,9 +110,9 @@ export default function Sidebar() {
           style={{ borderInlineEnd: 'none' }}
         />
 
-        <div style={{ height: 1, background: 'rgba(255,255,255,0.06)', margin: '12px 20px' }} />
+        <div style={dividerStyle} />
 
-        <div style={{ padding: '4px 24px 4px', fontSize: 11, color: 'rgba(255,255,255,0.35)', textTransform: 'uppercase', letterSpacing: 1 }}>Simulation</div>
+        <div style={sectionLabelStyle}>Simulation</div>
         <Menu
           mode="inline"
           theme="dark"
@@ -105,7 +122,7 @@ export default function Sidebar() {
           style={{ borderInlineEnd: 'none' }}
         />
 
-        <div style={{ height: 1, background: 'rgba(255,255,255,0.06)', margin: '12px 20px' }} />
+        <div style={dividerStyle} />
 
         <Menu
           mode="inline"
@@ -118,7 +135,9 @@ export default function Sidebar() {
       </div>
 
       <div className="sidebar-footer">
-        <div className="sidebar-footer-text">AD Testing Platform v0.1</div>
+        <div className="sidebar-footer-text">
+          <span style={{ color: '#00f0ff' }}>&gt;</span> AD Testing Platform v0.1
+        </div>
       </div>
     </div>
   );
