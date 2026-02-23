@@ -1,5 +1,5 @@
 import crypto from 'node:crypto';
-import { Project, Task, Run, Vehicle, type SimulationSessionDocument, type ISimVehicle } from '@nvidopia/data-models';
+import { Project, Task, Run, Vehicle, SimulationSession, type SimulationSessionDocument, type ISimVehicle } from '@nvidopia/data-models';
 import { generateFleet } from './fleet-generator.js';
 import { generateRoutes } from './route-generator.js';
 import { snapRoutesToRoads, type RoadRoute } from './road-router.js';
@@ -24,6 +24,27 @@ class SessionController {
     console.log(`[session-controller] Snapping ${rawRoutes.length} route(s) to roads via OSRM...`);
     const snappedRoutes = await snapRoutesToRoads(rawRoutes);
     console.log(`[session-controller] Road snapping complete.`);
+
+    // Persist resolved routes and fleet back to the session so the frontend can display them
+    await SimulationSession.updateOne(
+      { session_id: session.session_id },
+      {
+        $set: {
+          'route_config.routes': snappedRoutes.map((r) => ({
+            route_id: r.route_id,
+            name: r.name,
+            waypoints: r.waypoints,
+            road: (r as { road?: RoadRoute }).road ? {
+              coordinates: (r as { road?: RoadRoute }).road!.coordinates,
+              total_distance_m: (r as { road?: RoadRoute }).road!.total_distance_m,
+              total_duration_s: (r as { road?: RoadRoute }).road!.total_duration_s,
+            } : undefined,
+          })),
+          'fleet_config.vehicles': vehicles,
+          'fleet_config.vehicle_count': vehicles.length,
+        },
+      },
+    );
 
     const assignments = await this.resolveAssignments(session, vehicles, snappedRoutes);
 
