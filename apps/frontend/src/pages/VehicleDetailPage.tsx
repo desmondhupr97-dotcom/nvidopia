@@ -15,7 +15,20 @@ import {
 } from '../api/client';
 
 const STATUS_COLORS: Record<string, string> = {
-  Offline: '#595959', Idle: '#1890ff', Active: '#52c41a', Maintenance: '#fa8c16',
+  Offline: '#8E8E93',
+  Idle: '#007AFF',
+  Active: '#34C759',
+  Maintenance: '#FF9500',
+};
+
+const IOS_PIE_COLORS: Record<string, string> = {
+  Manual: '#8E8E93',
+  ACC: '#007AFF',
+  LCC: '#76B900',
+  HighwayPilot: '#FF9500',
+  UrbanPilot: '#AF52DE',
+  Standby: '#636366',
+  Autonomous: '#5AC8FA',
 };
 
 export default function VehicleDetailPage() {
@@ -63,14 +76,23 @@ export default function VehicleDetailPage() {
 
   const activeRuns = (runs ?? []).filter((r) => r.status === 'Active' || r.status === 'Scheduled');
 
+  const cardTitleStyle: React.CSSProperties = {
+    fontFamily: 'var(--font-display)',
+    fontWeight: 600,
+    color: 'var(--text-primary)',
+  };
+
+  const labelStyle: React.CSSProperties = { color: 'var(--text-secondary)', fontWeight: 500 };
+  const contentStyle: React.CSSProperties = { color: 'var(--text-primary)' };
+
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
       <PageHeader title={vehicle.vin} subtitle={vehicle.modelCode ?? vehicle.platform ?? ''} />
 
-      <Row gutter={16}>
-        <Col span={12}>
-          <Card title="Vehicle Info" size="small" className="glass-card">
-            <Descriptions column={2} size="small" labelStyle={{ color: 'rgba(255,255,255,0.5)' }} contentStyle={{ color: '#e0e0e0' }}>
+      <Row gutter={[16, 16]}>
+        <Col xs={24} lg={12}>
+          <Card title={<span style={cardTitleStyle}>Vehicle Info</span>} size="small" className="ios-card">
+            <Descriptions column={2} size="small" labelStyle={labelStyle} contentStyle={contentStyle}>
               <Descriptions.Item label="VIN">{vehicle.vin}</Descriptions.Item>
               <Descriptions.Item label="Plate Type">{vehicle.plateType === 'permanent' ? 'Perm' : vehicle.plateType === 'temporary' ? 'Temp' : '—'}</Descriptions.Item>
               <Descriptions.Item label="Model Code">{vehicle.modelCode ?? '—'}</Descriptions.Item>
@@ -83,9 +105,9 @@ export default function VehicleDetailPage() {
             </Descriptions>
           </Card>
         </Col>
-        <Col span={12}>
-          <Card title="Real-time Status" size="small" className="glass-card">
-            <Descriptions column={2} size="small" labelStyle={{ color: 'rgba(255,255,255,0.5)' }} contentStyle={{ color: '#e0e0e0' }}>
+        <Col xs={24} lg={12}>
+          <Card title={<span style={cardTitleStyle}>Real-time Status</span>} size="small" className="ios-card">
+            <Descriptions column={2} size="small" labelStyle={labelStyle} contentStyle={contentStyle}>
               <Descriptions.Item label="Status"><Tag color={STATUS_COLORS[vehicle.status]}>{vehicle.status}</Tag></Descriptions.Item>
               <Descriptions.Item label="Mode">{vehicle.drivingMode ? <Tag color={DRIVING_MODE_COLORS[vehicle.drivingMode]}>{vehicle.drivingMode}</Tag> : '—'}</Descriptions.Item>
               <Descriptions.Item label="Speed">{vehicle.currentSpeed != null ? `${vehicle.currentSpeed.toFixed(1)} m/s` : '—'}</Descriptions.Item>
@@ -99,9 +121,9 @@ export default function VehicleDetailPage() {
         </Col>
       </Row>
 
-      <Row gutter={16}>
-        <Col span={8}>
-          <Card title="Active Tasks" size="small" className="glass-card" style={{ height: 320 }}>
+      <Row gutter={[16, 16]}>
+        <Col xs={24} lg={8}>
+          <Card title={<span style={cardTitleStyle}>Active Tasks</span>} size="small" className="ios-card" style={{ height: 320 }}>
             {activeRuns.length === 0
               ? <Empty description="No active tasks" image={Empty.PRESENTED_IMAGE_SIMPLE} />
               : <Table
@@ -109,7 +131,7 @@ export default function VehicleDetailPage() {
                   columns={[
                     { title: 'Run', dataIndex: 'id', key: 'id', render: (id: string) => <a onClick={() => navigate(`/runs/${id}`)}>{id.slice(0, 12)}…</a> },
                     { title: 'Task', dataIndex: 'taskId', key: 'task', render: (t: string) => <a onClick={() => navigate(`/tasks/${t}`)}>{t.slice(0, 12)}…</a> },
-                    { title: 'Status', dataIndex: 'status', key: 'status', render: (s: string) => <Tag color={s === 'Active' ? '#52c41a' : '#1890ff'}>{s}</Tag> },
+                    { title: 'Status', dataIndex: 'status', key: 'status', render: (s: string) => <Tag color={s === 'Active' ? '#34C759' : '#007AFF'}>{s}</Tag> },
                   ]}
                   rowKey="id"
                   size="small"
@@ -119,12 +141,12 @@ export default function VehicleDetailPage() {
             }
           </Card>
         </Col>
-        <Col span={8}>
-          <Card title="Driving Mode Distribution" size="small" className="glass-card" style={{ height: 320 }}>
+        <Col xs={24} lg={8}>
+          <Card title={<span style={cardTitleStyle}>Driving Mode Distribution</span>} size="small" className="ios-card" style={{ height: 320 }}>
             <ResponsiveContainer width="100%" height={260}>
               <PieChart>
                 <Pie data={pieData} dataKey="value" nameKey="name" cx="50%" cy="50%" innerRadius={50} outerRadius={80} label={({ name }) => name}>
-                  {pieData.map((d, i) => <Cell key={i} fill={DRIVING_MODE_COLORS[d.name] ?? '#595959'} />)}
+                  {pieData.map((d, i) => <Cell key={i} fill={IOS_PIE_COLORS[d.name] ?? DRIVING_MODE_COLORS[d.name] ?? '#8E8E93'} />)}
                 </Pie>
                 <Tooltip formatter={(v: number) => formatDuration(v)} />
                 <Legend />
@@ -132,8 +154,8 @@ export default function VehicleDetailPage() {
             </ResponsiveContainer>
           </Card>
         </Col>
-        <Col span={8}>
-          <Card title="Mode Mileage (km)" size="small" className="glass-card" style={{ height: 320 }}>
+        <Col xs={24} lg={8}>
+          <Card title={<span style={cardTitleStyle}>Mode Mileage (km)</span>} size="small" className="ios-card" style={{ height: 320 }}>
             <Table
               dataSource={statusDist ?? []}
               columns={[
@@ -150,7 +172,7 @@ export default function VehicleDetailPage() {
         </Col>
       </Row>
 
-      <Card title="Recent Trajectory" size="small" className="glass-card">
+      <Card title={<span style={cardTitleStyle}>Recent Trajectory</span>} size="small" className="ios-card">
         <div style={{ height: 400 }}>
           <MapContainer
             center={vehicle.currentLocation ? [vehicle.currentLocation.lat, vehicle.currentLocation.lng] : undefined}

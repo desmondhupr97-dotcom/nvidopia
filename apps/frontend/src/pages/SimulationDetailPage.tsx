@@ -15,8 +15,8 @@ const statusColor: Record<string, string> = {
   Draft: 'default', Running: 'processing', Paused: 'warning', Completed: 'success', Aborted: 'error',
 };
 
-const VEHICLE_COLORS = ['#22c55e', '#3b82f6', '#f59e0b', '#ef4444', '#ec4899', '#14b8a6', '#a855f7', '#6366f1'];
-const ROUTE_COLORS = ['#6366f1', '#22c55e', '#f59e0b', '#ef4444', '#3b82f6', '#ec4899', '#14b8a6', '#a855f7'];
+const VEHICLE_COLORS = ['#34C759', '#007AFF', '#FF9500', '#FF3B30', '#AF52DE', '#5AC8FA', '#76B900', '#FF2D55'];
+const ROUTE_COLORS = ['#007AFF', '#76B900', '#FF9500', '#FF3B30', '#34C759', '#AF52DE', '#5AC8FA', '#FF2D55'];
 
 function carIcon(color: string, heading: number) {
   return L.divIcon({
@@ -123,7 +123,7 @@ export default function SimulationDetailPage() {
   const stopMut = useMutation({ mutationFn: () => stopSimulation(id!), onSuccess: () => { invalidate(); message.success('Stopped'); } });
 
   if (isLoading || !session) {
-    return <Card className="glass-panel" loading />;
+    return <Card className="ios-card" loading />;
   }
 
   const stats = liveStats ?? session.stats;
@@ -139,9 +139,16 @@ export default function SimulationDetailPage() {
     return [31.23, 121.47];
   })() as [number, number];
 
+  const cardTitleStyle: React.CSSProperties = {
+    fontFamily: 'var(--font-display)',
+    fontWeight: 600,
+    color: 'var(--text-primary)',
+  };
+
   return (
-    <div>
-      <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 24 }}>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
+      {/* Header */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
         <Button type="text" icon={<ArrowLeft size={18} />} onClick={() => navigate('/simulation')} />
         <div style={{ flex: 1 }}>
           <h1 className="page-title" style={{ marginBottom: 0 }}>{session.name}</h1>
@@ -152,50 +159,72 @@ export default function SimulationDetailPage() {
         </div>
         <Space>
           {(session.status === 'Draft' || session.status === 'Paused') && (
-            <Button type="primary" icon={<Play size={14} />} onClick={() => session.status === 'Draft' ? startMut.mutate() : resumeMut.mutate()} loading={startMut.isPending || resumeMut.isPending}>
+            <Button
+              type="primary"
+              icon={<Play size={14} />}
+              onClick={() => session.status === 'Draft' ? startMut.mutate() : resumeMut.mutate()}
+              loading={startMut.isPending || resumeMut.isPending}
+              style={{ background: '#34C759', borderColor: '#34C759' }}
+            >
               {session.status === 'Draft' ? 'Start' : 'Resume'}
             </Button>
           )}
           {session.status === 'Running' && (
             <>
-              <Button icon={<Pause size={14} />} onClick={() => pauseMut.mutate()} loading={pauseMut.isPending}>Pause</Button>
-              <Button danger icon={<Square size={14} />} onClick={() => stopMut.mutate()} loading={stopMut.isPending}>Stop</Button>
+              <Button
+                icon={<Pause size={14} />}
+                onClick={() => pauseMut.mutate()}
+                loading={pauseMut.isPending}
+                style={{ color: '#FF9500', borderColor: '#FF9500' }}
+              >
+                Pause
+              </Button>
+              <Button
+                danger
+                icon={<Square size={14} />}
+                onClick={() => stopMut.mutate()}
+                loading={stopMut.isPending}
+                style={{ color: '#FF3B30', borderColor: '#FF3B30' }}
+              >
+                Stop
+              </Button>
             </>
           )}
         </Space>
       </div>
 
-      <Row gutter={[16, 16]} style={{ marginBottom: 24 }}>
+      {/* Stats Row */}
+      <Row gutter={[16, 16]}>
         <Col xs={24} sm={6}>
-          <Card className="glass-panel">
-            <Statistic title="Vehicles" value={session.fleet_config?.vehicle_count ?? session.fleet_config?.vehicles?.length ?? 0} valueStyle={{ fontFamily: "var(--font-mono)", color: 'var(--accent-strong)' }} />
+          <Card className="ios-card">
+            <Statistic title="Vehicles" value={session.fleet_config?.vehicle_count ?? session.fleet_config?.vehicles?.length ?? 0} valueStyle={{ fontFamily: 'var(--font-mono)', color: 'var(--text-primary)' }} />
           </Card>
         </Col>
         <Col xs={24} sm={6}>
-          <Card className="glass-panel">
-            <Statistic title="Telemetry Sent" value={stats?.telemetry_sent ?? 0} valueStyle={{ fontFamily: "var(--font-mono)", color: 'var(--success)' }} />
+          <Card className="ios-card">
+            <Statistic title="Telemetry Sent" value={stats?.telemetry_sent ?? 0} valueStyle={{ fontFamily: 'var(--font-mono)', color: '#34C759' }} />
           </Card>
         </Col>
         <Col xs={24} sm={6}>
-          <Card className="glass-panel">
-            <Statistic title="Issues Reported" value={stats?.issues_sent ?? 0} valueStyle={{ fontFamily: "var(--font-mono)", color: 'var(--warning)' }} />
+          <Card className="ios-card">
+            <Statistic title="Issues Reported" value={stats?.issues_sent ?? 0} valueStyle={{ fontFamily: 'var(--font-mono)', color: '#FF9500' }} />
           </Card>
         </Col>
         <Col xs={24} sm={6}>
-          <Card className="glass-panel">
-            <Statistic title="Total Mileage" value={Number(stats?.total_mileage_km ?? 0).toFixed(1)} suffix="km" valueStyle={{ fontFamily: "var(--font-mono)", color: 'var(--success)' }} />
+          <Card className="ios-card">
+            <Statistic title="Total Mileage" value={Number(stats?.total_mileage_km ?? 0).toFixed(1)} suffix="km" valueStyle={{ fontFamily: 'var(--font-mono)', color: '#76B900' }} />
           </Card>
         </Col>
       </Row>
 
+      {/* Map + Config */}
       <Row gutter={[16, 16]}>
         <Col xs={24} lg={14}>
-          <Card className="glass-panel" title={isRunning ? 'Live Vehicle Map' : 'Route Map'} style={{ height: 520 }}>
+          <Card className="ios-card" title={<span style={cardTitleStyle}>{isRunning ? 'Live Vehicle Map' : 'Route Map'}</span>} style={{ height: 520 }}>
             <div style={{ height: 440 }}>
               <MapContainer center={center} zoom={11} style={{ height: '100%', width: '100%', borderRadius: 8 }}>
-                <TileLayer url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png" attribution='&copy; CartoDB' />
+                <TileLayer url="https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png" attribution='&copy; CartoDB' />
 
-                {/* Planned routes as dim background */}
                 {routes.map((route, idx) => {
                   const color = ROUTE_COLORS[idx % ROUTE_COLORS.length]!;
                   const roadCoords = route.road?.coordinates;
@@ -214,7 +243,6 @@ export default function SimulationDetailPage() {
                   );
                 })}
 
-                {/* Real-time vehicle trails */}
                 {vehicles.map((v, idx) => {
                   const color = VEHICLE_COLORS[idx % VEHICLE_COLORS.length]!;
                   if (v.trail.length < 2) return null;
@@ -227,7 +255,6 @@ export default function SimulationDetailPage() {
                   );
                 })}
 
-                {/* Start/End markers for routes (only when no live vehicles) */}
                 {vehicles.length === 0 && routes.map((route, idx) => {
                   const color = ROUTE_COLORS[idx % ROUTE_COLORS.length]!;
                   const displayCoords = route.road?.coordinates ?? route.waypoints;
@@ -242,15 +269,14 @@ export default function SimulationDetailPage() {
                   );
                 })}
 
-                {/* Animated vehicle markers */}
                 <VehicleMarkers vehicles={vehicles} />
               </MapContainer>
             </div>
           </Card>
         </Col>
         <Col xs={24} lg={10}>
-          <Card className="glass-panel" title="Configuration" style={{ marginBottom: 16 }}>
-            <Descriptions column={1} size="small" labelStyle={{ color: 'var(--text-muted)' }}>
+          <Card className="ios-card" title={<span style={cardTitleStyle}>Configuration</span>} style={{ marginBottom: 16 }}>
+            <Descriptions column={1} size="small" labelStyle={{ color: 'var(--text-secondary)', fontWeight: 500 }} contentStyle={{ color: 'var(--text-primary)' }}>
               <Descriptions.Item label="Fleet Mode">{session.fleet_config?.mode}</Descriptions.Item>
               <Descriptions.Item label="Route Mode">{session.route_config?.mode}</Descriptions.Item>
               <Descriptions.Item label="Routes">{routes.length} route(s){routes.some((r) => r.road) ? ' (road-planned)' : ''}</Descriptions.Item>
@@ -265,7 +291,7 @@ export default function SimulationDetailPage() {
           </Card>
 
           {vehicles.length > 0 && (
-            <Card className="glass-panel" title="Vehicle Status">
+            <Card className="ios-card" title={<span style={cardTitleStyle}>Vehicle Status</span>}>
               <Table
                 size="small"
                 dataSource={vehicles}
@@ -277,7 +303,7 @@ export default function SimulationDetailPage() {
                       <div style={{ width: 8, height: 8, borderRadius: '50%', background: VEHICLE_COLORS[idx % VEHICLE_COLORS.length] }} />
                     ),
                   },
-                  { title: 'VIN', dataIndex: 'vin', ellipsis: true, render: (v: string) => <span style={{ fontSize: 11, fontFamily: 'monospace' }}>{v}</span> },
+                  { title: 'VIN', dataIndex: 'vin', ellipsis: true, render: (v: string) => <span style={{ fontSize: 11, fontFamily: 'var(--font-mono)', color: 'var(--text-primary)' }}>{v}</span> },
                   {
                     title: 'Speed', render: (_: unknown, r: SimVehiclePosition) =>
                       r.current ? `${(r.current.speed_mps * 3.6).toFixed(0)} km/h` : '-',
