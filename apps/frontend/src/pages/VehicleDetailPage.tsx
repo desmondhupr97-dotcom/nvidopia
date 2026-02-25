@@ -76,11 +76,9 @@ export default function VehicleDetailPage() {
 
   const activeRuns = (runs ?? []).filter((r) => r.status === 'Active' || r.status === 'Scheduled');
 
-  const cardTitleStyle: React.CSSProperties = {
-    fontFamily: 'var(--font-display)',
-    fontWeight: 600,
-    color: 'var(--text-primary)',
-  };
+  const cardTitle = (text: string): React.ReactNode => (
+    <span style={{ fontFamily: 'var(--font-display)', fontWeight: 600, color: 'var(--text-primary)' }}>{text}</span>
+  );
 
   const labelStyle: React.CSSProperties = { color: 'var(--text-secondary)', fontWeight: 500 };
   const contentStyle: React.CSSProperties = { color: 'var(--text-primary)' };
@@ -91,7 +89,7 @@ export default function VehicleDetailPage() {
 
       <Row gutter={[16, 16]}>
         <Col xs={24} lg={12}>
-          <Card title={<span style={cardTitleStyle}>Vehicle Info</span>} size="small" className="ios-card">
+          <Card title={cardTitle('Vehicle Info')} size="small" className="ios-card">
             <Descriptions column={2} size="small" labelStyle={labelStyle} contentStyle={contentStyle}>
               <Descriptions.Item label="VIN">{vehicle.vin}</Descriptions.Item>
               <Descriptions.Item label="Plate Type">{vehicle.plateType === 'permanent' ? 'Perm' : vehicle.plateType === 'temporary' ? 'Temp' : '—'}</Descriptions.Item>
@@ -106,7 +104,7 @@ export default function VehicleDetailPage() {
           </Card>
         </Col>
         <Col xs={24} lg={12}>
-          <Card title={<span style={cardTitleStyle}>Real-time Status</span>} size="small" className="ios-card">
+          <Card title={cardTitle('Real-time Status')} size="small" className="ios-card">
             <Descriptions column={2} size="small" labelStyle={labelStyle} contentStyle={contentStyle}>
               <Descriptions.Item label="Status"><Tag color={STATUS_COLORS[vehicle.status]}>{vehicle.status}</Tag></Descriptions.Item>
               <Descriptions.Item label="Mode">{vehicle.drivingMode ? <Tag color={DRIVING_MODE_COLORS[vehicle.drivingMode]}>{vehicle.drivingMode}</Tag> : '—'}</Descriptions.Item>
@@ -123,7 +121,7 @@ export default function VehicleDetailPage() {
 
       <Row gutter={[16, 16]}>
         <Col xs={24} lg={8}>
-          <Card title={<span style={cardTitleStyle}>Active Tasks</span>} size="small" className="ios-card" style={{ height: 320 }}>
+          <Card title={cardTitle('Active Tasks')} size="small" className="ios-card" style={{ height: 320 }}>
             {activeRuns.length === 0
               ? <Empty description="No active tasks" image={Empty.PRESENTED_IMAGE_SIMPLE} />
               : <Table
@@ -142,7 +140,7 @@ export default function VehicleDetailPage() {
           </Card>
         </Col>
         <Col xs={24} lg={8}>
-          <Card title={<span style={cardTitleStyle}>Driving Mode Distribution</span>} size="small" className="ios-card" style={{ height: 320 }}>
+          <Card title={cardTitle('Driving Mode Distribution')} size="small" className="ios-card" style={{ height: 320 }}>
             <ResponsiveContainer width="100%" height={260}>
               <PieChart>
                 <Pie data={pieData} dataKey="value" nameKey="name" cx="50%" cy="50%" innerRadius={50} outerRadius={80} label={({ name }) => name}>
@@ -155,7 +153,7 @@ export default function VehicleDetailPage() {
           </Card>
         </Col>
         <Col xs={24} lg={8}>
-          <Card title={<span style={cardTitleStyle}>Mode Mileage (km)</span>} size="small" className="ios-card" style={{ height: 320 }}>
+          <Card title={cardTitle('Mode Mileage (km)')} size="small" className="ios-card" style={{ height: 320 }}>
             <Table
               dataSource={statusDist ?? []}
               columns={[
@@ -172,7 +170,7 @@ export default function VehicleDetailPage() {
         </Col>
       </Row>
 
-      <Card title={<span style={cardTitleStyle}>Recent Trajectory</span>} size="small" className="ios-card">
+      <Card title={cardTitle('Recent Trajectory')} size="small" className="ios-card">
         <div style={{ height: 400 }}>
           <MapContainer
             center={vehicle.currentLocation ? [vehicle.currentLocation.lat, vehicle.currentLocation.lng] : undefined}
