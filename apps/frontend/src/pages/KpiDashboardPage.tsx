@@ -17,10 +17,18 @@ import KpiDefinitionModal from '../components/kpi/KpiDefinitionModal';
 import KpiJsonUpload from '../components/kpi/KpiJsonUpload';
 import VChartRenderer from '../components/kpi/VChartRenderer';
 
+const cardStyle: React.CSSProperties = {
+  background: '#FFFFFF',
+  borderRadius: 12,
+  boxShadow: '0 1px 3px rgba(0,0,0,0.08)',
+  border: 'none',
+  padding: 20,
+};
+
 function gaugeColor(pct: number): string {
-  if (pct >= 80) return '#34d399';
-  if (pct >= 50) return '#fbbf24';
-  return '#f87171';
+  if (pct >= 80) return '#34C759';
+  if (pct >= 50) return '#FF9500';
+  return '#FF3B30';
 }
 
 function BuiltinPanels({ projectId, startDate, endDate, interval }: {
@@ -52,59 +60,61 @@ function BuiltinPanels({ projectId, startDate, endDate, interval }: {
   ];
 
   return (
-    <>
-      <Row gutter={[16, 16]} style={{ marginBottom: 24 }}>
-        {stats.map((s) => (
-          <Col xs={24} sm={12} lg={6} key={s.title}>
-            <Card className="glass-panel" style={{ height: '100%' }}>
-              <Statistic
-                title={<span className="font-display" style={{ fontWeight: 600, fontSize: 9, textTransform: 'uppercase', letterSpacing: '0.06em' }}>{s.title}</span>}
-                value={s.value != null ? Number(s.value) : undefined}
-                precision={1}
-                suffix={<span style={{ fontSize: 12, color: 'var(--text-muted)' }}>{s.unit}</span>}
-                valueStyle={{ fontFamily: "var(--font-mono)", fontWeight: 700, color: 'var(--accent-strong)' }}
-              />
-            </Card>
-          </Col>
-        ))}
-        {gauges.map((g) => {
-          const val = g.value != null ? Number(g.value) : null;
-          return (
-            <Col xs={24} sm={12} lg={6} key={g.title}>
-              <Card className="glass-panel" style={{ height: '100%' }}>
-                <div className="font-display" style={{ fontWeight: 600, fontSize: 9, color: 'var(--text-muted)', marginBottom: 6, textTransform: 'uppercase', letterSpacing: '0.06em' }}>{g.title}</div>
-                <div style={{ fontFamily: "var(--font-mono)", fontSize: 24, fontWeight: 700, color: val != null ? gaugeColor(val) : 'var(--text-primary)', marginBottom: 8 }}>
-                  {val != null ? val.toFixed(1) : '\u2014'}
-                  <span style={{ fontSize: 12, color: 'var(--text-muted)', marginLeft: 4 }}>{g.unit}</span>
-                </div>
-                <Progress percent={val != null ? Math.min(100, Math.max(0, val)) : 0} showInfo={false} strokeColor={val != null ? gaugeColor(val) : '#34d399'} size="small" />
-              </Card>
-            </Col>
-          );
-        })}
-      </Row>
-      <Card className="glass-panel" title={<span className="font-display" style={{ fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Issue Convergence</span>}>
+    <div style={{
+      display: 'grid',
+      gridTemplateColumns: 'repeat(3, 1fr)',
+      gap: 16,
+      marginBottom: 24,
+    }}>
+      {stats.map((s) => (
+        <div key={s.title} className="ios-card" style={cardStyle}>
+          <Statistic
+            title={<span style={{ fontWeight: 600, fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.06em', color: '#8E8E93' }}>{s.title}</span>}
+            value={s.value != null ? Number(s.value) : undefined}
+            precision={1}
+            suffix={<span style={{ fontSize: 12, color: '#8E8E93' }}>{s.unit}</span>}
+            valueStyle={{ fontFamily: "var(--font-mono)", fontWeight: 700, color: '#76B900' }}
+          />
+        </div>
+      ))}
+
+      {gauges.map((g) => {
+        const val = g.value != null ? Number(g.value) : null;
+        return (
+          <div key={g.title} className="ios-card" style={cardStyle}>
+            <div style={{ fontWeight: 600, fontSize: 11, color: '#8E8E93', marginBottom: 6, textTransform: 'uppercase', letterSpacing: '0.06em' }}>{g.title}</div>
+            <div style={{ fontFamily: "var(--font-mono)", fontSize: 28, fontWeight: 700, color: val != null ? gaugeColor(val) : '#1C1C1E', marginBottom: 8 }}>
+              {val != null ? val.toFixed(1) : '\u2014'}
+              <span style={{ fontSize: 12, color: '#8E8E93', marginLeft: 4 }}>{g.unit}</span>
+            </div>
+            <Progress percent={val != null ? Math.min(100, Math.max(0, val)) : 0} showInfo={false} strokeColor={val != null ? gaugeColor(val) : '#34C759'} size="small" />
+          </div>
+        );
+      })}
+
+      <div className="ios-card" style={{ ...cardStyle, gridColumn: 'span 2', minHeight: 340 }}>
+        <div style={{ fontWeight: 600, fontSize: 13, color: '#1C1C1E', marginBottom: 16, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Issue Convergence</div>
         {convergencePoints.length > 0 ? (
-          <ResponsiveContainer width="100%" height={300}>
+          <ResponsiveContainer width="100%" height={280}>
             <AreaChart data={convergencePoints}>
               <defs>
-                <linearGradient id="openGrad" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stopColor="#f87171" stopOpacity={0.2} /><stop offset="100%" stopColor="#f87171" stopOpacity={0} /></linearGradient>
-                <linearGradient id="closedGrad" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stopColor="#34d399" stopOpacity={0.2} /><stop offset="100%" stopColor="#34d399" stopOpacity={0} /></linearGradient>
+                <linearGradient id="openGrad" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stopColor="#FF3B30" stopOpacity={0.15} /><stop offset="100%" stopColor="#FF3B30" stopOpacity={0} /></linearGradient>
+                <linearGradient id="closedGrad" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stopColor="#76B900" stopOpacity={0.15} /><stop offset="100%" stopColor="#76B900" stopOpacity={0} /></linearGradient>
               </defs>
-              <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.06)" />
-              <XAxis dataKey="timestamp" tick={{ fontSize: 10, fill: '#505660' }} tickFormatter={(v) => new Date(v).toLocaleDateString()} stroke="rgba(255,255,255,0.06)" />
-              <YAxis tick={{ fontSize: 10, fill: '#505660' }} stroke="rgba(255,255,255,0.06)" />
-              <Tooltip labelFormatter={(v) => new Date(v as string).toLocaleDateString()} contentStyle={{ background: 'rgba(24,25,30,0.95)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 12, color: '#e4e7eb' }} />
+              <CartesianGrid strokeDasharray="3 3" stroke="rgba(0,0,0,0.06)" />
+              <XAxis dataKey="timestamp" tick={{ fontSize: 10, fill: '#8E8E93' }} tickFormatter={(v) => new Date(v).toLocaleDateString()} stroke="rgba(0,0,0,0.06)" />
+              <YAxis tick={{ fontSize: 10, fill: '#8E8E93' }} stroke="rgba(0,0,0,0.06)" />
+              <Tooltip labelFormatter={(v) => new Date(v as string).toLocaleDateString()} contentStyle={{ background: '#FFFFFF', border: '1px solid rgba(0,0,0,0.08)', borderRadius: 12, color: '#1C1C1E', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }} />
               <Legend />
-              <Area type="monotone" dataKey="open" stroke="#f87171" fill="url(#openGrad)" name="Open" strokeWidth={2} />
-              <Area type="monotone" dataKey="closed" stroke="#34d399" fill="url(#closedGrad)" name="Closed" strokeWidth={2} />
+              <Area type="monotone" dataKey="open" stroke="#FF3B30" fill="url(#openGrad)" name="Open" strokeWidth={2} />
+              <Area type="monotone" dataKey="closed" stroke="#76B900" fill="url(#closedGrad)" name="Closed" strokeWidth={2} />
             </AreaChart>
           </ResponsiveContainer>
         ) : (
           <Empty description="No convergence data available" />
         )}
-      </Card>
-    </>
+      </div>
+    </div>
   );
 }
 
@@ -144,7 +154,7 @@ function CustomKpiPanel({ def, projectId }: { def: KpiDefinition; projectId: str
 
   if (chartType === 'table' && data?.groups) {
     return (
-      <Card className="glass-panel" title={<span className="font-display" style={{ fontWeight: 600 }}>{def.name}</span>}>
+      <Card className="ios-card" style={cardStyle} title={<span style={{ fontWeight: 600, color: '#1C1C1E' }}>{def.name}</span>}>
         <KpiTableRenderer groups={data.groups} />
       </Card>
     );
@@ -162,7 +172,7 @@ function CustomKpiPanel({ def, projectId }: { def: KpiDefinition; projectId: str
 
     const thresholds = (def.visualization as any)?.thresholds;
     return (
-      <Card className="glass-panel" title={<span className="font-display" style={{ fontWeight: 600 }}>{def.name}</span>}>
+      <Card className="ios-card" style={cardStyle} title={<span style={{ fontWeight: 600, color: '#1C1C1E' }}>{def.name}</span>}>
         <KpiChartRenderer chartType={chartType} data={chartData} xField={xField} yFields={yFields} thresholds={thresholds} />
       </Card>
     );
@@ -202,13 +212,13 @@ export default function KpiDashboardPage() {
   }, [customDefs]);
 
   return (
-    <div>
+    <div style={{ background: '#F5F5F7', minHeight: '100vh' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 24, flexWrap: 'wrap', gap: 16 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-          <BarChart3 size={24} style={{ color: 'var(--text-secondary)' }} />
+          <BarChart3 size={24} style={{ color: '#76B900' }} />
           <div>
-            <h1 className="page-title">KPI Overview</h1>
-            <p className="page-subtitle">Key performance indicators for autonomous driving test campaigns</p>
+            <h1 className="page-title" style={{ margin: 0, color: '#1C1C1E' }}>KPI Overview</h1>
+            <p style={{ margin: 0, color: '#8E8E93', fontSize: 13 }}>Key performance indicators for autonomous driving test campaigns</p>
           </div>
         </div>
         <Space wrap>
@@ -219,12 +229,12 @@ export default function KpiDashboardPage() {
         </Space>
       </div>
 
-      <Card className="glass-panel" style={{ marginBottom: 24 }}>
+      <div className="ios-card" style={{ ...cardStyle, marginBottom: 24 }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 12 }}>
           <div>
-            <div className="font-display" style={{ fontWeight: 600, fontSize: 13, marginBottom: 4, textTransform: 'uppercase', letterSpacing: '0.06em' }}>Panel Configuration</div>
+            <div style={{ fontWeight: 600, fontSize: 13, marginBottom: 4, textTransform: 'uppercase', letterSpacing: '0.06em', color: '#1C1C1E' }}>Panel Configuration</div>
             <Space>
-              <span style={{ color: 'var(--text-muted)', fontSize: 12 }}>Built-in metrics</span>
+              <span style={{ color: '#8E8E93', fontSize: 12 }}>Built-in metrics</span>
               <Switch size="small" checked={showBuiltin} onChange={setShowBuiltin} />
             </Space>
           </div>
@@ -232,22 +242,22 @@ export default function KpiDashboardPage() {
             <Button
               icon={<Upload size={14} />}
               onClick={() => setImportOpen(true)}
-              style={{ borderColor: 'var(--glass-border-light)', color: 'var(--accent-strong)' }}
+              style={{ borderColor: '#E5E5EA', color: '#76B900', borderRadius: 8 }}
             >
               Import JSON
             </Button>
-            <Button type="primary" icon={<Plus size={14} />} onClick={() => { setEditingDef(undefined); setModalOpen(true); }}>
+            <Button type="primary" icon={<Plus size={14} />} onClick={() => { setEditingDef(undefined); setModalOpen(true); }} style={{ background: '#76B900', borderColor: '#76B900', borderRadius: 8 }}>
               Add Custom KPI
             </Button>
           </Space>
         </div>
-      </Card>
+      </div>
 
       {!projectId && (
-        <Card className="glass-panel" style={{ textAlign: 'center', padding: '40px 0' }}>
-          <TrendingUp size={48} style={{ color: 'var(--text-muted)', opacity: 0.3, marginBottom: 16 }} />
-          <p style={{ color: 'var(--text-muted)', fontSize: 14 }}>Select a project to view KPI metrics</p>
-        </Card>
+        <div className="ios-card" style={{ ...cardStyle, textAlign: 'center', padding: '48px 20px' }}>
+          <TrendingUp size={48} style={{ color: '#C7C7CC', marginBottom: 16 }} />
+          <p style={{ color: '#8E8E93', fontSize: 14, margin: 0 }}>Select a project to view KPI metrics</p>
+        </div>
       )}
 
       {projectId && (
@@ -256,7 +266,7 @@ export default function KpiDashboardPage() {
 
           {grouped.size > 0 && (
             <div style={{ marginTop: 24 }}>
-              <div className="font-display" style={{ fontWeight: 600, fontSize: 12, marginBottom: 12, color: 'var(--text-primary)', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+              <div style={{ fontWeight: 600, fontSize: 13, marginBottom: 12, color: '#1C1C1E', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
                 Custom KPIs
               </div>
 
@@ -273,7 +283,7 @@ export default function KpiDashboardPage() {
                           <div style={{ position: 'relative' }}>
                             <CustomKpiPanel def={def} projectId={projectId} />
                             <div style={{ position: 'absolute', top: 8, right: 8, display: 'flex', gap: 4 }}>
-                              <Button size="small" type="text" icon={<Edit3 size={12} />} onClick={() => { setEditingDef(def); setModalOpen(true); }} style={{ color: 'var(--text-muted)' }} />
+                              <Button size="small" type="text" icon={<Edit3 size={12} />} onClick={() => { setEditingDef(def); setModalOpen(true); }} style={{ color: '#8E8E93' }} />
                               <Popconfirm title="Delete this KPI?" onConfirm={() => deleteMut.mutate(def.kpi_id)} okText="Delete" cancelText="Cancel">
                                 <Button size="small" type="text" danger icon={<Trash2 size={12} />} />
                               </Popconfirm>
@@ -296,7 +306,7 @@ export default function KpiDashboardPage() {
                         key: dashId,
                         label: (
                           <Space>
-                            <span style={{ color: '#e2e8f0', fontWeight: 600 }}>{dashName ?? dashId}</span>
+                            <span style={{ color: '#1C1C1E', fontWeight: 600 }}>{dashName ?? dashId}</span>
                             <Tag color="cyan">{defs.length} KPIs</Tag>
                             {defs.some((d) => d.renderer === 'vchart') && <Tag color="magenta">VChart</Tag>}
                           </Space>
