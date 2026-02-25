@@ -1,6 +1,7 @@
-import { useParams } from 'react-router-dom';
+import { useParams, Link } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Tag, Table, Empty, Space, message } from 'antd';
+import { Tag, Table, Empty, Button, Space, message } from 'antd';
+import { ArrowLeftOutlined } from '@ant-design/icons';
 import { getTask, getRuns, advanceTaskStage, getProject } from '../api/client';
 import type { Run } from '../api/client';
 import type { ColumnsType } from 'antd/es/table';
@@ -10,34 +11,17 @@ import { useEntityDetail } from '../hooks/useEntityDetail';
 
 const TERMINAL_STATUSES = ['Completed', 'Cancelled'];
 
-const SECTION_TITLE: React.CSSProperties = {
-  fontFamily: "'Sora', sans-serif",
-  fontWeight: 600,
-  fontSize: '0.95rem',
-  color: 'var(--text-primary)',
-  letterSpacing: '-0.01em',
-};
+const sectionTitle = (text: string) => (
+  <span style={{ fontFamily: 'var(--font-display)', fontWeight: 600, fontSize: '1rem', color: 'var(--text-primary)', letterSpacing: '-0.01em' }}>
+    {text}
+  </span>
+);
 
-const LABEL: React.CSSProperties = {
-  fontSize: '0.7rem',
-  fontWeight: 600,
-  textTransform: 'uppercase',
-  letterSpacing: '0.05em',
-  color: 'var(--text-muted)',
-  marginBottom: 2,
-};
-
-const VALUE: React.CSSProperties = {
-  fontSize: '0.9rem',
-  fontWeight: 500,
-  color: 'var(--text-primary)',
-};
-
-function PropRow({ label, children }: { label: string; children: React.ReactNode }) {
+function PropertyRow({ label, children }: { label: string; children: React.ReactNode }) {
   return (
-    <div style={{ padding: '10px 0', borderBottom: '1px solid var(--border-secondary)' }}>
-      <dt style={LABEL}>{label}</dt>
-      <dd style={{ ...VALUE, margin: 0 }}>{children}</dd>
+    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 0', borderBottom: '1px solid var(--border-secondary)' }}>
+      <span style={{ fontSize: '0.8125rem', color: 'var(--text-secondary)', fontWeight: 500 }}>{label}</span>
+      <span style={{ fontSize: '0.875rem', color: 'var(--text-primary)', fontWeight: 500, textAlign: 'right' }}>{children}</span>
     </div>
   );
 }
@@ -90,7 +74,7 @@ export default function TaskDetailPage() {
       dataIndex: 'status',
       key: 'status',
       width: 120,
-      render: (s: string) => <Tag color={statusColor[s] ?? 'default'} style={{ borderRadius: 9999 }}>{s}</Tag>,
+      render: (s: string) => <Tag color={statusColor[s] ?? 'default'}>{s}</Tag>,
     },
     {
       title: 'Result',
@@ -108,48 +92,46 @@ export default function TaskDetailPage() {
   ];
 
   return (
-    <div>
-      {/* ── Task Header Card ─────────────────────────────── */}
-      <div className="ios-card" style={{ padding: 24, marginBottom: 24 }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+    <div style={{ maxWidth: 1280, margin: '0 auto' }}>
+      {/* Back link */}
+      <Link to="/tasks" style={{ display: 'inline-flex', alignItems: 'center', gap: 6, color: 'var(--text-secondary)', marginBottom: 20, fontSize: 13, fontWeight: 500 }}>
+        <ArrowLeftOutlined /> Back to Tasks
+      </Link>
+
+      {/* === Task Header Card === */}
+      <div className="ios-card" style={{ padding: '24px', marginBottom: 24 }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: 12 }}>
           <div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 6 }}>
-              <Tag color={stageColor[task.stage] ?? 'default'} style={{ fontSize: 12, borderRadius: 9999, padding: '2px 12px' }}>{task.stage}</Tag>
-              <Tag color={priorityColor[task.priority] ?? 'default'} style={{ fontSize: 12, borderRadius: 9999, padding: '2px 12px' }}>{task.priority}</Tag>
-            </div>
-            <h1 style={{
-              fontFamily: "'Sora', sans-serif",
-              fontSize: '1.35rem',
-              fontWeight: 700,
-              color: 'var(--text-primary)',
-              margin: 0,
-              letterSpacing: '-0.01em',
-            }}>
+            <h1 style={{ fontFamily: 'var(--font-display)', fontSize: '1.5rem', fontWeight: 700, color: 'var(--text-primary)', margin: 0, letterSpacing: '-0.02em' }}>
               {task.title}
             </h1>
-            {task.description && (
-              <p style={{ color: 'var(--text-secondary)', fontSize: 14, marginTop: 4 }}>{task.description}</p>
-            )}
+            <p style={{ fontSize: '0.9rem', color: 'var(--text-secondary)', marginTop: 4 }}>
+              {task.description ?? 'No description'}
+            </p>
           </div>
-          {canAdvance && (
-            <button
-              className="btn-primary-green"
-              disabled={advanceMutation.isPending}
-              onClick={() => advanceMutation.mutate()}
-            >
-              {advanceMutation.isPending ? 'Advancing…' : 'Advance Stage →'}
-            </button>
-          )}
+          <Space size={8}>
+            <Tag color={stageColor[task.stage] ?? 'default'} style={{ fontSize: 13, padding: '3px 14px', borderRadius: 9999 }}>{task.stage}</Tag>
+            <Tag color={priorityColor[task.priority] ?? 'default'} style={{ fontSize: 13, padding: '3px 14px', borderRadius: 9999 }}>{task.priority}</Tag>
+            {canAdvance && (
+              <button
+                className="btn-primary-green"
+                onClick={() => advanceMutation.mutate()}
+                disabled={advanceMutation.isPending}
+              >
+                {advanceMutation.isPending ? 'Advancing…' : 'Advance Stage →'}
+              </button>
+            )}
+          </Space>
         </div>
       </div>
 
-      {/* ── 65/35 Two-Column Layout ──────────────────────── */}
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 340px', gap: 20, alignItems: 'start' }}>
+      {/* === Two-column layout === */}
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 380px', gap: 24, alignItems: 'start' }}>
 
-        {/* ─── Left: Test Runs ───────────────────────────── */}
+        {/* Left: Runs table */}
         <div className="ios-card" style={{ overflow: 'hidden' }}>
-          <div style={{ padding: '16px 20px', borderBottom: '1px solid var(--border-secondary)' }}>
-            <span style={SECTION_TITLE}>Test Runs</span>
+          <div style={{ padding: '16px 24px', borderBottom: '1px solid var(--border-secondary)' }}>
+            {sectionTitle('Test Runs')}
           </div>
           <Table
             columns={runColumns}
@@ -160,40 +142,41 @@ export default function TaskDetailPage() {
           />
         </div>
 
-        {/* ─── Right: Details Sidebar ────────────────────── */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
-          <div className="ios-card" style={{ padding: 20 }}>
-            <span style={SECTION_TITLE}>Details</span>
-            <dl style={{ margin: 0 }}>
-              <PropRow label="Stage">
-                <Tag color={stageColor[task.stage] ?? 'default'} style={{ borderRadius: 9999 }}>{task.stage}</Tag>
-              </PropRow>
-              <PropRow label="Task Type">
-                {task.taskType ? <Tag style={{ borderRadius: 9999 }}>{task.taskType}</Tag> : '—'}
-              </PropRow>
-              <PropRow label="Priority">
-                <Tag color={priorityColor[task.priority] ?? 'default'} style={{ borderRadius: 9999 }}>{task.priority}</Tag>
-              </PropRow>
-              <PropRow label="Project">
-                {task.projectId ? (
-                  <EntityLink to={`/projects/${task.projectId}`} style={{ color: 'var(--ios-blue)' }}>
-                    {project?.name ?? task.projectId}
-                  </EntityLink>
-                ) : '—'}
-              </PropRow>
-              <PropRow label="Execution Region">{task.executionRegion ?? '—'}</PropRow>
-              <PropRow label="Target Vehicles">
-                {task.targetVehicleCount != null ? String(task.targetVehicleCount) : '—'}
-              </PropRow>
-            </dl>
-          </div>
-
-          <div className="ios-card" style={{ padding: 20 }}>
-            <span style={SECTION_TITLE}>Timestamps</span>
-            <dl style={{ margin: 0 }}>
-              <PropRow label="Created">{new Date(task.createdAt).toLocaleString()}</PropRow>
-              <PropRow label="Last Updated">{new Date(task.updatedAt).toLocaleString()}</PropRow>
-            </dl>
+        {/* Right: Details sidebar */}
+        <div className="ios-card" style={{ padding: '20px 24px' }}>
+          {sectionTitle('Details')}
+          <div style={{ marginTop: 12 }}>
+            <PropertyRow label="Stage">
+              <Tag color={stageColor[task.stage] ?? 'default'} style={{ margin: 0 }}>{task.stage}</Tag>
+            </PropertyRow>
+            <PropertyRow label="Task Type">
+              {task.taskType ? <Tag style={{ margin: 0 }}>{task.taskType}</Tag> : <EmptyDash />}
+            </PropertyRow>
+            <PropertyRow label="Priority">
+              <Tag color={priorityColor[task.priority] ?? 'default'} style={{ margin: 0 }}>{task.priority}</Tag>
+            </PropertyRow>
+            <PropertyRow label="Project">
+              {task.projectId ? (
+                <EntityLink to={`/projects/${task.projectId}`}>
+                  {project?.name ?? task.projectId.slice(0, 8)}
+                </EntityLink>
+              ) : <EmptyDash />}
+            </PropertyRow>
+            <PropertyRow label="Execution Region">
+              {task.executionRegion ?? <EmptyDash />}
+            </PropertyRow>
+            <PropertyRow label="Target Vehicles">
+              {task.targetVehicleCount ?? <EmptyDash />}
+            </PropertyRow>
+            <PropertyRow label="Created">
+              {new Date(task.createdAt).toLocaleString()}
+            </PropertyRow>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 0' }}>
+              <span style={{ fontSize: '0.8125rem', color: 'var(--text-secondary)', fontWeight: 500 }}>Updated</span>
+              <span style={{ fontSize: '0.875rem', color: 'var(--text-primary)', fontWeight: 500 }}>
+                {new Date(task.updatedAt).toLocaleString()}
+              </span>
+            </div>
           </div>
         </div>
       </div>
