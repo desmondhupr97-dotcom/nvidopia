@@ -1,8 +1,12 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
-import { Card, Table, Tag, Button, Space, Modal, Steps, Form, Input, InputNumber, Slider, Select, Radio, Switch, Row, Col, Popconfirm, message } from 'antd';
-import { MonitorPlay, Plus, Trash2, Play, Eye } from 'lucide-react';
+import {
+  Table, Tag, Button, Space, Modal, Steps, Form, Input, InputNumber,
+  Slider, Select, Radio, Switch, Row, Col, Popconfirm, message, Segmented, Empty,
+} from 'antd';
+import { AppstoreOutlined, UnorderedListOutlined } from '@ant-design/icons';
+import { MonitorPlay, Plus, Trash2, Play, Eye, Cpu, Route, BarChart3 } from 'lucide-react';
 import {
   getSimulations, createSimulation, deleteSimulation, startSimulation,
   getProjects, getTasks, generateSimFleet, generateSimRoutes,
@@ -10,6 +14,27 @@ import {
 } from '../api/client';
 import SimRouteEditor from '../components/simulation/SimRouteEditor';
 import SimAssignmentMatrix from '../components/simulation/SimAssignmentMatrix';
+import PageHeader from '../components/shared/PageHeader';
+
+const STATUS_PILL: Record<string, { bg: string; text: string }> = {
+  Draft:     { bg: '#F3F4F6', text: '#6B7280' },
+  Running:   { bg: '#ECFDF5', text: '#059669' },
+  Paused:    { bg: '#FEF3C7', text: '#D97706' },
+  Completed: { bg: '#E8F0FE', text: '#1A73E8' },
+  Aborted:   { bg: '#FEE2E2', text: '#DC2626' },
+};
+
+function StatusPill({ status }: { status: string }) {
+  const c = STATUS_PILL[status] ?? { bg: '#F3F4F6', text: '#6B7280' };
+  return (
+    <span style={{
+      display: 'inline-block', padding: '2px 12px', borderRadius: 9999,
+      fontSize: '0.75rem', fontWeight: 600, background: c.bg, color: c.text, lineHeight: '20px',
+    }}>
+      {status}
+    </span>
+  );
+}
 
 const statusColor: Record<string, string> = {
   Draft: 'default', Running: 'processing', Paused: 'warning', Completed: 'success', Aborted: 'error',
@@ -21,6 +46,7 @@ export default function SimulationPage() {
   const [wizardOpen, setWizardOpen] = useState(false);
   const [step, setStep] = useState(0);
   const [form] = Form.useForm();
+  const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
 
   const [fleetMode, setFleetMode] = useState<'random' | 'custom'>('random');
   const [routeMode, setRouteMode] = useState<'random' | 'custom'>('random');
@@ -133,6 +159,23 @@ export default function SimulationPage() {
     createMut.mutate(session);
   }
 
+  const stats = useMemo(() => {
+    const all = sessions ?? [];
+    return {
+      total: all.length,
+      running: all.filter((s) => s.status === 'Running').length,
+      queued: all.filter((s) => s.status === 'Draft' || s.status === 'Paused').length,
+      completed: all.filter((s) => s.status === 'Completed').length,
+    };
+  }, [sessions]);
+
+  const statCards = [
+    { label: 'Total', value: stats.total, color: '#76B900' },
+    { label: 'Running', value: stats.running, color: '#34C759' },
+    { label: 'Queued / Draft', value: stats.queued, color: '#FF9500' },
+    { label: 'Completed', value: stats.completed, color: '#007AFF' },
+  ];
+
   const columns = [
     { title: 'Name', dataIndex: 'name', key: 'name', render: (name: string, r: SimulationSession) => <a onClick={() => navigate(`/simulation/${r.session_id}`)}>{name}</a> },
     { title: 'Status', dataIndex: 'status', key: 'status', render: (s: string) => <Tag color={statusColor[s] || 'default'}>{s}</Tag> },
@@ -154,6 +197,51 @@ export default function SimulationPage() {
   ];
 
   const filteredTasks = tasksData?.filter((t) => selectedProjects.includes(t.projectId)) ?? [];
+
+  function SimCard({ session }: { session: SimulationSession }) {
+    const vCount = session.fleet_config?.vehicle_count ?? session.fleet_config?.vehicles?.length ?? 0;
+    const routeMode = session.route_config?.mode ?? 'random';
+    return (
+      <div className="ios-card ios-card-interactive" style={{ padding: 20, height: '100%', cursor: 'pointer', display: 'flex', flexDirection: 'column' }} onClick={() => navigate(`/simulation/${session.session_id}`)}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 12 }}>
+          <h3 style={{ margin: 0, fontSize: '1rem', fontWeight: 700, color: 'var(--text-primary)', lineHeight: 1.3, flex: 1, marginRight: 8 }}>
+            {session.name}
+          </h3>
+          <StatusPill status={session.status} />
+        </div>
+
+        <div style={{ fontSize: '0.8125rem', color: 'var(--text-secondary)', marginBottom: 16, lineHeight: 1.8, flex: 1 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+            <Cpu size={13} style={{ color: 'var(--text-muted)' }} />
+            <span>{vCount} vehicle{vCount !== 1 ? 's' : ''} ({session.fleet_config?.mode})</span>
+          </div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+            <Route size={13} style={{ color: 'var(--text-muted)' }} />
+            <span>Routes: {routeMode}{session.route_config?.routes ? ` (${session.route_config.routes.length})` : ''}</span>
+          </div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+            <BarChart3 size={13} style={{ color: 'var(--text-muted)' }} />
+            <span>{(session.stats?.total_mileage_km ?? 0).toFixed(1)} km driven</span>
+          </div>
+        </div>
+
+        <div style={{ display: 'flex', gap: 12, fontSize: '0.75rem', color: 'var(--text-muted)', marginBottom: 14, flexWrap: 'wrap' }}>
+          <span>Telemetry: {session.stats?.telemetry_sent ?? 0}</span>
+          <span>Issues: {session.stats?.issues_sent ?? 0}</span>
+        </div>
+
+        <div style={{ display: 'flex', gap: 6, borderTop: '1px solid var(--border-secondary)', paddingTop: 12 }} onClick={(e) => e.stopPropagation()}>
+          <Button size="small" icon={<Eye size={12} />} onClick={() => navigate(`/simulation/${session.session_id}`)}>View</Button>
+          {session.status === 'Draft' && (
+            <Button size="small" type="primary" icon={<Play size={12} />} onClick={() => startMut.mutate(session.session_id)}>Start</Button>
+          )}
+          <Popconfirm title="Delete simulation?" onConfirm={() => deleteMut.mutate(session.session_id)}>
+            <Button size="small" danger icon={<Trash2 size={12} />} />
+          </Popconfirm>
+        </div>
+      </div>
+    );
+  }
 
   const wizardSteps = [
     {
@@ -292,7 +380,7 @@ export default function SimulationPage() {
       title: 'Review',
       content: (
         <div>
-          <Card className="glass-panel" style={{ marginBottom: 16 }}>
+          <div className="ios-card" style={{ padding: 20, marginBottom: 16 }}>
             <Row gutter={[16, 8]}>
               <Col span={12}><strong>Name:</strong> {form.getFieldValue('name') || 'New Simulation'}</Col>
               <Col span={12}><strong>Fleet:</strong> {fleetMode === 'random' ? `${form.getFieldValue('vehicle_count') ?? 5} random vehicles` : `${vehicles.length} custom vehicles`}</Col>
@@ -301,7 +389,7 @@ export default function SimulationPage() {
               <Col span={12}><strong>Telemetry:</strong> every {form.getFieldValue('telemetry_interval') ?? 3}s</Col>
               <Col span={12}><strong>Speed:</strong> {form.getFieldValue('speed_min') ?? 30} - {form.getFieldValue('speed_max') ?? 120} km/h</Col>
             </Row>
-          </Card>
+          </div>
         </div>
       ),
     },
@@ -309,29 +397,68 @@ export default function SimulationPage() {
 
   return (
     <div>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 24, flexWrap: 'wrap', gap: 16 }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-          <MonitorPlay size={28} style={{ color: '#22c55e' }} />
-          <div>
-            <h1 className="page-title">Fleet Simulation</h1>
-            <p className="page-subtitle">Simulate vehicle fleets for demo and stress testing</p>
+      <PageHeader
+        title="Fleet Simulation"
+        subtitle="Simulate vehicle fleets for demo and stress testing"
+        action={
+          <Button className="btn-primary-green" icon={<Plus size={14} />} size="large" onClick={() => { resetWizard(); setWizardOpen(true); }}>
+            New Simulation
+          </Button>
+        }
+      />
+
+      {/* Stats Row */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 16, marginBottom: 20 }}>
+        {statCards.map((s) => (
+          <div className="stat-card" key={s.label}>
+            <span className="stat-card-label">{s.label}</span>
+            <span className="stat-card-value" style={{ color: s.color }}>{s.value}</span>
           </div>
-        </div>
-        <Button type="primary" icon={<Plus size={14} />} onClick={() => { resetWizard(); setWizardOpen(true); }}>
-          New Simulation
-        </Button>
+        ))}
       </div>
 
-      <Card className="glass-panel">
-        <Table
-          dataSource={sessions ?? []}
-          columns={columns}
-          rowKey="session_id"
-          loading={isLoading}
-          pagination={{ pageSize: 10 }}
-          size="middle"
+      {/* Toolbar */}
+      <div style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', marginBottom: 16 }}>
+        <Segmented
+          value={viewMode}
+          onChange={(v) => setViewMode(v as 'grid' | 'list')}
+          options={[
+            { value: 'grid', icon: <AppstoreOutlined /> },
+            { value: 'list', icon: <UnorderedListOutlined /> },
+          ]}
         />
-      </Card>
+      </div>
+
+      {/* Content */}
+      {viewMode === 'grid' ? (
+        (!sessions || sessions.length === 0) && !isLoading ? (
+          <div className="ios-card" style={{ padding: 48, textAlign: 'center' }}>
+            <Empty
+              image={<MonitorPlay size={48} style={{ color: 'var(--text-muted)', opacity: 0.4 }} />}
+              description={<span style={{ color: 'var(--text-muted)' }}>No simulations yet. Create your first simulation to get started.</span>}
+            />
+          </div>
+        ) : (
+          <Row gutter={[16, 16]}>
+            {(sessions ?? []).map((session) => (
+              <Col xs={24} sm={12} lg={8} key={session.session_id}>
+                <SimCard session={session} />
+              </Col>
+            ))}
+          </Row>
+        )
+      ) : (
+        <div className="ios-card" style={{ overflow: 'hidden' }}>
+          <Table
+            dataSource={sessions ?? []}
+            columns={columns}
+            rowKey="session_id"
+            loading={isLoading}
+            pagination={{ pageSize: 10 }}
+            size="middle"
+          />
+        </div>
+      )}
 
       <Modal
         open={wizardOpen}
