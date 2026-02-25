@@ -15,8 +15,8 @@ const statusColor: Record<string, string> = {
   Draft: 'default', Running: 'processing', Paused: 'warning', Completed: 'success', Aborted: 'error',
 };
 
-const VEHICLE_COLORS = ['#34C759', '#007AFF', '#FF9500', '#FF3B30', '#AF52DE', '#5AC8FA', '#76B900', '#FF2D55'];
-const ROUTE_COLORS = ['#007AFF', '#76B900', '#FF9500', '#FF3B30', '#34C759', '#AF52DE', '#5AC8FA', '#FF2D55'];
+const VEHICLE_COLORS = ['#22c55e', '#3b82f6', '#f59e0b', '#ef4444', '#ec4899', '#14b8a6', '#a855f7', '#6366f1'];
+const ROUTE_COLORS = ['#6366f1', '#22c55e', '#f59e0b', '#ef4444', '#3b82f6', '#ec4899', '#14b8a6', '#a855f7'];
 
 function carIcon(color: string, heading: number) {
   return L.divIcon({
@@ -139,16 +139,15 @@ export default function SimulationDetailPage() {
     return [31.23, 121.47];
   })() as [number, number];
 
-  const cardTitleStyle: React.CSSProperties = {
-    fontFamily: 'var(--font-display)',
-    fontWeight: 600,
-    color: 'var(--text-primary)',
-  };
+  const cardTitle = (text: string): React.ReactNode => (
+    <span style={{ fontFamily: 'var(--font-display)', fontWeight: 600, color: 'var(--text-primary)' }}>{text}</span>
+  );
+
+  const labelStyle: React.CSSProperties = { color: 'var(--text-secondary)', fontWeight: 500 };
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
-      {/* Header */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+    <div>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 24 }}>
         <Button type="text" icon={<ArrowLeft size={18} />} onClick={() => navigate('/simulation')} />
         <div style={{ flex: 1 }}>
           <h1 className="page-title" style={{ marginBottom: 0 }}>{session.name}</h1>
@@ -193,34 +192,32 @@ export default function SimulationDetailPage() {
         </Space>
       </div>
 
-      {/* Stats Row */}
-      <Row gutter={[16, 16]}>
+      <Row gutter={[16, 16]} style={{ marginBottom: 24 }}>
         <Col xs={24} sm={6}>
           <Card className="ios-card">
-            <Statistic title="Vehicles" value={session.fleet_config?.vehicle_count ?? session.fleet_config?.vehicles?.length ?? 0} valueStyle={{ fontFamily: 'var(--font-mono)', color: 'var(--text-primary)' }} />
+            <Statistic title="Vehicles" value={session.fleet_config?.vehicle_count ?? session.fleet_config?.vehicles?.length ?? 0} valueStyle={{ fontFamily: "var(--font-mono)", color: 'var(--accent-strong)' }} />
           </Card>
         </Col>
         <Col xs={24} sm={6}>
           <Card className="ios-card">
-            <Statistic title="Telemetry Sent" value={stats?.telemetry_sent ?? 0} valueStyle={{ fontFamily: 'var(--font-mono)', color: '#34C759' }} />
+            <Statistic title="Telemetry Sent" value={stats?.telemetry_sent ?? 0} valueStyle={{ fontFamily: "var(--font-mono)", color: 'var(--ios-green)' }} />
           </Card>
         </Col>
         <Col xs={24} sm={6}>
           <Card className="ios-card">
-            <Statistic title="Issues Reported" value={stats?.issues_sent ?? 0} valueStyle={{ fontFamily: 'var(--font-mono)', color: '#FF9500' }} />
+            <Statistic title="Issues Reported" value={stats?.issues_sent ?? 0} valueStyle={{ fontFamily: "var(--font-mono)", color: 'var(--ios-orange)' }} />
           </Card>
         </Col>
         <Col xs={24} sm={6}>
           <Card className="ios-card">
-            <Statistic title="Total Mileage" value={Number(stats?.total_mileage_km ?? 0).toFixed(1)} suffix="km" valueStyle={{ fontFamily: 'var(--font-mono)', color: '#76B900' }} />
+            <Statistic title="Total Mileage" value={Number(stats?.total_mileage_km ?? 0).toFixed(1)} suffix="km" valueStyle={{ fontFamily: "var(--font-mono)", color: 'var(--brand-green)' }} />
           </Card>
         </Col>
       </Row>
 
-      {/* Map + Config */}
       <Row gutter={[16, 16]}>
         <Col xs={24} lg={14}>
-          <Card className="ios-card" title={<span style={cardTitleStyle}>{isRunning ? 'Live Vehicle Map' : 'Route Map'}</span>} style={{ height: 520 }}>
+          <Card className="ios-card" title={cardTitle(isRunning ? 'Live Vehicle Map' : 'Route Map')} style={{ height: 520 }}>
             <div style={{ height: 440 }}>
               <MapContainer center={center} zoom={11} style={{ height: '100%', width: '100%', borderRadius: 8 }}>
                 <TileLayer url="https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png" attribution='&copy; CartoDB' />
@@ -275,8 +272,8 @@ export default function SimulationDetailPage() {
           </Card>
         </Col>
         <Col xs={24} lg={10}>
-          <Card className="ios-card" title={<span style={cardTitleStyle}>Configuration</span>} style={{ marginBottom: 16 }}>
-            <Descriptions column={1} size="small" labelStyle={{ color: 'var(--text-secondary)', fontWeight: 500 }} contentStyle={{ color: 'var(--text-primary)' }}>
+          <Card className="ios-card" title={cardTitle('Configuration')} style={{ marginBottom: 16 }}>
+            <Descriptions column={1} size="small" labelStyle={labelStyle}>
               <Descriptions.Item label="Fleet Mode">{session.fleet_config?.mode}</Descriptions.Item>
               <Descriptions.Item label="Route Mode">{session.route_config?.mode}</Descriptions.Item>
               <Descriptions.Item label="Routes">{routes.length} route(s){routes.some((r) => r.road) ? ' (road-planned)' : ''}</Descriptions.Item>
@@ -291,7 +288,7 @@ export default function SimulationDetailPage() {
           </Card>
 
           {vehicles.length > 0 && (
-            <Card className="ios-card" title={<span style={cardTitleStyle}>Vehicle Status</span>}>
+            <Card className="ios-card" title={cardTitle('Vehicle Status')}>
               <Table
                 size="small"
                 dataSource={vehicles}
@@ -303,7 +300,7 @@ export default function SimulationDetailPage() {
                       <div style={{ width: 8, height: 8, borderRadius: '50%', background: VEHICLE_COLORS[idx % VEHICLE_COLORS.length] }} />
                     ),
                   },
-                  { title: 'VIN', dataIndex: 'vin', ellipsis: true, render: (v: string) => <span style={{ fontSize: 11, fontFamily: 'var(--font-mono)', color: 'var(--text-primary)' }}>{v}</span> },
+                  { title: 'VIN', dataIndex: 'vin', ellipsis: true, render: (v: string) => <span style={{ fontSize: 11, fontFamily: 'monospace' }}>{v}</span> },
                   {
                     title: 'Speed', render: (_: unknown, r: SimVehiclePosition) =>
                       r.current ? `${(r.current.speed_mps * 3.6).toFixed(0)} km/h` : '-',
