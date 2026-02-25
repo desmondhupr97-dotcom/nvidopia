@@ -211,8 +211,8 @@ export default function KpiJsonUpload({ open, onClose, onImported }: KpiJsonUplo
             showUploadList={false}
             beforeUpload={handleFile}
             style={{
-              background: 'var(--bg-glass)',
-              borderColor: 'var(--glass-border-light)',
+              background: 'var(--bg-surface)',
+              borderColor: 'var(--border-primary)',
               borderStyle: 'dashed',
               borderRadius: 16,
             }}

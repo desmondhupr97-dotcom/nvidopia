@@ -387,7 +387,7 @@ export default function KpiDefinitionModal({ open, onClose, onSaved, editingDef 
           <Card
             key={idx}
             size="small"
-            className="glass-panel"
+            className="ios-card"
             style={{ marginBottom: 12 }}
             extra={
               variables.length > 1 && (
@@ -527,7 +527,7 @@ export default function KpiDefinitionModal({ open, onClose, onSaved, editingDef 
           <Card
             key={idx}
             size="small"
-            className="glass-panel"
+            className="ios-card"
             style={{ marginBottom: 12 }}
             extra={
               yAxes.length > 1 && (
@@ -587,7 +587,7 @@ export default function KpiDefinitionModal({ open, onClose, onSaved, editingDef 
 
         <div style={{ ...labelStyle, fontSize: 13, marginBottom: 8 }}>Thresholds (Reference Lines)</div>
         {thresholds.map((t, idx) => (
-          <Card key={idx} size="small" className="glass-panel" style={{ marginBottom: 8 }}>
+          <Card key={idx} size="small" className="ios-card" style={{ marginBottom: 8 }}>
             <Row gutter={8}>
               <Col span={8}><Input type="number" placeholder="Value" value={t.value} onChange={(e) => { const copy = [...thresholds]; copy[idx] = { ...copy[idx]!, value: Number(e.target.value) }; setThresholds(copy); }} /></Col>
               <Col span={8}><Input placeholder="Label" value={t.label} onChange={(e) => { const copy = [...thresholds]; copy[idx] = { ...copy[idx]!, label: e.target.value }; setThresholds(copy); }} /></Col>
@@ -618,7 +618,7 @@ export default function KpiDefinitionModal({ open, onClose, onSaved, editingDef 
             <Divider titlePlacement="left" style={{ ...labelStyle, fontSize: 13 }}>
               Preview Result
             </Divider>
-            <Card size="small" className="glass-panel">
+            <Card size="small" className="ios-card">
               {previewResult.error ? (
                 <span style={{ color: 'var(--danger)' }}>{previewResult.error}</span>
               ) : (

@@ -1,7 +1,8 @@
 import { Outlet, useLocation, Link } from 'react-router-dom';
 import { Layout as AntLayout, Breadcrumb } from 'antd';
 import { Home } from 'lucide-react';
-import Sidebar from './Sidebar';
+import TopNav from './TopNav';
+import SecondaryTabs from './SecondaryTabs';
 
 const { Content } = AntLayout;
 
@@ -41,46 +42,18 @@ function BreadcrumbNav() {
 
 export default function Layout() {
   return (
-    <div style={{ display: 'flex', minHeight: '100vh', position: 'relative', zIndex: 1 }}>
-      {/* Floating Sidebar */}
-      <div
-        style={{
-          position: 'fixed',
-          left: 16,
-          top: 16,
-          bottom: 16,
-          width: 260,
-          zIndex: 20,
-        }}
-      >
-        <Sidebar />
-      </div>
+    <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
+      <TopNav />
+      <SecondaryTabs />
 
-      {/* Main Content Area */}
-      <div style={{ marginLeft: 292, flex: 1, display: 'flex', flexDirection: 'column' }}>
-        {/* Header */}
-        <header
-          className="glass-header"
-          style={{
-            position: 'sticky',
-            top: 0,
-            zIndex: 10,
-            display: 'flex',
-            alignItems: 'center',
-            padding: '0 32px',
-            height: 56,
-          }}
-        >
+      <Content style={{ padding: '20px 24px', minHeight: 'calc(100vh - var(--header-height) - var(--secondary-tab-height))' }}>
+        <div style={{ marginBottom: 16 }}>
           <BreadcrumbNav />
-        </header>
-
-        {/* Content */}
-        <Content style={{ padding: 32, minHeight: 'calc(100vh - 56px)' }}>
-          <div className="animate-fade-in">
-            <Outlet />
-          </div>
-        </Content>
-      </div>
+        </div>
+        <div className="animate-fade-in">
+          <Outlet />
+        </div>
+      </Content>
     </div>
   );
 }

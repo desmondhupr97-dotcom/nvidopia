@@ -121,7 +121,7 @@ export default function VChartRenderer({ spec, data, title, height = 340, loadin
 
   if (loading || !ready) {
     return (
-      <Card className="glass-panel">
+      <Card className="ios-card">
         <div style={{ display: 'flex', justifyContent: 'center', padding: 40 }}>
           <Spin />
         </div>
@@ -131,7 +131,7 @@ export default function VChartRenderer({ spec, data, title, height = 340, loadin
 
   if (!spec || !spec.type) {
     return (
-      <Card className="glass-panel">
+      <Card className="ios-card">
         <Empty description="Invalid VChart spec" />
       </Card>
     );
@@ -139,7 +139,7 @@ export default function VChartRenderer({ spec, data, title, height = 340, loadin
 
   return (
     <Card
-      className="glass-panel"
+      className="ios-card"
       title={title ? <span className="font-display" style={{ fontWeight: 600 }}>{title}</span> : undefined}
     >
       <div ref={containerRef} style={{ width: '100%', height }} />

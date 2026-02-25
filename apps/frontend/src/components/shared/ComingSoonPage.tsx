@@ -15,7 +15,7 @@ export default function ComingSoonPage({ icon: Icon, iconColor, title, descripti
   return (
     <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '60vh' }}>
       <Card
-        className="glass-panel-elevated"
+        className="ios-card-elevated"
         style={{ maxWidth: 480, width: '100%', textAlign: 'center', padding: '20px 0' }}
       >
         <div

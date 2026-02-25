@@ -47,7 +47,7 @@ export default function KpiTableRenderer({ groups, title }: Props) {
 
   return (
     <Card
-      className="glass-panel"
+      className="ios-card"
       title={
         title ? (
           <span className="font-display" style={{ fontWeight: 600 }}>{title}</span>

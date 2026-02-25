@@ -56,7 +56,7 @@ export default function KpiFieldPicker({ entity, value, onChange }: Props) {
       treeDefaultExpandAll
       style={{ width: '100%' }}
       dropdownStyle={{ maxHeight: 360, overflow: 'auto' }}
-      popupClassName="glass-panel-elevated"
+      popupClassName="ios-card-elevated"
     />
   );
 }
