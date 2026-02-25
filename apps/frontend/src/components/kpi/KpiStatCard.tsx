@@ -9,7 +9,7 @@ interface Props {
 
 export default function KpiStatCard({ title, value, unit, loading }: Props) {
   return (
-    <Card className="glass-panel" style={{ height: '100%' }}>
+    <Card className="ios-card" style={{ height: '100%' }}>
       {loading ? (
         <div style={{ textAlign: 'center', padding: '20px 0' }}>
           <Spin />

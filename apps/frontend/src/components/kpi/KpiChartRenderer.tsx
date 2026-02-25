@@ -34,23 +34,23 @@ interface KpiChartRendererProps {
 }
 
 const PALETTE = [
-  '#8b929a', '#60a5fa', '#34d399', '#fbbf24', '#f87171',
-  '#a78bfa', '#fb923c', '#22d3ee', '#e879f9', '#4ade80',
+  '#76B900', '#007AFF', '#FF9500', '#34C759', '#AF52DE',
+  '#5AC8FA', '#FF3B30', '#FFCC00', '#FF2D55', '#00C7BE',
 ];
 
-const GRID_STROKE = 'rgba(255,255,255,0.06)';
-const TICK_FILL = '#505660';
+const GRID_STROKE = 'rgba(0,0,0,0.06)';
+const TICK_FILL = '#6E6E73';
 
 const tooltipStyle = {
   contentStyle: {
-    background: 'rgba(24,25,30,0.95)',
-    border: '1px solid rgba(255,255,255,0.1)',
+    background: '#FFFFFF',
+    border: '1px solid #E5E5EA',
     borderRadius: 12,
     backdropFilter: 'blur(20px)',
-    color: '#e4e7eb',
+    color: '#1D1D1F',
     fontFamily: "'Fira Code', monospace",
     fontSize: 11,
-    boxShadow: '0 8px 32px rgba(0,0,0,0.3)',
+    boxShadow: '0 4px 12px rgba(0,0,0,0.08)',
   },
 };
 
@@ -237,7 +237,7 @@ function PieChartInner({ data, xField, yFields }: KpiChartRendererProps) {
         innerRadius="40%"
         outerRadius="75%"
         strokeWidth={1}
-        stroke="rgba(255,255,255,0.06)"
+        stroke="rgba(0,0,0,0.06)"
         label={({ name, percent }: { name: string; percent: number }) =>
           `${name} ${(percent * 100).toFixed(0)}%`
         }
@@ -275,12 +275,12 @@ function GaugeChartInner({ data, yFields }: KpiChartRendererProps) {
         strokeWidth={0}
       >
         <Cell fill={color} />
-        <Cell fill="rgba(255,255,255,0.06)" />
+        <Cell fill="rgba(0,0,0,0.04)" />
       </Pie>
       <text x="50%" y="62%" textAnchor="middle" fill={color} style={{ fontSize: 24, fontFamily: "'Fira Code', monospace", fontWeight: 700 }}>
         {value.toFixed(1)}
       </text>
-      <text x="50%" y="78%" textAnchor="middle" fill="#505660" style={{ fontSize: 11, fontFamily: "'Fira Code', monospace" }}>
+      <text x="50%" y="78%" textAnchor="middle" fill="#6E6E73" style={{ fontSize: 11, fontFamily: "'Fira Code', monospace" }}>
         {yFields[0]?.label || 'Value'}
       </text>
     </PieChart>
@@ -421,7 +421,7 @@ export default function KpiChartRenderer(props: KpiChartRendererProps) {
 
   if (!ChartComp || !data.length) {
     return (
-      <Card className="glass-panel">
+      <Card className="ios-card">
         <Empty description={data.length === 0 ? 'No data' : `Unknown chart type: ${chartType}`} />
       </Card>
     );
@@ -429,7 +429,7 @@ export default function KpiChartRenderer(props: KpiChartRendererProps) {
 
   return (
     <Card
-      className="glass-panel"
+      className="ios-card"
       title={
         title ? (
           <span className="font-display" style={{ fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em' }}>{title}</span>

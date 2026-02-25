@@ -60,7 +60,7 @@ export default function IssueMapPage() {
     <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
       <PageHeader title="Issue Map" subtitle="Issue locations on map" />
 
-      <Card size="small" className="glass-card">
+      <Card size="small" className="ios-card">
         <Space wrap size="middle">
           <Select allowClear placeholder="Project" style={{ width: 180 }} value={projectId} onChange={(v) => { setProjectId(v); setTaskId(undefined); setRunId(undefined); }}
             options={(projects ?? []).map((p) => ({ value: p.id, label: p.name }))} showSearch optionFilterProp="label" />
@@ -75,7 +75,7 @@ export default function IssueMapPage() {
         </Space>
       </Card>
 
-      <Card size="small" className="glass-card" bodyStyle={{ padding: 0, height: 'calc(100vh - 280px)', minHeight: 500 }}>
+      <Card size="small" className="ios-card" bodyStyle={{ padding: 0, height: 'calc(100vh - 280px)', minHeight: 500 }}>
         {!queryParams
           ? <Empty description="Set filters and click Search" style={{ paddingTop: 100 }} />
           : isLoading
