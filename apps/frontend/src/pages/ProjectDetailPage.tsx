@@ -1,7 +1,8 @@
 import { useState } from 'react';
-import { useParams } from 'react-router-dom';
+import { useParams, Link } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Tag, Table, Empty, Button, Space, message } from 'antd';
+import { ArrowLeftOutlined } from '@ant-design/icons';
 import { getProject, getTasks, updateProject } from '../api/client';
 import type { Task } from '../api/client';
 import type { ColumnsType } from 'antd/es/table';
@@ -17,39 +18,22 @@ const PROJECT_STATUS_FLOW: Record<string, string[]> = {
   Archived: [],
 };
 
-const SECTION_TITLE: React.CSSProperties = {
-  fontFamily: "'Sora', sans-serif",
-  fontWeight: 600,
-  fontSize: '0.95rem',
-  color: 'var(--text-primary)',
-  letterSpacing: '-0.01em',
-};
+type TabKey = 'overview' | 'tasks';
 
-const LABEL: React.CSSProperties = {
-  fontSize: '0.7rem',
-  fontWeight: 600,
-  textTransform: 'uppercase',
-  letterSpacing: '0.05em',
-  color: 'var(--text-muted)',
-  marginBottom: 2,
-};
+const sectionTitle = (text: string) => (
+  <span style={{ fontFamily: 'var(--font-display)', fontWeight: 600, fontSize: '1rem', color: 'var(--text-primary)', letterSpacing: '-0.01em' }}>
+    {text}
+  </span>
+);
 
-const VALUE: React.CSSProperties = {
-  fontSize: '0.9rem',
-  fontWeight: 500,
-  color: 'var(--text-primary)',
-};
-
-function PropRow({ label, children }: { label: string; children: React.ReactNode }) {
+function PropertyRow({ label, children }: { label: string; children: React.ReactNode }) {
   return (
-    <div style={{ padding: '10px 0', borderBottom: '1px solid var(--border-secondary)' }}>
-      <dt style={LABEL}>{label}</dt>
-      <dd style={{ ...VALUE, margin: 0 }}>{children}</dd>
+    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 0', borderBottom: '1px solid var(--border-secondary)' }}>
+      <span style={{ fontSize: '0.8125rem', color: 'var(--text-secondary)', fontWeight: 500 }}>{label}</span>
+      <span style={{ fontSize: '0.875rem', color: 'var(--text-primary)', fontWeight: 500, textAlign: 'right' }}>{children}</span>
     </div>
   );
 }
-
-type TabKey = 'overview' | 'tasks';
 
 export default function ProjectDetailPage() {
   const { id } = useParams<{ id: string }>();
@@ -94,121 +78,101 @@ export default function ProjectDetailPage() {
       dataIndex: 'stage',
       key: 'stage',
       width: 120,
-      render: (s: string) => <Tag color={stageColor[s] ?? 'default'} style={{ borderRadius: 9999 }}>{s}</Tag>,
+      render: (s: string) => <Tag color={stageColor[s] ?? 'default'}>{s}</Tag>,
     },
     {
       title: 'Priority',
       dataIndex: 'priority',
       key: 'priority',
       width: 110,
-      render: (p: string) => <Tag color={priorityColor[p] ?? 'default'} style={{ borderRadius: 9999 }}>{p}</Tag>,
+      render: (p: string) => <Tag color={priorityColor[p] ?? 'default'}>{p}</Tag>,
     },
     {
       title: 'Type',
       dataIndex: 'taskType',
       key: 'taskType',
       width: 100,
-      render: (v: string | undefined) => v ? <Tag style={{ borderRadius: 9999 }}>{v}</Tag> : <EmptyDash />,
+      render: (v: string | undefined) => v ? <Tag>{v}</Tag> : <EmptyDash />,
     },
   ];
 
-  const statusProgress: Record<string, number> = {
-    Planning: 10,
-    Active: 50,
-    Frozen: 50,
-    Completed: 90,
-    Archived: 100,
-  };
-  const progress = statusProgress[project.status] ?? 0;
-
   return (
-    <div>
-      {/* ── Project Header Card ──────────────────────────── */}
-      <div className="ios-card" style={{ padding: 24, marginBottom: 24 }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+    <div style={{ maxWidth: 1280, margin: '0 auto' }}>
+      {/* Back link */}
+      <Link to="/projects" style={{ display: 'inline-flex', alignItems: 'center', gap: 6, color: 'var(--text-secondary)', marginBottom: 20, fontSize: 13, fontWeight: 500 }}>
+        <ArrowLeftOutlined /> Back to Projects
+      </Link>
+
+      {/* === Project Header Card === */}
+      <div className="ios-card" style={{ padding: '24px', marginBottom: 24 }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: 12 }}>
           <div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 6 }}>
-              <Tag color={statusColor[project.status] ?? 'blue'} style={{ fontSize: 12, borderRadius: 9999, padding: '2px 12px' }}>
-                {project.status}
-              </Tag>
-              <Space size={4}>
-                {nextStatuses.map((s) => (
-                  <Button
-                    key={s}
-                    size="small"
-                    loading={statusMutation.isPending}
-                    onClick={() => statusMutation.mutate(s)}
-                    style={{ borderColor: 'var(--border-primary)', color: 'var(--text-secondary)', borderRadius: 9999, fontSize: 12 }}
-                  >
-                    → {s}
-                  </Button>
-                ))}
-              </Space>
-            </div>
-            <h1 style={{
-              fontFamily: "'Sora', sans-serif",
-              fontSize: '1.5rem',
-              fontWeight: 700,
-              color: 'var(--text-primary)',
-              margin: 0,
-              letterSpacing: '-0.02em',
-            }}>
+            <h1 style={{ fontFamily: 'var(--font-display)', fontSize: '1.5rem', fontWeight: 700, color: 'var(--text-primary)', margin: 0, letterSpacing: '-0.02em' }}>
               {project.name}
             </h1>
-            {project.description && (
-              <p style={{ color: 'var(--text-secondary)', fontSize: 14, marginTop: 4 }}>{project.description}</p>
-            )}
+            <p style={{ fontSize: '0.9rem', color: 'var(--text-secondary)', marginTop: 4 }}>
+              {project.description ?? 'No description'}
+            </p>
           </div>
+          <Space size={8} wrap>
+            <Tag color={statusColor[project.status] ?? 'blue'} style={{ fontSize: 13, padding: '3px 14px', borderRadius: 9999 }}>
+              {project.status}
+            </Tag>
+            {nextStatuses.map((s) => (
+              <Button
+                key={s}
+                size="small"
+                loading={statusMutation.isPending}
+                onClick={() => statusMutation.mutate(s)}
+                style={{ borderRadius: 9999, fontWeight: 500, borderColor: 'var(--border-primary)', color: 'var(--text-secondary)' }}
+              >
+                → {s}
+              </Button>
+            ))}
+          </Space>
         </div>
 
-        {/* Progress Bar */}
-        <div style={{ marginTop: 20 }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 6 }}>
-            <span style={{ fontSize: 12, color: 'var(--text-muted)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.04em' }}>Progress</span>
-            <span style={{ fontSize: 12, color: 'var(--text-secondary)', fontWeight: 600 }}>{progress}%</span>
-          </div>
-          <div style={{ height: 6, background: 'var(--bg-deep)', borderRadius: 3, overflow: 'hidden' }}>
-            <div style={{
-              height: '100%',
-              width: `${progress}%`,
-              background: 'var(--brand-green)',
-              borderRadius: 3,
-              transition: 'width 500ms cubic-bezier(0.16, 1, 0.3, 1)',
-            }} />
-          </div>
-        </div>
-
-        {/* Meta Stats Row */}
-        <div style={{ display: 'flex', gap: 24, marginTop: 16 }}>
-          <div style={{
-            background: 'var(--bg-deep)', borderRadius: 10, padding: '10px 18px',
-            border: '1px solid var(--border-secondary)', flex: 1, textAlign: 'center',
-          }}>
-            <div style={{ fontSize: 11, color: 'var(--text-muted)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.04em' }}>Tasks</div>
-            <div style={{ fontFamily: 'var(--font-mono)', fontSize: '1.25rem', fontWeight: 700, color: 'var(--text-primary)' }}>{taskCount}</div>
-          </div>
-          <div style={{
-            background: 'var(--bg-deep)', borderRadius: 10, padding: '10px 18px',
-            border: '1px solid var(--border-secondary)', flex: 1, textAlign: 'center',
-          }}>
-            <div style={{ fontSize: 11, color: 'var(--text-muted)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.04em' }}>Platform</div>
-            <div style={{ fontSize: '0.9rem', fontWeight: 600, color: 'var(--text-primary)', marginTop: 2 }}>{project.vehicle_platform ?? '—'}</div>
-          </div>
-          <div style={{
-            background: 'var(--bg-deep)', borderRadius: 10, padding: '10px 18px',
-            border: '1px solid var(--border-secondary)', flex: 1, textAlign: 'center',
-          }}>
-            <div style={{ fontSize: 11, color: 'var(--text-muted)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.04em' }}>Mileage Target</div>
-            <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.9rem', fontWeight: 600, color: 'var(--text-primary)', marginTop: 2 }}>
-              {project.target_mileage_km != null ? `${project.target_mileage_km.toLocaleString()} km` : '—'}
+        {/* Progress bar */}
+        {taskCount > 0 && (
+          <div style={{ marginTop: 20 }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 6 }}>
+              <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', fontWeight: 500 }}>Progress</span>
+              <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', fontWeight: 500 }}>
+                {tasks?.filter((t) => t.stage === 'GoLive' || t.stage === 'done').length ?? 0} / {taskCount} completed
+              </span>
             </div>
+            <div style={{ height: 6, background: 'var(--bg-hover)', borderRadius: 3, overflow: 'hidden' }}>
+              <div
+                style={{
+                  height: '100%',
+                  width: `${((tasks?.filter((t) => t.stage === 'GoLive' || t.stage === 'done').length ?? 0) / taskCount) * 100}%`,
+                  background: 'var(--brand-green)',
+                  borderRadius: 3,
+                  transition: 'width 0.3s ease',
+                }}
+              />
+            </div>
+          </div>
+        )}
+
+        {/* Stats row */}
+        <div style={{ display: 'flex', gap: 32, marginTop: 20, paddingTop: 16, borderTop: '1px solid var(--border-secondary)' }}>
+          <div>
+            <div style={{ fontSize: '1.5rem', fontWeight: 700, fontFamily: 'var(--font-display)', color: 'var(--text-primary)' }}>{taskCount}</div>
+            <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', fontWeight: 500 }}>Tasks</div>
+          </div>
+          <div>
+            <div style={{ fontSize: '1.5rem', fontWeight: 700, fontFamily: 'var(--font-display)', color: 'var(--text-primary)' }}>
+              {project.target_mileage_km != null ? project.target_mileage_km.toLocaleString() : '—'}
+            </div>
+            <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', fontWeight: 500 }}>Target KM</div>
           </div>
         </div>
       </div>
 
-      {/* ── Tab Navigation ───────────────────────────────── */}
-      <div style={{ display: 'flex', gap: 4, marginBottom: 20 }}>
-        {(['overview', 'tasks'] as TabKey[]).map((tab) => (
+      {/* === Internal Tab Navigation === */}
+      <div style={{ display: 'flex', gap: 4, marginBottom: 24 }}>
+        {(['overview', 'tasks'] as const).map((tab) => (
           <button
             key={tab}
             className={`secondary-tab ${activeTab === tab ? 'active' : ''}`}
@@ -219,51 +183,76 @@ export default function ProjectDetailPage() {
         ))}
       </div>
 
-      {/* ── Tab Content ──────────────────────────────────── */}
+      {/* === Tab Content === */}
       {activeTab === 'overview' && (
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 20 }}>
-          <div className="ios-card" style={{ padding: 20 }}>
-            <span style={SECTION_TITLE}>Project Details</span>
-            <dl style={{ margin: 0 }}>
-              <PropRow label="Status">
-                <Tag color={statusColor[project.status] ?? 'blue'} style={{ borderRadius: 9999 }}>{project.status}</Tag>
-              </PropRow>
-              <PropRow label="Vehicle Platform">{project.vehicle_platform ?? '—'}</PropRow>
-              <PropRow label="SoC Architecture">{project.soc_architecture ?? '—'}</PropRow>
-              <PropRow label="Sensor Suite">{project.sensor_suite_version ?? '—'}</PropRow>
-              <PropRow label="SW Baseline">{project.software_baseline_version ?? '—'}</PropRow>
-            </dl>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 380px', gap: 24, alignItems: 'start' }}>
+          {/* Left: Tasks preview */}
+          <div className="ios-card" style={{ overflow: 'hidden' }}>
+            <div style={{ padding: '16px 24px', borderBottom: '1px solid var(--border-secondary)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              {sectionTitle('Tasks')}
+              <button
+                onClick={() => setActiveTab('tasks')}
+                style={{ background: 'none', border: 'none', color: 'var(--brand-green)', fontSize: 13, fontWeight: 500, cursor: 'pointer' }}
+              >
+                View All
+              </button>
+            </div>
+            <Table
+              columns={taskColumns}
+              dataSource={tasks?.slice(0, 5)}
+              rowKey="id"
+              pagination={false}
+              locale={{ emptyText: <Empty description="No tasks for this project yet" /> }}
+            />
           </div>
 
-          <div className="ios-card" style={{ padding: 20 }}>
-            <span style={SECTION_TITLE}>Timeline</span>
-            <dl style={{ margin: 0 }}>
-              <PropRow label="Target Mileage">
+          {/* Right: Details */}
+          <div className="ios-card" style={{ padding: '20px 24px' }}>
+            {sectionTitle('Details')}
+            <div style={{ marginTop: 12 }}>
+              <PropertyRow label="Status">
+                <Tag color={statusColor[project.status] ?? 'blue'} style={{ margin: 0 }}>{project.status}</Tag>
+              </PropertyRow>
+              <PropertyRow label="Vehicle Platform">
+                {project.vehicle_platform ?? <EmptyDash />}
+              </PropertyRow>
+              <PropertyRow label="SoC Architecture">
+                {project.soc_architecture ?? <EmptyDash />}
+              </PropertyRow>
+              <PropertyRow label="Sensor Suite">
+                {project.sensor_suite_version ?? <EmptyDash />}
+              </PropertyRow>
+              <PropertyRow label="SW Baseline">
+                {project.software_baseline_version ?? <EmptyDash />}
+              </PropertyRow>
+              <PropertyRow label="Target Mileage">
                 {project.target_mileage_km != null
                   ? `${project.target_mileage_km.toLocaleString()} km`
-                  : '—'}
-              </PropRow>
-              <PropRow label="Start Date">
+                  : <EmptyDash />}
+              </PropertyRow>
+              <PropertyRow label="Start Date">
                 {project.start_date
                   ? new Date(project.start_date).toLocaleDateString()
-                  : '—'}
-              </PropRow>
-              <PropRow label="Created">
+                  : <EmptyDash />}
+              </PropertyRow>
+              <PropertyRow label="Created">
                 {new Date(project.createdAt).toLocaleString()}
-              </PropRow>
-              <PropRow label="Last Updated">
-                {new Date(project.updatedAt).toLocaleString()}
-              </PropRow>
-            </dl>
+              </PropertyRow>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 0' }}>
+                <span style={{ fontSize: '0.8125rem', color: 'var(--text-secondary)', fontWeight: 500 }}>Last Updated</span>
+                <span style={{ fontSize: '0.875rem', color: 'var(--text-primary)', fontWeight: 500 }}>
+                  {new Date(project.updatedAt).toLocaleString()}
+                </span>
+              </div>
+            </div>
           </div>
         </div>
       )}
 
       {activeTab === 'tasks' && (
         <div className="ios-card" style={{ overflow: 'hidden' }}>
-          <div style={{ padding: '16px 20px', borderBottom: '1px solid var(--border-secondary)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <span style={SECTION_TITLE}>Tasks</span>
-            <EntityLink to="/tasks" style={{ fontSize: 13, color: 'var(--ios-blue)' }}>View All</EntityLink>
+          <div style={{ padding: '16px 24px', borderBottom: '1px solid var(--border-secondary)' }}>
+            {sectionTitle('All Tasks')}
           </div>
           <Table
             columns={taskColumns}
