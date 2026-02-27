@@ -43,21 +43,23 @@
 
 /* Task Card */
 .ptc-task-card {
-  width: 340px;
+  width: 320px;
   border-radius: 14px;
-  background: #ECECEF;
+  background: #F6F6F8;
   border: 1px solid var(--border-secondary);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.06), 0 1px 2px rgba(0, 0, 0, 0.04);
   cursor: pointer;
   transition: transform 0.2s, box-shadow 0.2s, border-color 0.2s;
 }
 
 .ptc-task-card.draft {
-  background: #DDDDE0;
+  background: #E2E2E6;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08), 0 1px 2px rgba(0, 0, 0, 0.05);
 }
 
 .ptc-task-card:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.10);
+  transform: translateY(-3px);
+  box-shadow: 0 10px 28px rgba(0, 0, 0, 0.12), 0 4px 10px rgba(0, 0, 0, 0.06);
   border-color: var(--border-primary);
 }
 

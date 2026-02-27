@@ -30,9 +30,16 @@ function ProjectPanelContent({
     tasks = tasks.filter((t) => t.task_id === filters.task_id);
   }
 
+  const sorted = [...tasks].sort((a, b) => {
+    const aPub = a.binding_status === 'Published' ? 0 : 1;
+    const bPub = b.binding_status === 'Published' ? 0 : 1;
+    if (aPub !== bPub) return aPub - bPub;
+    return (a.name ?? '').localeCompare(b.name ?? '');
+  });
+
   return (
     <>
-      {tasks.map((t) => (
+      {sorted.map((t) => (
         <TaskCard key={t.task_id} task={t} onTaskClick={onTaskClick} />
       ))}
     </>
