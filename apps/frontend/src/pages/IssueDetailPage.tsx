@@ -2,7 +2,7 @@ import { useState, useMemo } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useParams, Link } from 'react-router-dom';
 import {
-  Tag, Timeline, Button, Input, Form, Modal,
+  Tag, Button, Input, Form, Modal,
   Space, Alert, Tooltip, Tabs, Empty,
 } from 'antd';
 import {
@@ -18,7 +18,7 @@ import {
   getIssueSnapshot, getIssueTimeSeries,
 } from '../api/client';
 import type { IssueTimeSeriesChannel } from '../api/client';
-import { statusColor as STATUS_COLOR, severityColor as SEVERITY_COLOR, transitionColor as TRANSITION_COLOR } from '../constants/colors';
+import { statusColor as STATUS_COLOR, severityColor as SEVERITY_COLOR } from '../constants/colors';
 import { FullPageSpinner } from '../components/shared';
 
 const TS_LINE_COLORS = ['#007AFF', '#34C759', '#FF9500', '#AF52DE', '#5AC8FA', '#FF3B30', '#FFCC00', '#6E6E73'];

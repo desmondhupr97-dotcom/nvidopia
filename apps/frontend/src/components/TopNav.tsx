@@ -76,11 +76,12 @@ export default function TopNav() {
           const isActive = activeGroup === group.key;
 
           if (group.items.length === 1) {
+            const item = group.items[0];
             return (
               <button
                 key={group.key}
                 className={`topnav-item${isActive ? ' active' : ''}`}
-                onClick={() => navigate(group.items[0].path)}
+                onClick={() => item && navigate(item.path)}
               >
                 {group.label}
               </button>

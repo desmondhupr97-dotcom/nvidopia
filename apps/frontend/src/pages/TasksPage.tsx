@@ -21,13 +21,6 @@ const PRIORITY_PILL_COLORS: Record<string, { bg: string; text: string }> = {
   Low: { bg: '#EFF6FF', text: '#2563EB' },
 };
 
-const STAGE_PILL_COLORS: Record<string, { bg: string; text: string }> = {
-  Pending: { bg: '#F3F4F6', text: '#6B7280' },
-  InProgress: { bg: '#FFFBEB', text: '#D97706' },
-  Completed: { bg: '#ECFDF5', text: '#059669' },
-  Cancelled: { bg: '#F3F4F6', text: '#9CA3AF' },
-};
-
 const TYPE_PILL_COLORS: Record<string, { bg: string; text: string }> = {
   Daily: { bg: '#E8F0FE', text: '#1A73E8' },
   Smoke: { bg: '#E0F7FA', text: '#0097A7' },
@@ -183,7 +176,7 @@ export default function TasksPage() {
     const groups: Record<string, Task[]> = {};
     for (const col of KANBAN_COLUMNS) groups[col.key] = [];
     for (const task of filtered ?? []) {
-      const bucket = groups[task.stage] ?? groups['Pending'];
+      const bucket = (groups[task.stage] ?? groups['Pending'])!;
       bucket.push(task);
     }
     return groups;
