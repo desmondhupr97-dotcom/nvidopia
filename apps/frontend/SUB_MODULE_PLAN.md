@@ -25,18 +25,18 @@
 | FE-11 | Issue 详情页时序图表（多通道、多变量） | P0 | Not Started |
 | FE-12 | 自定义 KPI 看板（定义构建器 + 多图表渲染器） | P0 | Not Started |
 | FE-13 | Schema 字段自动同步选择器 | P1 | Not Started |
-| FE-14 | PTC 导航与路由（TopNav 新增 PTC 组、SecondaryTabs Binding/KPI、/ptc/* 路由） | P0 | Not Started |
-| FE-15 | PTC Binding 总览页骨架（PtcBindingPage 容器组件） | P0 | Not Started |
-| FE-16 | PTC 筛选栏组件（FilterBar：Project/Task/Car/Build/Tag/Drive 模糊搜索） | P0 | Not Started |
-| FE-17 | Project 折叠列表组件（ProjectCollapseList：Ant Collapse，渐进式加载） | P0 | Not Started |
-| FE-18 | Task 毛玻璃卡片组件（TaskCard：时间线、里程面积图、统计行、编辑时间） | P0 | Not Started |
-| FE-19 | Task 详情弹窗（TaskDetailModal：毛玻璃 + 背景虚化，car/drive 表格，查看/编辑双模式） | P0 | Not Started |
-| FE-20 | Drive 筛选弹窗（DriveSelectionPopup：搜索、复选框、取消勾选理由表单） | P0 | Not Started |
-| FE-21 | 新增 Project/Task 弹窗（AddProjectTaskModal：AutoComplete 模糊匹配 + 从属关系逻辑） | P0 | Not Started |
-| FE-22 | Add Binding 工作流（BindingConfigModal：Build/Car/Tag 筛选条件、car 勾选、Draft/Publish） | P0 | Not Started |
-| FE-23 | Edit/Delete Binding 工作流（复用 TaskDetailModal 编辑模式 + 删除确认） | P0 | Not Started |
-| FE-24 | PTC KPI 基础页（PtcKpiPage：Published Binding 聚合指标、Recharts 图表） | P1 | Not Started |
-| FE-25 | PTC TanStack Query Hooks（usePtcApi.ts：全部 PTC 端点 hooks + cache 策略） | P0 | Not Started |
+| FE-14 | PTC 导航与路由（TopNav 新增 PTC 组、SecondaryTabs Binding/KPI、/ptc/* 路由） | P0 | Done |
+| FE-15 | PTC Binding 总览页骨架（PtcBindingPage 容器组件） | P0 | Done |
+| FE-16 | PTC 筛选栏组件（FilterBar：Project/Task/Car/Build/Tag/Drive 模糊搜索） | P0 | Done |
+| FE-17 | Project 折叠列表组件（ProjectCollapseList：Ant Collapse，渐进式加载） | P0 | Done |
+| FE-18 | Task 毛玻璃卡片组件（TaskCard：时间线、里程面积图、统计行、编辑时间） | P0 | Done |
+| FE-19 | Task 详情弹窗（TaskDetailModal：毛玻璃 + 背景虚化，car/drive 表格，查看/编辑双模式） | P0 | Done |
+| FE-20 | Drive 筛选弹窗（DriveSelectionPopup：搜索、复选框、取消勾选理由表单） | P0 | Done |
+| FE-21 | 新增 Project/Task 弹窗（AddProjectTaskModal：AutoComplete 模糊匹配 + 从属关系逻辑） | P0 | Done |
+| FE-22 | Add Binding 工作流（BindingConfigModal：Build/Car/Tag 筛选条件、car 勾选、Draft/Publish） | P0 | Done |
+| FE-23 | Edit/Delete Binding 工作流（复用 TaskDetailModal 编辑模式 + 删除确认） | P0 | Done |
+| FE-24 | PTC KPI 基础页（PtcKpiPage：Published Binding 聚合指标、Recharts 图表） | P1 | Done |
+| FE-25 | PTC TanStack Query Hooks（usePtcApi.ts：全部 PTC 端点 hooks + cache 策略） | P0 | Done |
 
 ## 数据与接口契约
 
@@ -61,19 +61,19 @@
 | 实现时序图表组件（多通道、多变量） | Not Started |
 | 实现 Schema 字段自动同步选择器 | Not Started |
 | 更新 normalize 函数适配新数据结构 | Not Started |
-| 新增 PTC 导航入口与路由配置 | Not Started |
-| 实现 PtcBindingPage 容器组件 | Not Started |
-| 实现 FilterBar 筛选栏组件 | Not Started |
-| 实现 ProjectCollapseList 折叠列表 | Not Started |
-| 实现 TaskCard 毛玻璃卡片（含 Recharts 迷你面积图） | Not Started |
-| 实现 TaskDetailModal 详情弹窗（查看 + 编辑双模式） | Not Started |
-| 实现 DriveSelectionPopup 弹窗（搜索 + 复选框 + 理由表单） | Not Started |
-| 实现 AddProjectTaskModal 弹窗 | Not Started |
-| 实现 BindingConfigModal（Add Binding 工作流） | Not Started |
-| 实现 Edit/Delete Binding 工作流 | Not Started |
-| 实现 PtcKpiPage 基础页 | Not Started |
-| 实现 usePtcApi.ts TanStack Query hooks | Not Started |
-| 编写 ptc.css 毛玻璃与自定义样式 | Not Started |
+| 新增 PTC 导航入口与路由配置 | Done |
+| 实现 PtcBindingPage 容器组件 | Done |
+| 实现 FilterBar 筛选栏组件 | Done |
+| 实现 ProjectCollapseList 折叠列表 | Done |
+| 实现 TaskCard 毛玻璃卡片（含 Recharts 迷你面积图） | Done |
+| 实现 TaskDetailModal 详情弹窗（查看 + 编辑双模式） | Done |
+| 实现 DriveSelectionPopup 弹窗（搜索 + 复选框 + 理由表单） | Done |
+| 实现 AddProjectTaskModal 弹窗 | Done |
+| 实现 BindingConfigModal（Add Binding 工作流） | Done |
+| 实现 Edit/Delete Binding 工作流 | Done |
+| 实现 PtcKpiPage 基础页 | Done |
+| 实现 usePtcApi.ts TanStack Query hooks | Done |
+| 编写 ptc.css 毛玻璃与自定义样式 | Done |
 
 ## 测试策略与验收标准
 

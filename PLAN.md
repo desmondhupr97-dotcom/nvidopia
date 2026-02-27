@@ -37,7 +37,7 @@
 | 可观测性 | [platform/observability/SUB_MODULE_PLAN.md](platform/observability/SUB_MODULE_PLAN.md) | Done | - |
 | 契约管理 | [contracts/SUB_MODULE_PLAN.md](contracts/SUB_MODULE_PLAN.md) | Done | - |
 | 基础设施 | [infra/SUB_MODULE_PLAN.md](infra/SUB_MODULE_PLAN.md) | Done | - |
-| PTC 服务 | [services/ptc-service/SUB_MODULE_PLAN.md](services/ptc-service/SUB_MODULE_PLAN.md) | M6 Not Started | - |
+| PTC 服务 | [services/ptc-service/SUB_MODULE_PLAN.md](services/ptc-service/SUB_MODULE_PLAN.md) | M6 Done | - |
 | 文档中心 | [docs/SUB_MODULE_PLAN.md](docs/SUB_MODULE_PLAN.md) | M5 InProgress | - |
 
 ## 4. 跨模块接口冻结点与联调窗口
@@ -87,15 +87,15 @@
 - [ ] E2E Smoke 测试新增步骤通过
 
 ### M6 验收
-- [ ] ptc-service 可独立启动并通过健康检查
-- [ ] 7 个 PTC 数据模型 Schema 通过 Mongoose 验证
-- [ ] Mock 种子数据可一键导入（5-10 Project，50-100 Task，500+ Drive）
-- [ ] BFF 网关 /api/ptc/* 代理路由正常转发
-- [ ] 前端 PTC 导航与路由可达（Binding 总览页 + PTC KPI 页）
-- [ ] Binding 总览页渐进式加载：Project 折叠 -> Task 卡片 -> Binding 详情弹窗
-- [ ] Add/Edit/Delete Binding 工作流完整可用
-- [ ] Drive 筛选弹窗可搜索、勾选/取消勾选（含理由保存与展示）
-- [ ] PTC KPI 基础页按 Published Binding 聚合展示
+- [x] ptc-service 可独立启动并通过健康检查
+- [x] 7 个 PTC 数据模型 Schema 通过 Mongoose 验证
+- [x] Mock 种子数据可一键导入（5-10 Project，50-100 Task，500+ Drive）
+- [x] BFF 网关 /api/ptc/* 代理路由正常转发
+- [x] 前端 PTC 导航与路由可达（Binding 总览页 + PTC KPI 页）
+- [x] Binding 总览页渐进式加载：Project 折叠 -> Task 卡片 -> Binding 详情弹窗
+- [x] Add/Edit/Delete Binding 工作流完整可用
+- [x] Drive 筛选弹窗可搜索、勾选/取消勾选（含理由保存与展示）
+- [x] PTC KPI 基础页按 Published Binding 聚合展示
 
 ## 6. Git 提交与推送策略
 

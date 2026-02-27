@@ -14,14 +14,14 @@ PTC（Project-Task-Car）绑定管理服务。管理 PTC 专属的 Project/Task 
 
 | ID | 功能 | 优先级 | 状态 |
 |----|------|--------|------|
-| PTC-01 | PTC Project CRUD（创建、模糊搜索、更新、删除级联） | P0 | Not Started |
-| PTC-02 | PTC Task CRUD（创建、模糊搜索、从属关系变更、删除级联） | P0 | Not Started |
-| PTC-03 | PTC Binding CRUD（创建、查询、更新 car/drive、状态变更 Draft/Published、删除） | P0 | Not Started |
-| PTC-04 | Drive 筛选与绑定管理（复合条件筛选、drive 勾选/取消勾选、保存理由） | P0 | Not Started |
-| PTC-05 | 爬取数据只读查询（Build/Car/Tag/Drive 列表 + 模糊搜索 + 筛选） | P0 | Not Started |
-| PTC-06 | Binding 总览聚合（Project 维度摘要 + Task 维度详情，支持渐进式加载） | P0 | Not Started |
-| PTC-07 | Mock 数据种子脚本（中等规模：5-10 Project、50-100 Task、20 Build、30 Car、10 Tag、500+ Drive） | P1 | Not Started |
-| PTC-08 | 健康检查端点（/health） | P0 | Not Started |
+| PTC-01 | PTC Project CRUD（创建、模糊搜索、更新、删除级联） | P0 | Done |
+| PTC-02 | PTC Task CRUD（创建、模糊搜索、从属关系变更、删除级联） | P0 | Done |
+| PTC-03 | PTC Binding CRUD（创建、查询、更新 car/drive、状态变更 Draft/Published、删除） | P0 | Done |
+| PTC-04 | Drive 筛选与绑定管理（复合条件筛选、drive 勾选/取消勾选、保存理由） | P0 | Done |
+| PTC-05 | 爬取数据只读查询（Build/Car/Tag/Drive 列表 + 模糊搜索 + 筛选） | P0 | Done |
+| PTC-06 | Binding 总览聚合（Project 维度摘要 + Task 维度详情，支持渐进式加载） | P0 | Done |
+| PTC-07 | Mock 数据种子脚本（中等规模：5-10 Project、50-100 Task、20 Build、30 Car、10 Tag、500+ Drive） | P1 | Done |
+| PTC-08 | 健康检查端点（/health） | P0 | Done |
 
 ## 数据与接口契约
 
@@ -34,15 +34,15 @@ PTC（Project-Task-Car）绑定管理服务。管理 PTC 专属的 Project/Task 
 
 | 任务 | 状态 |
 |------|------|
-| 初始化 Node.js 微服务项目（package.json, tsconfig, Express） | Not Started |
-| 实现 PTC Project CRUD API | Not Started |
-| 实现 PTC Task CRUD API（含从属关系逻辑） | Not Started |
-| 实现 PTC Binding CRUD API（含状态机） | Not Started |
-| 实现 Drive 筛选与绑定管理 API | Not Started |
-| 实现 Build/Car/Tag/Drive 只读查询 API | Not Started |
-| 实现 Binding 总览聚合 API（渐进式加载） | Not Started |
-| 编写 Mock 数据种子脚本 | Not Started |
-| 实现 /health 健康检查端点 | Not Started |
+| 初始化 Node.js 微服务项目（package.json, tsconfig, Express） | Done |
+| 实现 PTC Project CRUD API | Done |
+| 实现 PTC Task CRUD API（含从属关系逻辑） | Done |
+| 实现 PTC Binding CRUD API（含状态机） | Done |
+| 实现 Drive 筛选与绑定管理 API | Done |
+| 实现 Build/Car/Tag/Drive 只读查询 API | Done |
+| 实现 Binding 总览聚合 API（渐进式加载） | Done |
+| 编写 Mock 数据种子脚本 | Done |
+| 实现 /health 健康检查端点 | Done |
 
 ## 测试策略与验收标准
 

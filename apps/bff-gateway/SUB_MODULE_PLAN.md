@@ -23,7 +23,7 @@ API 网关 / BFF（Backend-for-Frontend）层。统一接收前端请求与车�
 | GW-09 | Schema 注册表代理路由（转发至 kpi-engine） | P0 | Not Started |
 | GW-10 | Issue 快照/时序数据代理路由（转发至 issue-workflow） | P0 | Not Started |
 | GW-11 | 自定义 KPI 代理路由（转发至 kpi-engine） | P0 | Not Started |
-| GW-12 | PTC 代理路由（/api/ptc/* 转发至 ptc-service:3007） | P0 | Not Started |
+| GW-12 | PTC 代理路由（/api/ptc/* 转发至 ptc-service:3007） | P0 | Done |
 
 ## 数据与接口契约
 
@@ -45,7 +45,7 @@ API 网关 / BFF（Backend-for-Frontend）层。统一接收前端请求与车�
 | 配置 Schema 注册表代理路由转发 | Not Started |
 | 配置 Issue 快照/时序数据代理路由转发 | Not Started |
 | 配置自定义 KPI 代理路由转发 | Not Started |
-| 配置 PTC 代理路由转发（/api/ptc/* -> ptc-service:3007） | Not Started |
+| 配置 PTC 代理路由转发（/api/ptc/* -> ptc-service:3007） | Done |
 
 ## 测试策略与验收标准
 

@@ -18,7 +18,7 @@
 | IF-04 | 环境变量模板（.env.example） | P0 | Not Started |
 | IF-05 | CI 流水线配置（GitHub Actions：lint/test/build） | P1 | Not Started |
 | IF-06 | 镜像构建与推送脚本 | P2 | Not Started |
-| IF-07 | ptc-service 容器编排（Docker Compose + Dockerfile + Cloud Run 集成） | P0 | Not Started |
+| IF-07 | ptc-service 容器编排（Docker Compose + Dockerfile + Cloud Run 集成） | P0 | Done |
 
 ## 数据与接口契约
 
@@ -39,9 +39,9 @@
 | 编写全栈 Docker Compose | Not Started |
 | 编写 .env.example | Not Started |
 | 编写 GitHub Actions CI 配置 | Not Started |
-| 添加 ptc-service 到 docker-compose.full.yml | Not Started |
-| 更新 Dockerfile 包含 ptc-service | Not Started |
-| 更新 start-all.sh 启动 ptc-service | Not Started |
+| 添加 ptc-service 到 docker-compose.full.yml | Done |
+| 更新 Dockerfile 包含 ptc-service | Done |
+| 更新 start-all.sh 启动 ptc-service | Done |
 
 ## 测试策略与验收标准
 
