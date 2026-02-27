@@ -1,5 +1,5 @@
 import { Router, type Request, type Response } from 'express';
-import { PtcBuild, PtcCar, PtcTag, PtcDrive } from '@nvidopia/data-models';
+import { PtcBuild, PtcCar, PtcTag, PtcDrive, PtcProject, PtcTask, PtcBinding } from '@nvidopia/data-models';
 import { asyncHandler } from '@nvidopia/service-toolkit';
 
 const router = Router();
@@ -148,7 +148,6 @@ router.post('/seed', asyncHandler(async (_req: Request, res: Response) => {
   const tags = TAG_NAMES.map((name, i) => ({ tag_id: `tag-${String(i+1).padStart(3,'0')}`, name }));
   await PtcTag.insertMany(tags);
 
-  const { PtcProject, PtcTask, PtcBinding } = await import('@nvidopia/data-models');
   const projects = await PtcProject.find().lean();
 
   const allDrives: Array<Record<string,unknown>> = [];
