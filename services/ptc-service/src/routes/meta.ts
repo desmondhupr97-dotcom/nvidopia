@@ -111,11 +111,19 @@ router.get('/drives/filter', asyncHandler(async (req: Request, res: Response) =>
   })));
 }));
 
-router.post('/seed', asyncHandler(async (_req: Request, res: Response) => {
+router.post('/seed', asyncHandler(async (req: Request, res: Response) => {
+  const force = req.query.force === 'true';
   const existingBuilds = await PtcBuild.countDocuments();
-  if (existingBuilds > 0) {
+  if (existingBuilds > 0 && !force) {
     res.json({ message: 'Already seeded', builds: existingBuilds });
     return;
+  }
+  if (force) {
+    await Promise.all([
+      PtcBuild.deleteMany({}), PtcCar.deleteMany({}), PtcTag.deleteMany({}),
+      PtcDrive.deleteMany({}), PtcBinding.deleteMany({}), PtcTask.deleteMany({}),
+      PtcProject.deleteMany({}),
+    ]);
   }
 
   function randomInt(min: number, max: number) {
@@ -168,7 +176,7 @@ router.post('/seed', asyncHandler(async (_req: Request, res: Response) => {
           name: taskName,
         });
       }
-      const driveCount = randomInt(30, 60);
+      const driveCount = randomInt(15, 30);
       const tBuilds = [pick(builds), pick(builds)];
       const tTags = [pick(tags), pick(tags)];
       const tCars = Array.from({ length: randomInt(3, 6) }, () => pick(cars));
