@@ -5,6 +5,7 @@ import type { PtcTaskSummary } from '../../api/client';
 interface TaskCardProps {
   task: PtcTaskSummary;
   onTaskClick: (taskId: string) => void;
+  maxDays?: number;
 }
 
 function formatDate(d: string | null) {
@@ -18,18 +19,18 @@ function daysBetween(a: string, b: string) {
   return Math.max(1, Math.round(ms / 86400000));
 }
 
-export default function TaskCard({ task, onTaskClick }: TaskCardProps) {
+export { daysBetween };
+
+export default function TaskCard({ task, onTaskClick, maxDays = 0 }: TaskCardProps) {
   const start = task.start_date ?? null;
   const end = task.end_date ?? null;
   const hasRange = start && end;
   const isDraft = task.binding_status !== 'Published';
 
   const totalDays = hasRange ? daysBetween(start, end) : 0;
-  const now = new Date();
-  const elapsed = hasRange
-    ? Math.max(0, Math.min(totalDays, daysBetween(start, now.toISOString())))
-    : 0;
-  const progressPct = totalDays > 0 ? Math.min(100, Math.round((elapsed / totalDays) * 100)) : 0;
+  const barWidthPct = maxDays > 0 && totalDays > 0
+    ? Math.max(15, Math.round((totalDays / maxDays) * 100))
+    : 100;
 
   const chartData = (task.daily_mileage ?? []).map((d) => ({
     date: d.date,
@@ -52,7 +53,7 @@ export default function TaskCard({ task, onTaskClick }: TaskCardProps) {
           <div className="ptc-task-card-timeline">
             <div
               className="ptc-task-card-timeline-bar"
-              style={{ width: `${progressPct}%` }}
+              style={{ width: `${barWidthPct}%` }}
             />
           </div>
         </div>

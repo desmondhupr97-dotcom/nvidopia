@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Collapse, Spin } from 'antd';
 import { usePtcOverviewProject } from '../../hooks/usePtcApi';
-import TaskCard from './TaskCard';
+import TaskCard, { daysBetween } from './TaskCard';
 
 interface ProjectCollapseListProps {
   projects: Array<{ project_id: string; name: string; task_count?: number }>;
@@ -37,10 +37,17 @@ function ProjectPanelContent({
     return (a.name ?? '').localeCompare(b.name ?? '');
   });
 
+  const maxDays = sorted.reduce((max, t) => {
+    if (t.start_date && t.end_date) {
+      return Math.max(max, daysBetween(t.start_date, t.end_date));
+    }
+    return max;
+  }, 1);
+
   return (
     <div style={{ display: 'flex', flexDirection: 'row', flexWrap: 'wrap', gap: 16, alignItems: 'flex-start' }}>
       {sorted.map((t) => (
-        <TaskCard key={t.task_id} task={t} onTaskClick={onTaskClick} />
+        <TaskCard key={t.task_id} task={t} onTaskClick={onTaskClick} maxDays={maxDays} />
       ))}
     </div>
   );
