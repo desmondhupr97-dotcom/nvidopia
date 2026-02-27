@@ -1,6 +1,6 @@
 node_modules
+**/node_modules
 **/dist
-!apps/frontend/dist
 build
 .git
 .gitignore
@@ -16,3 +16,6 @@ coverage
 *.tgz
 .DS_Store
 FRONTEND_VERIFICATION_REPORT.md
+*.md
+!README.md
+agent-transcripts

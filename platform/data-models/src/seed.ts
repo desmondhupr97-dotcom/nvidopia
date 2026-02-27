@@ -21,6 +21,13 @@ import { IssueTimeSeries } from './issue-timeseries.model.js';
 import { KpiDefinition } from './kpi-definition.model.js';
 import { VehicleTrajectory } from './vehicle-trajectory.model.js';
 import { VehicleStatusSegment } from './vehicle-status-segment.model.js';
+import { PtcProject } from './ptc-project.model.js';
+import { PtcTask } from './ptc-task.model.js';
+import { PtcBinding } from './ptc-binding.model.js';
+import { PtcBuild } from './ptc-build.model.js';
+import { PtcCar } from './ptc-car.model.js';
+import { PtcTag } from './ptc-tag.model.js';
+import { PtcDrive } from './ptc-drive.model.js';
 
 const MONGO_URI =
   process.env.MONGO_URI ??
@@ -41,6 +48,7 @@ async function seed(): Promise<void> {
     'projects', 'tasks', 'runs', 'issues', 'issuestatetransitions',
     'requirements', 'commits', 'builds', 'vehicles', 'kpisnapshots',
     'issuetimeseries', 'kpidefinitions', 'vehicletrajectories', 'vehiclestatussegments',
+    'ptc_projects', 'ptc_tasks', 'ptc_bindings', 'ptc_builds', 'ptc_cars', 'ptc_tags', 'ptc_drives',
   ];
   for (const name of collections) {
     try { await mongoose.connection.db!.dropCollection(name); } catch { /* may not exist */ }
@@ -574,6 +582,168 @@ async function seed(): Promise<void> {
   await VehicleStatusSegment.insertMany(statusSegments);
   console.log(`[seed] Inserted ${statusSegments.length} status segments`);
 
+  // -------------------------------------------------------------------------
+  // PTC — Projects, Tasks, Builds, Cars, Tags, Drives, Bindings
+  // -------------------------------------------------------------------------
+
+  const ptcProjects = await PtcProject.insertMany([
+    { project_id: 'PTC-PROJ-001', name: 'V2.0 Urban Pilot PTC' },
+    { project_id: 'PTC-PROJ-002', name: 'V1.5 Highway Assist PTC' },
+    { project_id: 'PTC-PROJ-003', name: 'V3.0 City Cruise PTC' },
+  ]);
+  console.log(`[seed] Inserted ${ptcProjects.length} PTC projects`);
+
+  const ptcTasks = await PtcTask.insertMany([
+    { task_id: 'PTC-TASK-001', project_id: 'PTC-PROJ-001', name: 'Urban Regression Week 12', start_date: daysAgo(14), end_date: daysAgo(7) },
+    { task_id: 'PTC-TASK-002', project_id: 'PTC-PROJ-001', name: 'Urban Corner Case Validation', start_date: daysAgo(7), end_date: daysAgo(0) },
+    { task_id: 'PTC-TASK-003', project_id: 'PTC-PROJ-002', name: 'Highway Night Test Campaign', start_date: daysAgo(21), end_date: daysAgo(14) },
+    { task_id: 'PTC-TASK-004', project_id: 'PTC-PROJ-002', name: 'Highway Rain Condition Soak', start_date: daysAgo(10), end_date: daysAgo(3) },
+    { task_id: 'PTC-TASK-005', project_id: 'PTC-PROJ-003', name: 'City Cruise Alpha Test', start_date: daysAgo(5) },
+  ]);
+  console.log(`[seed] Inserted ${ptcTasks.length} PTC tasks`);
+
+  const ptcBuilds = await PtcBuild.insertMany([
+    { build_id: 'PTC-BLD-001', version_tag: 'v2.0.0-rc3-ptc', build_time: daysAgo(20) },
+    { build_id: 'PTC-BLD-002', version_tag: 'v2.0.0-rc4-ptc', build_time: daysAgo(12) },
+    { build_id: 'PTC-BLD-003', version_tag: 'v1.5.2-ptc', build_time: daysAgo(25) },
+    { build_id: 'PTC-BLD-004', version_tag: 'v3.0.0-alpha1', build_time: daysAgo(6) },
+  ]);
+  console.log(`[seed] Inserted ${ptcBuilds.length} PTC builds`);
+
+  const ptcCars = await PtcCar.insertMany([
+    { car_id: 'PTC-CAR-001', name: 'EP32-SH-001', vin: 'VIN-ORINX-001' },
+    { car_id: 'PTC-CAR-002', name: 'EP32-SH-002', vin: 'VIN-ORINX-002' },
+    { car_id: 'PTC-CAR-003', name: 'ES33-BJ-001', vin: 'VIN-ORIN-003' },
+    { car_id: 'PTC-CAR-004', name: 'ES33-BJ-002', vin: 'VIN-ORIN-004' },
+    { car_id: 'PTC-CAR-005', name: 'EP32-SH-003', vin: 'VIN-ORINX-005' },
+    { car_id: 'PTC-CAR-006', name: 'EP32-GZ-001' },
+  ]);
+  console.log(`[seed] Inserted ${ptcCars.length} PTC cars`);
+
+  const ptcTags = await PtcTag.insertMany([
+    { tag_id: 'PTC-TAG-001', name: 'Urban' },
+    { tag_id: 'PTC-TAG-002', name: 'Highway' },
+    { tag_id: 'PTC-TAG-003', name: 'Night' },
+    { tag_id: 'PTC-TAG-004', name: 'Rain' },
+    { tag_id: 'PTC-TAG-005', name: 'CornerCase' },
+  ]);
+  console.log(`[seed] Inserted ${ptcTags.length} PTC tags`);
+
+  const ptcDrivesData: any[] = [];
+  const ROUTES = ['浦东新区-陆家嘴环路', '张江高科-金科路', 'G2京沪高速-昆山段', 'G15沈海高速-嘉兴段', '海淀区-中关村北大街', '天河区-天河路'];
+  let driveIdx = 1;
+  const carBuildTagCombos = [
+    { car: 'PTC-CAR-001', build: 'PTC-BLD-001', tag: 'PTC-TAG-001' },
+    { car: 'PTC-CAR-001', build: 'PTC-BLD-002', tag: 'PTC-TAG-001' },
+    { car: 'PTC-CAR-002', build: 'PTC-BLD-001', tag: 'PTC-TAG-005' },
+    { car: 'PTC-CAR-002', build: 'PTC-BLD-002', tag: 'PTC-TAG-001' },
+    { car: 'PTC-CAR-003', build: 'PTC-BLD-003', tag: 'PTC-TAG-002' },
+    { car: 'PTC-CAR-003', build: 'PTC-BLD-003', tag: 'PTC-TAG-003' },
+    { car: 'PTC-CAR-004', build: 'PTC-BLD-003', tag: 'PTC-TAG-004' },
+    { car: 'PTC-CAR-005', build: 'PTC-BLD-001', tag: 'PTC-TAG-001' },
+    { car: 'PTC-CAR-005', build: 'PTC-BLD-002', tag: 'PTC-TAG-005' },
+    { car: 'PTC-CAR-006', build: 'PTC-BLD-004', tag: 'PTC-TAG-001' },
+  ];
+
+  for (const combo of carBuildTagCombos) {
+    const drivesPerCombo = 3 + Math.floor(Math.random() * 4);
+    for (let d = 0; d < drivesPerCombo; d++) {
+      const dayOffset = Math.floor(Math.random() * 20);
+      const startHour = 6 + Math.floor(Math.random() * 14);
+      const durationHours = 1 + Math.random() * 4;
+      const start = new Date(daysAgo(dayOffset));
+      start.setHours(startHour, 0, 0, 0);
+      const end = new Date(start.getTime() + durationHours * 3600_000);
+
+      ptcDrivesData.push({
+        drive_id: `PTC-DRV-${String(driveIdx).padStart(3, '0')}`,
+        car_id: combo.car,
+        build_id: combo.build,
+        tag_id: combo.tag,
+        date: new Date(start.toISOString().slice(0, 10)),
+        start_time: start,
+        end_time: end,
+        mileage_km: Math.round((20 + Math.random() * 180) * 10) / 10,
+        xl_events: Math.floor(Math.random() * 3),
+        l_events: Math.floor(Math.random() * 8),
+        hotline_count: Math.floor(Math.random() * 2),
+        route: ROUTES[Math.floor(Math.random() * ROUTES.length)],
+      });
+      driveIdx++;
+    }
+  }
+
+  await PtcDrive.insertMany(ptcDrivesData);
+  console.log(`[seed] Inserted ${ptcDrivesData.length} PTC drives`);
+
+  const ptcBindings = await PtcBinding.insertMany([
+    {
+      binding_id: 'PTC-BIND-001',
+      task_id: 'PTC-TASK-001',
+      status: 'Published',
+      filter_criteria: { builds: ['PTC-BLD-001', 'PTC-BLD-002'], cars: ['PTC-CAR-001', 'PTC-CAR-002'], tags: ['PTC-TAG-001'] },
+      cars: [
+        {
+          car_id: 'PTC-CAR-001',
+          drives: ptcDrivesData.filter(d => d.car_id === 'PTC-CAR-001').map(d => ({ drive_id: d.drive_id, selected: true })),
+        },
+        {
+          car_id: 'PTC-CAR-002',
+          drives: ptcDrivesData.filter(d => d.car_id === 'PTC-CAR-002').map((d, i) => ({
+            drive_id: d.drive_id,
+            selected: i !== 0,
+            ...(i === 0 ? { deselect_reason_preset: '数据异常', deselect_reason_text: 'Lidar数据缺失前10分钟' } : {}),
+          })),
+        },
+      ],
+    },
+    {
+      binding_id: 'PTC-BIND-002',
+      task_id: 'PTC-TASK-002',
+      status: 'Draft',
+      filter_criteria: { builds: ['PTC-BLD-002'], cars: ['PTC-CAR-001', 'PTC-CAR-005'], tags: ['PTC-TAG-005'] },
+      cars: [
+        {
+          car_id: 'PTC-CAR-005',
+          drives: ptcDrivesData.filter(d => d.car_id === 'PTC-CAR-005').map(d => ({ drive_id: d.drive_id, selected: true })),
+        },
+      ],
+    },
+    {
+      binding_id: 'PTC-BIND-003',
+      task_id: 'PTC-TASK-003',
+      status: 'Published',
+      filter_criteria: { builds: ['PTC-BLD-003'], cars: ['PTC-CAR-003', 'PTC-CAR-004'], tags: ['PTC-TAG-002', 'PTC-TAG-003'] },
+      cars: [
+        {
+          car_id: 'PTC-CAR-003',
+          drives: ptcDrivesData.filter(d => d.car_id === 'PTC-CAR-003').map(d => ({ drive_id: d.drive_id, selected: true })),
+        },
+        {
+          car_id: 'PTC-CAR-004',
+          drives: ptcDrivesData.filter(d => d.car_id === 'PTC-CAR-004').map((d, i) => ({
+            drive_id: d.drive_id,
+            selected: i !== 1,
+            ...(i === 1 ? { deselect_reason_preset: '设备故障', deselect_reason_text: '雷达传感器在暴雨中失效' } : {}),
+          })),
+        },
+      ],
+    },
+    {
+      binding_id: 'PTC-BIND-004',
+      task_id: 'PTC-TASK-004',
+      status: 'Published',
+      filter_criteria: { builds: ['PTC-BLD-003'], cars: ['PTC-CAR-003'], tags: ['PTC-TAG-004'] },
+      cars: [
+        {
+          car_id: 'PTC-CAR-003',
+          drives: ptcDrivesData.filter(d => d.car_id === 'PTC-CAR-003' && d.tag_id === 'PTC-TAG-003').slice(0, 2).map(d => ({ drive_id: d.drive_id, selected: true })),
+        },
+      ],
+    },
+  ]);
+  console.log(`[seed] Inserted ${ptcBindings.length} PTC bindings`);
+
   console.log('\n[seed] Seeding complete!');
   console.log('  - 2 Projects');
   console.log('  - 6 Tasks');
@@ -589,6 +759,13 @@ async function seed(): Promise<void> {
   console.log('  - 3 Custom KPI Definitions');
   console.log(`  - ${trajectoryPoints.length} Trajectory Points`);
   console.log(`  - ${statusSegments.length} Status Segments`);
+  console.log(`  - ${ptcProjects.length} PTC Projects`);
+  console.log(`  - ${ptcTasks.length} PTC Tasks`);
+  console.log(`  - ${ptcBuilds.length} PTC Builds`);
+  console.log(`  - ${ptcCars.length} PTC Cars`);
+  console.log(`  - ${ptcTags.length} PTC Tags`);
+  console.log(`  - ${ptcDrivesData.length} PTC Drives`);
+  console.log(`  - ${ptcBindings.length} PTC Bindings`);
 
   await mongoose.disconnect();
   console.log('[seed] Disconnected from MongoDB');

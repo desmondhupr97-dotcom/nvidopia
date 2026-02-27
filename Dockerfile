@@ -7,13 +7,15 @@ WORKDIR /app
 COPY package.json package-lock.json ./
 COPY platform/ platform/
 COPY apps/bff-gateway/ apps/bff-gateway/
+COPY apps/frontend/ apps/frontend/
 COPY services/ services/
 COPY contracts/ contracts/
 
 RUN npm ci
 
-# Frontend pre-built locally via `npm run build -w @nvidopia/frontend`
-COPY apps/frontend/dist /usr/share/nginx/html
+RUN npm run build -w @nvidopia/frontend && \
+    mkdir -p /usr/share/nginx/html && \
+    cp -r apps/frontend/dist/* /usr/share/nginx/html/
 
 COPY nginx.cloudrun.conf /etc/nginx/http.d/default.conf.template
 COPY scripts/start-all.sh scripts/start-all.sh
