@@ -33,19 +33,27 @@ gcloud artifacts repositories create "${AR_REPO}" \
 echo "▸ Configuring Docker authentication..."
 gcloud auth configure-docker "${REGION}-docker.pkg.dev" --quiet
 
-# ── Step 2: Build locally (with full layer cache) ────────────────
+# ── Step 2: Check Docker memory ──────────────────────────────────
+DOCKER_MEM_MB=$(docker system info --format '{{.MemTotal}}' 2>/dev/null | awk '{printf "%.0f", $1/1048576}')
+if [ "${DOCKER_MEM_MB:-0}" -lt 4000 ]; then
+  echo "⚠  Docker memory is ${DOCKER_MEM_MB}MB. Vite build needs ≥4GB."
+  echo "   Please increase in Docker Desktop → Settings → Resources → Memory."
+  exit 1
+fi
+
+# ── Step 3: Build locally (with full layer cache) ────────────────
 echo "▸ Building Docker image locally..."
 SECONDS=0
 docker build -t "${IMAGE}:${TAG}" .
 echo "  ✓ Build completed in ${SECONDS}s"
 
-# ── Step 3: Push to Artifact Registry ────────────────────────────
+# ── Step 4: Push to Artifact Registry ────────────────────────────
 echo "▸ Pushing image to Artifact Registry..."
 SECONDS=0
 docker push "${IMAGE}:${TAG}"
 echo "  ✓ Push completed in ${SECONDS}s"
 
-# ── Step 4: Deploy to Cloud Run ──────────────────────────────────
+# ── Step 5: Deploy to Cloud Run ──────────────────────────────────
 echo "▸ Deploying to Cloud Run..."
 SECONDS=0
 gcloud run deploy "${SERVICE_NAME}" \

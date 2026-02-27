@@ -30,7 +30,7 @@ COPY apps/frontend/ apps/frontend/
 COPY services/ services/
 COPY contracts/ contracts/
 
-RUN npm run build -w @nvidopia/frontend && \
+RUN NODE_OPTIONS="--max-old-space-size=4096" npm run build -w @nvidopia/frontend && \
     mkdir -p /usr/share/nginx/html && \
     cp -r apps/frontend/dist/* /usr/share/nginx/html/
 
