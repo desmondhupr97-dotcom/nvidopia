@@ -164,7 +164,6 @@ input, select, textarea {
 /* ── Top Navigation ──────────────────────────────────── */
 .topnav {
   background: var(--bg-surface);
-  box-shadow: var(--shadow-xs);
   height: var(--header-height);
   display: flex;
   align-items: center;
@@ -201,20 +200,28 @@ input, select, textarea {
 .topnav-nav {
   display: flex;
   align-items: center;
-  gap: 4px;
-  margin-left: 32px;
+  flex: 1;
+  justify-content: center;
+  gap: 0;
+  margin-left: 24px;
+  margin-right: 24px;
 }
 
 .topnav-item {
+  flex: 1;
   padding: 6px 14px;
   font-size: 0.875rem;
   font-weight: 500;
   color: var(--text-secondary);
+  border: none;
+  background: transparent;
   border-radius: var(--radius-xs);
   cursor: pointer;
   transition: color var(--transition-fast), background var(--transition-fast);
   position: relative;
   font-family: var(--font-body);
+  text-align: center;
+  white-space: nowrap;
 }
 
 .topnav-item:hover {
