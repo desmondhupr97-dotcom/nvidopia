@@ -23,12 +23,13 @@ API 网关 / BFF（Backend-for-Frontend）层。统一接收前端请求与车�
 | GW-09 | Schema 注册表代理路由（转发至 kpi-engine） | P0 | Not Started |
 | GW-10 | Issue 快照/时序数据代理路由（转发至 issue-workflow） | P0 | Not Started |
 | GW-11 | 自定义 KPI 代理路由（转发至 kpi-engine） | P0 | Not Started |
+| GW-12 | PTC 代理路由（/api/ptc/* 转发至 ptc-service:3007） | P0 | Not Started |
 
 ## 数据与接口契约
 
 - 入口契约：`contracts/openapi/gateway.yaml`
 - Kafka produce 目标：`ad.telemetry.mileage.realtime`、`ad.vehicle.status.tracking`、`ad.testing.issue.reports`
-- 转发目标：release-manager、fleet-manager、issue-workflow、traceability、kpi-engine
+- 转发目标：release-manager、fleet-manager、issue-workflow、traceability、kpi-engine、ptc-service
 
 ## 开发任务清单
 
@@ -44,6 +45,7 @@ API 网关 / BFF（Backend-for-Frontend）层。统一接收前端请求与车�
 | 配置 Schema 注册表代理路由转发 | Not Started |
 | 配置 Issue 快照/时序数据代理路由转发 | Not Started |
 | 配置自定义 KPI 代理路由转发 | Not Started |
+| 配置 PTC 代理路由转发（/api/ptc/* -> ptc-service:3007） | Not Started |
 
 ## 测试策略与验收标准
 
@@ -66,3 +68,4 @@ API 网关 / BFF（Backend-for-Frontend）层。统一接收前端请求与车�
 |------|--------|----------|-------------|
 | 2026-02-22 | System | 初始化子模块计划 | - |
 | 2026-02-23 | System | 追加 GW-09~GW-11：Schema 注册表、快照/时序、自定义 KPI 代理路由 | - |
+| 2026-02-27 | System | 追加 GW-12：PTC 代理路由 | - |

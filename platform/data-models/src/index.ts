@@ -14,3 +14,10 @@ export { VehicleStatusSegment, type IVehicleStatusSegment, type VehicleStatusSeg
 export { IssueTimeSeries, type IIssueTimeSeries, type IssueTimeSeriesDocument, CHANNEL_TYPE, type ChannelType, type ITimeSeriesDataPoint, type ITimeRange } from './issue-timeseries.model.js';
 export { KpiDefinition, type IKpiDefinition, type KpiDefinitionDocument, KPI_DATA_SOURCE, type KpiDataSource, KPI_CHART_TYPE, type KpiChartType, KPI_AGGREGATION, type KpiAggregation, KPI_FILTER_OPERATOR, type KpiFilterOperator, type IKpiFilter, type IKpiVariable, type IKpiYAxis, type IKpiVisualization, type IKpiThreshold, type IKpiColorRange, type IKpiFormat, KPI_RENDERER, type KpiRenderer } from './kpi-definition.model.js';
 export { SimulationSession, type ISimulationSession, type SimulationSessionDocument, SIMULATION_STATUS, type SimulationStatus, FLEET_MODE, type FleetMode, ROUTE_MODE, type RouteMode, type ISimVehicle, type IFleetConfig, type ISimRoute, type IRoadRoute, type IRandomRouteConfig, type IRouteConfig, type IReportConfig, type IVehicleAssignment, type ISimulationStats } from './simulation-session.model.js';
+export { PtcProject, type IPtcProject, type PtcProjectDocument } from './ptc-project.model.js';
+export { PtcTask, type IPtcTask, type PtcTaskDocument } from './ptc-task.model.js';
+export { PtcBinding, type IPtcBinding, type PtcBindingDocument, BINDING_STATUS, type BindingStatus, DESELECT_REASON_PRESETS, type DeselectReasonPreset, type IBindingDrive, type IBindingCar, type IFilterCriteria } from './ptc-binding.model.js';
+export { PtcBuild, type IPtcBuild, type PtcBuildDocument } from './ptc-build.model.js';
+export { PtcCar, type IPtcCar, type PtcCarDocument } from './ptc-car.model.js';
+export { PtcTag, type IPtcTag, type PtcTagDocument } from './ptc-tag.model.js';
+export { PtcDrive, type IPtcDrive, type PtcDriveDocument } from './ptc-drive.model.js';

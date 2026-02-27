@@ -45,6 +45,7 @@ const issueWorkflowUrl   = () => serviceUrl('ISSUE_WORKFLOW_URL', 'ISSUE_WORKFLO
 const traceabilityUrl    = () => serviceUrl('TRACEABILITY_URL', 'TRACEABILITY_PORT', 3040);
 const kpiEngineUrl       = () => serviceUrl('KPI_ENGINE_URL', 'KPI_ENGINE_PORT', 3050);
 const fleetSimulatorUrl  = () => serviceUrl('FLEET_SIMULATOR_URL', 'FLEET_SIMULATOR_PORT', 3060);
+const ptcServiceUrl      = () => serviceUrl('PTC_SERVICE_URL', 'PTC_SERVICE_PORT', 3070);
 
 router.use('/api/projects', createProxyMiddleware(proxyOpts(releaseManagerUrl(), '/projects')));
 router.use('/api/tasks',    createProxyMiddleware(proxyOpts(releaseManagerUrl(), '/tasks')));
@@ -62,5 +63,7 @@ router.use('/api/schema',   createProxyMiddleware(proxyOpts(kpiEngineUrl(), '/sc
 router.use('/api/kpi',      createProxyMiddleware(proxyOpts(kpiEngineUrl(), '/kpi')));
 
 router.use('/api/simulations', createProxyMiddleware(proxyOpts(fleetSimulatorUrl(), '/simulations')));
+
+router.use('/api/ptc', createProxyMiddleware(proxyOpts(ptcServiceUrl(), '')));
 
 export default router;

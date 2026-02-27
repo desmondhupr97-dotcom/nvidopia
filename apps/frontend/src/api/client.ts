@@ -903,3 +903,219 @@ export function planRoadRoute(waypoints: Array<{ lat: number; lng: number }>) {
 export function snapRoutesToRoads(routes: SimRoute[]) {
   return fetchJson<{ routes: SimRoute[] }>('/simulations/snap-routes', { method: 'POST', body: JSON.stringify({ routes }) });
 }
+
+/* ── PTC (Project-Task-Car Binding) ──────────────────── */
+
+export interface PtcProject {
+  project_id: string;
+  name: string;
+  task_count?: number;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface PtcTask {
+  task_id: string;
+  project_id: string;
+  name: string;
+  start_date?: string;
+  end_date?: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface PtcBindingDrive {
+  drive_id: string;
+  selected: boolean;
+  deselect_reason_preset?: string;
+  deselect_reason_text?: string;
+  detail?: PtcDrive;
+}
+
+export interface PtcBindingCar {
+  car_id: string;
+  drives: PtcBindingDrive[];
+}
+
+export interface PtcBinding {
+  binding_id: string;
+  task_id: string;
+  status: 'Draft' | 'Published';
+  filter_criteria: { builds: string[]; cars: string[]; tags: string[] };
+  cars: PtcBindingCar[];
+  created_at: string;
+  updated_at: string;
+}
+
+export interface PtcBuild {
+  build_id: string;
+  version_tag: string;
+  build_time?: string;
+}
+
+export interface PtcCar {
+  car_id: string;
+  name: string;
+  vin?: string;
+}
+
+export interface PtcTag {
+  tag_id: string;
+  name: string;
+}
+
+export interface PtcDrive {
+  drive_id: string;
+  car_id: string;
+  build_id: string;
+  tag_id: string;
+  date: string;
+  start_time: string;
+  end_time: string;
+  mileage_km: number;
+  xl_events: number;
+  l_events: number;
+  hotline_count: number;
+  route?: string;
+}
+
+export interface PtcTaskSummary {
+  task_id: string;
+  name: string;
+  start_date: string | null;
+  end_date: string | null;
+  binding_status: string | null;
+  build_count: number;
+  car_count: number;
+  tag_count: number;
+  hotline_count: number;
+  total_mileage: number;
+  daily_mileage: Array<{ date: string; km: number }>;
+  updated_at: string;
+}
+
+export interface PtcOverviewProject extends PtcProject {
+  tasks?: PtcTaskSummary[];
+}
+
+export interface PtcFilterResult {
+  car_id: string;
+  drive_count: number;
+  total_mileage: number;
+  builds: string[];
+  tags: string[];
+  date_range: { start: string; end: string };
+}
+
+export function getPtcProjects(q?: string) {
+  return fetchJson<PtcProject[]>(`/ptc/projects${q ? `?q=${encodeURIComponent(q)}` : ''}`);
+}
+
+export function createPtcProject(name: string) {
+  return fetchJson<PtcProject>('/ptc/projects', { method: 'POST', body: JSON.stringify({ name }) });
+}
+
+export function updatePtcProject(id: string, name: string) {
+  return fetchJson<PtcProject>(`/ptc/projects/${id}`, { method: 'PUT', body: JSON.stringify({ name }) });
+}
+
+export function deletePtcProject(id: string) {
+  return fetchJson<{ deleted: boolean }>(`/ptc/projects/${id}`, { method: 'DELETE' });
+}
+
+export function getPtcTasks(params?: { q?: string; project_id?: string }) {
+  const qs = new URLSearchParams();
+  if (params?.q) qs.set('q', params.q);
+  if (params?.project_id) qs.set('project_id', params.project_id);
+  const s = qs.toString();
+  return fetchJson<PtcTask[]>(`/ptc/tasks${s ? `?${s}` : ''}`);
+}
+
+export function createPtcTask(data: { name: string; project_id?: string; project_name?: string }) {
+  return fetchJson<PtcTask>('/ptc/tasks', { method: 'POST', body: JSON.stringify(data) });
+}
+
+export function updatePtcTask(id: string, data: { name?: string; project_id?: string }) {
+  return fetchJson<PtcTask>(`/ptc/tasks/${id}`, { method: 'PUT', body: JSON.stringify(data) });
+}
+
+export function deletePtcTask(id: string) {
+  return fetchJson<{ deleted: boolean }>(`/ptc/tasks/${id}`, { method: 'DELETE' });
+}
+
+export function getPtcBindings(params?: { project_id?: string; task_id?: string; status?: string }) {
+  const qs = new URLSearchParams();
+  if (params?.project_id) qs.set('project_id', params.project_id);
+  if (params?.task_id) qs.set('task_id', params.task_id);
+  if (params?.status) qs.set('status', params.status);
+  const s = qs.toString();
+  return fetchJson<PtcBinding[]>(`/ptc/bindings${s ? `?${s}` : ''}`);
+}
+
+export function getPtcBinding(id: string) {
+  return fetchJson<PtcBinding>(`/ptc/bindings/${id}`);
+}
+
+export function createPtcBinding(data: { task_id: string; filter_criteria?: PtcBinding['filter_criteria']; car_ids?: string[]; status?: string }) {
+  return fetchJson<PtcBinding>('/ptc/bindings', { method: 'POST', body: JSON.stringify(data) });
+}
+
+export function updatePtcBinding(id: string, data: Partial<PtcBinding>) {
+  return fetchJson<PtcBinding>(`/ptc/bindings/${id}`, { method: 'PUT', body: JSON.stringify(data) });
+}
+
+export function updatePtcBindingDrives(id: string, data: { car_id: string; drive_updates: Array<{ drive_id: string; selected: boolean; deselect_reason_preset?: string; deselect_reason_text?: string }> }) {
+  return fetchJson<PtcBinding>(`/ptc/bindings/${id}/drives`, { method: 'PUT', body: JSON.stringify(data) });
+}
+
+export function deletePtcBinding(id: string) {
+  return fetchJson<{ deleted: boolean }>(`/ptc/bindings/${id}`, { method: 'DELETE' });
+}
+
+export function getPtcBuilds(q?: string) {
+  return fetchJson<PtcBuild[]>(`/ptc/builds${q ? `?q=${encodeURIComponent(q)}` : ''}`);
+}
+
+export function getPtcCars(params?: { q?: string; build_id?: string; tag_id?: string }) {
+  const qs = new URLSearchParams();
+  if (params?.q) qs.set('q', params.q);
+  if (params?.build_id) qs.set('build_id', params.build_id);
+  if (params?.tag_id) qs.set('tag_id', params.tag_id);
+  const s = qs.toString();
+  return fetchJson<PtcCar[]>(`/ptc/cars${s ? `?${s}` : ''}`);
+}
+
+export function getPtcTags(q?: string) {
+  return fetchJson<PtcTag[]>(`/ptc/tags${q ? `?q=${encodeURIComponent(q)}` : ''}`);
+}
+
+export function getPtcDrives(params?: { car_id?: string; build_id?: string; tag_id?: string; q?: string; page?: number; limit?: number }) {
+  const qs = new URLSearchParams();
+  if (params?.car_id) qs.set('car_id', params.car_id);
+  if (params?.build_id) qs.set('build_id', params.build_id);
+  if (params?.tag_id) qs.set('tag_id', params.tag_id);
+  if (params?.q) qs.set('q', params.q);
+  if (params?.page) qs.set('page', String(params.page));
+  if (params?.limit) qs.set('limit', String(params.limit));
+  const s = qs.toString();
+  return fetchJson<{ data: PtcDrive[]; total: number; page: number; limit: number }>(`/ptc/drives${s ? `?${s}` : ''}`);
+}
+
+export function filterPtcDrives(params: { builds?: string; cars?: string; tags?: string }) {
+  const qs = new URLSearchParams();
+  if (params.builds) qs.set('builds', params.builds);
+  if (params.cars) qs.set('cars', params.cars);
+  if (params.tags) qs.set('tags', params.tags);
+  return fetchJson<PtcFilterResult[]>(`/ptc/drives/filter?${qs.toString()}`);
+}
+
+export function getPtcOverview(project_id?: string) {
+  if (project_id) {
+    return fetchJson<{ project: PtcProject; tasks: PtcTaskSummary[] }>(`/ptc/overview?project_id=${project_id}`);
+  }
+  return fetchJson<PtcOverviewProject[]>('/ptc/overview');
+}
+
+export function getPtcTaskOverview(taskId: string) {
+  return fetchJson<{ task: PtcTask; binding: PtcBinding | null; drives: PtcDrive[] }>(`/ptc/overview/${taskId}`);
+}

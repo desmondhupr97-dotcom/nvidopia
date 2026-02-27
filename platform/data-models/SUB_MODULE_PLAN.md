@@ -28,6 +28,13 @@ MongoDB 数据模型层。集中定义所有业务集合的 Schema（Mongoose/JS
 | DM-14 | IVehicleDynamicsSnapshot 子 Schema 定义 | P0 | Not Started |
 | DM-15 | IssueTimeSeries 集合 Schema 与索引 | P0 | Not Started |
 | DM-16 | KpiDefinition 集合 Schema 与索引 | P0 | Not Started |
+| DM-17 | PtcProject 集合 Schema 与索引（ptc_projects） | P0 | Not Started |
+| DM-18 | PtcTask 集合 Schema 与索引（ptc_tasks，含 project_id 外键与唯一约束） | P0 | Not Started |
+| DM-19 | PtcBinding 集合 Schema 与索引（ptc_bindings，含 task_id 唯一约束、嵌套 cars/drives 子文档） | P0 | Not Started |
+| DM-20 | PtcBuild 集合 Schema（ptc_builds，Alfred/Kratos 爬取数据，先 mock） | P1 | Not Started |
+| DM-21 | PtcCar 集合 Schema（ptc_cars，Alfred/Kratos 爬取数据，先 mock） | P1 | Not Started |
+| DM-22 | PtcTag 集合 Schema（ptc_tags，测试标签/测试类型，先 mock） | P1 | Not Started |
+| DM-23 | PtcDrive 集合 Schema 与索引（ptc_drives，复合索引 car_id+build_id+tag_id，先 mock） | P0 | Not Started |
 
 ## 数据与接口契约
 
@@ -51,6 +58,14 @@ MongoDB 数据模型层。集中定义所有业务集合的 Schema（Mongoose/JS
 | 创建 KpiDefinition 集合 Schema | Not Started |
 | 更新索引策略（含新集合索引） | Not Started |
 | 更新种子数据脚本（覆盖新集合） | Not Started |
+| 创建 PtcProject 集合 Schema | Not Started |
+| 创建 PtcTask 集合 Schema（含 project_id 引用与唯一约束） | Not Started |
+| 创建 PtcBinding 集合 Schema（含嵌套 cars/drives 子文档与状态机） | Not Started |
+| 创建 PtcBuild 集合 Schema | Not Started |
+| 创建 PtcCar 集合 Schema | Not Started |
+| 创建 PtcTag 集合 Schema | Not Started |
+| 创建 PtcDrive 集合 Schema（含复合索引） | Not Started |
+| 导出所有 PTC 模型至 index.ts | Not Started |
 
 ## 测试策略与验收标准
 
@@ -75,3 +90,4 @@ MongoDB 数据模型层。集中定义所有业务集合的 Schema（Mongoose/JS
 |------|--------|----------|-------------|
 | 2026-02-22 | System | 初始化子模块计划 | - |
 | 2026-02-23 | System | 追加 DM-13~DM-16：字段容错改造、动态快照子 Schema、时序与自定义 KPI 集合 | - |
+| 2026-02-27 | System | 追加 DM-17~DM-23：PTC 数据模型（PtcProject/Task/Binding/Build/Car/Tag/Drive） | - |

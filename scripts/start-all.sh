@@ -14,6 +14,7 @@ export ISSUE_WORKFLOW_PORT=3003
 export TRACEABILITY_PORT=3004
 export KPI_ENGINE_PORT=3005
 export FLEET_SIMULATOR_PORT=3006
+export PTC_SERVICE_PORT=3007
 
 export RELEASE_MANAGER_URL="http://localhost:${RELEASE_MANAGER_PORT}"
 export FLEET_MANAGER_URL="http://localhost:${FLEET_MANAGER_PORT}"
@@ -21,6 +22,7 @@ export ISSUE_WORKFLOW_URL="http://localhost:${ISSUE_WORKFLOW_PORT}"
 export TRACEABILITY_URL="http://localhost:${TRACEABILITY_PORT}"
 export KPI_ENGINE_URL="http://localhost:${KPI_ENGINE_PORT}"
 export FLEET_SIMULATOR_URL="http://localhost:${FLEET_SIMULATOR_PORT}"
+export PTC_SERVICE_URL="http://localhost:${PTC_SERVICE_PORT}"
 export BFF_URL="http://localhost:${GATEWAY_PORT}"
 
 TSX="/app/node_modules/.bin/tsx"
@@ -38,6 +40,7 @@ $TSX services/issue-workflow/src/index.ts 2>&1 &
 $TSX services/traceability/src/index.ts 2>&1 &
 $TSX services/kpi-engine/src/index.ts 2>&1 &
 $TSX services/fleet-simulator/src/index.ts 2>&1 &
+$TSX services/ptc-service/src/index.ts 2>&1 &
 $TSX apps/bff-gateway/src/index.ts 2>&1 &
 
 echo "[start-all] Waiting for services to connect to MongoDB..."

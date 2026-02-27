@@ -77,6 +77,7 @@ services:
       TRACEABILITY_URL: http://traceability:3004
       KPI_ENGINE_URL: http://kpi-engine:3005
       FLEET_SIMULATOR_URL: http://fleet-simulator:3006
+      PTC_SERVICE_URL: http://ptc-service:3007
     depends_on:
       - kafka
       - mongodb
@@ -166,6 +167,19 @@ services:
     depends_on:
       - mongodb
       - bff-gateway
+
+  ptc-service:
+    build:
+      context: ..
+      dockerfile: services/ptc-service/Dockerfile
+    container_name: nvidopia-ptc-service
+    ports:
+      - "3007:3007"
+    environment:
+      PTC_SERVICE_PORT: 3007
+      MONGO_URI: mongodb://nvidopia:nvidopia_dev@mongodb:27017/nvidopia?authSource=admin
+    depends_on:
+      - mongodb
 
   frontend:
     build:

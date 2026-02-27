@@ -43,6 +43,15 @@ const navGroups: NavGroup[] = [
     ],
   },
   {
+    label: 'PTC',
+    key: 'ptc',
+    paths: ['/ptc'],
+    items: [
+      { path: '/ptc/binding', label: 'Binding' },
+      { path: '/ptc/kpi', label: 'PTC KPI' },
+    ],
+  },
+  {
     label: 'Simulation',
     key: 'simulation',
     paths: ['/simulation'],

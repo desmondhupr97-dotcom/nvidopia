@@ -1,0 +1,222 @@
+/* PTC Binding Module Styles */
+
+.ptc-page {
+  padding: 24px;
+  max-width: 1400px;
+  margin: 0 auto;
+}
+
+.ptc-page h2 {
+  margin-bottom: 20px;
+  font-weight: 600;
+}
+
+/* Filter Bar */
+.ptc-filter-bar {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-bottom: 24px;
+  padding: 16px;
+  background: rgba(255, 255, 255, 0.06);
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.ptc-filter-bar .ant-select {
+  min-width: 160px;
+}
+
+/* Project Collapse */
+.ptc-project-collapse .ant-collapse-header {
+  font-size: 15px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+}
+
+.ptc-project-collapse .ant-collapse-content-box {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  padding: 16px !important;
+}
+
+/* Task Card - Glassmorphism */
+.ptc-task-card {
+  width: 340px;
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.08);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  cursor: pointer;
+  transition: transform 0.2s, box-shadow 0.2s, border-color 0.2s;
+}
+
+.ptc-task-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15);
+  border-color: rgba(255, 255, 255, 0.2);
+}
+
+.ptc-task-card .ant-card-head {
+  border-bottom-color: rgba(255, 255, 255, 0.08);
+  min-height: auto;
+  padding: 12px 16px;
+}
+
+.ptc-task-card .ant-card-head-title {
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.ptc-task-card .ant-card-body {
+  padding: 12px 16px 16px;
+}
+
+.ptc-task-card-timeline {
+  height: 6px;
+  background: rgba(255, 255, 255, 0.06);
+  border-radius: 3px;
+  margin-bottom: 12px;
+  overflow: hidden;
+  position: relative;
+}
+
+.ptc-task-card-timeline-bar {
+  height: 100%;
+  background: linear-gradient(90deg, var(--brand-green, #76b900), #a3d944);
+  border-radius: 3px;
+  min-width: 20%;
+}
+
+.ptc-task-card-chart {
+  height: 60px;
+  margin-bottom: 12px;
+}
+
+.ptc-task-card-stats {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 8px;
+  text-align: center;
+  margin-bottom: 8px;
+}
+
+.ptc-task-card-stats .stat-item {
+  font-size: 12px;
+  opacity: 0.7;
+}
+
+.ptc-task-card-stats .stat-value {
+  font-size: 16px;
+  font-weight: 600;
+  opacity: 1;
+}
+
+.ptc-task-card-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 11px;
+  opacity: 0.5;
+  padding-top: 8px;
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+/* Task Detail Modal - Glassmorphism */
+.ptc-task-modal .ant-modal-content {
+  background: rgba(30, 30, 40, 0.85);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 16px;
+}
+
+.ptc-task-modal .ant-modal-header {
+  background: transparent;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.ptc-task-modal .ant-modal-mask {
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+}
+
+/* Drive Selection Popup */
+.ptc-drive-popup .drive-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+}
+
+.ptc-drive-popup .drive-item-info {
+  flex: 1;
+  font-size: 13px;
+}
+
+.ptc-drive-popup .drive-item-meta {
+  font-size: 11px;
+  opacity: 0.6;
+}
+
+.ptc-drive-popup .deselect-reason {
+  margin-top: 8px;
+  padding: 8px 12px;
+  background: rgba(255, 80, 80, 0.08);
+  border-radius: 8px;
+  font-size: 12px;
+}
+
+/* Binding Config Modal */
+.ptc-binding-config .filter-section {
+  margin-bottom: 16px;
+}
+
+.ptc-binding-config .car-selection {
+  max-height: 400px;
+  overflow-y: auto;
+}
+
+/* Action buttons */
+.ptc-actions {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+/* Status badges */
+.ptc-status-draft {
+  color: #faad14;
+}
+
+.ptc-status-published {
+  color: #52c41a;
+}
+
+/* KPI Page */
+.ptc-kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.ptc-kpi-card {
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.ptc-kpi-card .stat-label {
+  font-size: 13px;
+  opacity: 0.6;
+  margin-bottom: 4px;
+}
+
+.ptc-kpi-card .stat-number {
+  font-size: 28px;
+  font-weight: 700;
+}

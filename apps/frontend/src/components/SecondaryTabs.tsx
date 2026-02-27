@@ -37,6 +37,13 @@ const tabGroups: TabGroup[] = [
     ],
   },
   {
+    prefixes: ['/ptc'],
+    tabs: [
+      { path: '/ptc/binding', label: 'Binding' },
+      { path: '/ptc/kpi', label: 'PTC KPI' },
+    ],
+  },
+  {
     prefixes: ['/simulation'],
     tabs: [
       { path: '/simulation', label: 'Simulation' },

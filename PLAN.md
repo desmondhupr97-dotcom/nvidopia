@@ -19,6 +19,7 @@
 | **M3** | 阶段 3 - 前端应用 | 前端核心页面与 Dashboard-as-Code 可用，预留页上线 | Week 3-5 |
 | **M4** | 阶段 4 - 联调与发布 | E2E 打通、验收脚本、灰度发布能力完成 | Week 5-6 |
 | **M5** | 阶段 5 - 字段容错 + 数据快照 + 自定义 KPI | 模型字段容错（strict:false + extra field）、Issue 快照与时序数据、Schema Registry API、自定义 KPI（CRUD + 公式引擎 + 多图表 Dashboard）、API 测试套件（Vitest + 集成测试 + E2E Smoke 扩展） | Week 7-9 |
+| **M6** | 阶段 6 - PTC Binding（Project-Task-Car） | 新建 ptc-service 微服务、7 个 PTC 数据模型（PtcProject/Task/Binding/Build/Car/Tag/Drive）、Binding 总览页（毛玻璃卡片 + 渐进式加载）、Add/Edit/Delete Binding 工作流、Drive 筛选与绑定、PTC KPI 基础页、Mock 数据种子 | Week 10-12 |
 
 ## 3. 子模块状态看板
 
@@ -36,6 +37,7 @@
 | 可观测性 | [platform/observability/SUB_MODULE_PLAN.md](platform/observability/SUB_MODULE_PLAN.md) | Done | - |
 | 契约管理 | [contracts/SUB_MODULE_PLAN.md](contracts/SUB_MODULE_PLAN.md) | Done | - |
 | 基础设施 | [infra/SUB_MODULE_PLAN.md](infra/SUB_MODULE_PLAN.md) | Done | - |
+| PTC 服务 | [services/ptc-service/SUB_MODULE_PLAN.md](services/ptc-service/SUB_MODULE_PLAN.md) | M6 Not Started | - |
 | 文档中心 | [docs/SUB_MODULE_PLAN.md](docs/SUB_MODULE_PLAN.md) | M5 InProgress | - |
 
 ## 4. 跨模块接口冻结点与联调窗口
@@ -50,6 +52,8 @@
 | Schema Registry API 契约 | M5 初期 | kpi-engine, bff-gateway, frontend | M5 中期 |
 | Issue 快照/时序 API 契约 | M5 初期 | issue-workflow, bff-gateway, frontend | M5 中期 |
 | 自定义 KPI Definition API 契约 | M5 初期 | kpi-engine, bff-gateway, frontend | M5 中期 |
+| PTC Binding REST API 契约 | M6 初期 | ptc-service, bff-gateway, frontend | M6 中期 |
+| PTC 爬取数据 Mock Schema | M6 初期 | ptc-service, data-models | M6 中期 |
 
 ## 5. 全局测试验收门禁
 
@@ -82,6 +86,17 @@
 - [ ] 所有 API 测试用例通过
 - [ ] E2E Smoke 测试新增步骤通过
 
+### M6 验收
+- [ ] ptc-service 可独立启动并通过健康检查
+- [ ] 7 个 PTC 数据模型 Schema 通过 Mongoose 验证
+- [ ] Mock 种子数据可一键导入（5-10 Project，50-100 Task，500+ Drive）
+- [ ] BFF 网关 /api/ptc/* 代理路由正常转发
+- [ ] 前端 PTC 导航与路由可达（Binding 总览页 + PTC KPI 页）
+- [ ] Binding 总览页渐进式加载：Project 折叠 -> Task 卡片 -> Binding 详情弹窗
+- [ ] Add/Edit/Delete Binding 工作流完整可用
+- [ ] Drive 筛选弹窗可搜索、勾选/取消勾选（含理由保存与展示）
+- [ ] PTC KPI 基础页按 Published Binding 聚合展示
+
 ## 6. Git 提交与推送策略
 
 - **触发时机**：需求修改完成、开发完成、验收完成后必须 `git commit` + `git push`。
@@ -98,3 +113,5 @@
 | 自动 Triage | 桩接口（501 Not Implemented） | 插入规则引擎/ML 模型服务 |
 | 仿真测试 | 预留字段 simulation_ref/status | 对接仿真执行器与结果回写 |
 | 自定义公式引擎 | M5 基础实现（四则运算 + 聚合函数） | 扩展自定义函数库 / DSL / 沙箱执行环境 |
+| Alfred/Kratos 数据自动爬取 | M6 Mock 数据 | 对接 Alfred API + Kratos API，定时拉取 Build/Car/Tag/Drive 数据 |
+| PTC KPI 高级计算 | M6 基础聚合（里程/drive 数/car 数） | 接入 KPI Engine 公式引擎，支持自定义 PTC 指标 |
