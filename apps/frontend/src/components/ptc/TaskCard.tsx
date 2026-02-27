@@ -7,11 +7,29 @@ interface TaskCardProps {
   onTaskClick: (taskId: string) => void;
 }
 
+function formatDate(d: string | null) {
+  if (!d) return '—';
+  const dt = new Date(d);
+  return `${dt.getMonth() + 1}/${dt.getDate()}`;
+}
+
+function daysBetween(a: string, b: string) {
+  const ms = new Date(b).getTime() - new Date(a).getTime();
+  return Math.max(1, Math.round(ms / 86400000));
+}
+
 export default function TaskCard({ task, onTaskClick }: TaskCardProps) {
   const start = task.start_date ?? null;
   const end = task.end_date ?? null;
-  const hasRange = start || end;
+  const hasRange = start && end;
   const isDraft = task.binding_status !== 'Published';
+
+  const totalDays = hasRange ? daysBetween(start, end) : 0;
+  const now = new Date();
+  const elapsed = hasRange
+    ? Math.max(0, Math.min(totalDays, daysBetween(start, now.toISOString())))
+    : 0;
+  const progressPct = totalDays > 0 ? Math.min(100, Math.round((elapsed / totalDays) * 100)) : 0;
 
   const chartData = (task.daily_mileage ?? []).map((d) => ({
     date: d.date,
@@ -25,15 +43,19 @@ export default function TaskCard({ task, onTaskClick }: TaskCardProps) {
       onClick={() => onTaskClick(task.task_id)}
     >
       {hasRange && (
-        <>
+        <div className="ptc-task-card-timeline-section">
+          <div className="ptc-task-card-timeline-header">
+            <span className="ptc-task-card-timeline-date">{formatDate(start)}</span>
+            <span className="ptc-task-card-timeline-days">{totalDays}d</span>
+            <span className="ptc-task-card-timeline-date">{formatDate(end)}</span>
+          </div>
           <div className="ptc-task-card-timeline">
-            <div className="ptc-task-card-timeline-bar" style={{ width: '50%' }} />
+            <div
+              className="ptc-task-card-timeline-bar"
+              style={{ width: `${progressPct}%` }}
+            />
           </div>
-          <div className="ptc-task-card-dates">
-            <span>{start ? new Date(start).toLocaleDateString() : '—'}</span>
-            <span>{end ? new Date(end).toLocaleDateString() : '—'}</span>
-          </div>
-        </>
+        </div>
       )}
       {chartData.length > 0 && (
         <div className="ptc-task-card-chart">

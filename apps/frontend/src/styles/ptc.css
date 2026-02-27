@@ -81,28 +81,46 @@
   padding: 12px 16px 16px;
 }
 
+.ptc-task-card-timeline-section {
+  margin-bottom: 10px;
+}
+
+.ptc-task-card-timeline-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 4px;
+}
+
+.ptc-task-card-timeline-date {
+  font-size: 11px;
+  color: var(--text-muted);
+  font-family: var(--font-mono);
+}
+
+.ptc-task-card-timeline-days {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--brand-green);
+  background: var(--brand-green-soft);
+  padding: 1px 8px;
+  border-radius: var(--radius-full);
+}
+
 .ptc-task-card-timeline {
   height: 6px;
   background: rgba(0, 0, 0, 0.06);
   border-radius: 3px;
-  margin-bottom: 4px;
   overflow: hidden;
   position: relative;
-}
-
-.ptc-task-card-dates {
-  display: flex;
-  justify-content: space-between;
-  font-size: 11px;
-  color: var(--text-muted);
-  margin-bottom: 8px;
 }
 
 .ptc-task-card-timeline-bar {
   height: 100%;
   background: linear-gradient(90deg, var(--brand-green, #76b900), #a3d944);
   border-radius: 3px;
-  min-width: 20%;
+  min-width: 4%;
+  transition: width 0.3s ease;
 }
 
 .ptc-task-card-chart {
