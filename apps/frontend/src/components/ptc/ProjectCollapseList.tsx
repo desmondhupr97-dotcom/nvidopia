@@ -38,11 +38,11 @@ function ProjectPanelContent({
   });
 
   return (
-    <>
+    <div style={{ display: 'flex', flexDirection: 'row', flexWrap: 'wrap', gap: 16, alignItems: 'flex-start' }}>
       {sorted.map((t) => (
         <TaskCard key={t.task_id} task={t} onTaskClick={onTaskClick} />
       ))}
-    </>
+    </div>
   );
 }
 
