@@ -156,7 +156,16 @@ router.post('/seed', asyncHandler(async (req: Request, res: Response) => {
   const tags = TAG_NAMES.map((name, i) => ({ tag_id: `tag-${String(i+1).padStart(3,'0')}`, name }));
   await PtcTag.insertMany(tags);
 
-  const projects = await PtcProject.find().lean();
+  const PROJECT_NAMES = ['R17','R18','P20','S25','X30'];
+  let projects = await PtcProject.find().lean();
+  if (projects.length === 0) {
+    const newProjs = PROJECT_NAMES.map((name, i) => ({
+      project_id: `ptc-proj-${String(i+1).padStart(4,'0')}`,
+      name,
+    }));
+    await PtcProject.insertMany(newProjs);
+    projects = await PtcProject.find().lean();
+  }
 
   const allDrives: Array<Record<string,unknown>> = [];
   let dc = 0;
