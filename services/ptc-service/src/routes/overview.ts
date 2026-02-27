@@ -106,7 +106,19 @@ router.get('/overview/:taskId', asyncHandler(async (req: Request, res: Response)
     ? await PtcDrive.find({ drive_id: { $in: driveIds } }).lean()
     : [];
 
-  res.json({ task, binding, drives });
+  const driveMap = new Map(drives.map((d) => [d.drive_id, d]));
+  const enrichedBinding = {
+    ...binding,
+    cars: binding.cars.map((car) => ({
+      ...car,
+      drives: car.drives.map((d) => ({
+        ...d,
+        detail: driveMap.get(d.drive_id) || null,
+      })),
+    })),
+  };
+
+  res.json({ task, binding: enrichedBinding, drives });
 }));
 
 export default router;
