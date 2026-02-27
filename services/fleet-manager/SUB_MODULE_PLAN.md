@@ -13,13 +13,13 @@
 
 | ID | 功能 | 优先级 | 状态 |
 |----|------|--------|------|
-| FM-01 | 消费 `ad.vehicle.status.tracking` 维护车辆资源池 | P0 | Not Started |
-| FM-02 | 消费 `ad.telemetry.mileage.realtime` 聚合里程数据 | P0 | Not Started |
-| FM-03 | Task-车辆智能匹配（按硬件约束过滤） | P0 | Not Started |
-| FM-04 | Run 创建、状态流转、结束 | P0 | Not Started |
-| FM-05 | 车辆查询 API（状态、位置、配置） | P1 | Not Started |
-| FM-06 | Run 查询 API（按 Task/VIN/时间范围） | P1 | Not Started |
-| FM-07 | Simulation Adapter 接口预留（桩实现） | P2 | Not Started |
+| FM-01 | 消费 `ad.vehicle.status.tracking` 维护车辆资源池 | P0 | Done |
+| FM-02 | 消费 `ad.telemetry.mileage.realtime` 聚合里程数据 | P0 | Done |
+| FM-03 | Task-车辆智能匹配（按硬件约束过滤） | P0 | Done |
+| FM-04 | Run 创建、状态流转、结束 | P0 | Done |
+| FM-05 | 车辆查询 API（状态、位置、配置） | P1 | Done |
+| FM-06 | Run 查询 API（按 Task/VIN/时间范围） | P1 | Done |
+| FM-07 | Simulation Adapter 接口预留（桩实现） | P2 | Done |
 
 ## 数据与接口契约
 
@@ -31,13 +31,13 @@
 
 | 任务 | 状态 |
 |------|------|
-| 初始化 Node.js 微服务项目 | Not Started |
-| 实现 Kafka consumer（状态 + 遥测） | Not Started |
-| 实现车辆资源池内存模型与持久化 | Not Started |
-| 实现 Task-车辆匹配引擎 | Not Started |
-| 实现 Run CRUD API | Not Started |
-| 实现里程聚合与批量持久化 | Not Started |
-| 实现 Simulation Adapter 桩 | Not Started |
+| 初始化 Node.js 微服务项目 | Done |
+| 实现 Kafka consumer（状态 + 遥测） | Done |
+| 实现车辆资源池内存模型与持久化 | Done |
+| 实现 Task-车辆匹配引擎 | Done |
+| 实现 Run CRUD API | Done |
+| 实现里程聚合与批量持久化 | Done |
+| 实现 Simulation Adapter 桩 | Done |
 
 ## 测试策略与验收标准
 

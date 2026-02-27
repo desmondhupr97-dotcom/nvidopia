@@ -12,19 +12,19 @@
 
 | ID | 功能 | 优先级 | 状态 |
 |----|------|--------|------|
-| FE-01 | 项目管理页（Project CRUD、里程碑视图） | P0 | Not Started |
-| FE-02 | 任务管理页（Task 列表、类型筛选、状态流转） | P0 | Not Started |
-| FE-03 | Run 监控页（实时车辆状态、里程累计、地图轨迹） | P0 | Not Started |
-| FE-04 | Issue 工作台（人工分诊、状态机可视化、详情面板） | P0 | Not Started |
-| FE-05 | KPI 看板（Dashboard-as-Code 渲染器、变量筛选、告警阈值） | P0 | Not Started |
-| FE-06 | 追溯分析页（正反向追溯链路可视化） | P1 | Not Started |
-| FE-07 | AutoTriage 占位页（规划中提示 + 接口桩） | P2 | Not Started |
-| FE-08 | Simulation 占位页（规划中提示 + 数据结构桩） | P2 | Not Started |
-| FE-09 | 全局导航、布局、主题、权限路由守卫 | P0 | Not Started |
-| FE-10 | Issue 详情页车辆动态快照展示 | P0 | Not Started |
-| FE-11 | Issue 详情页时序图表（多通道、多变量） | P0 | Not Started |
-| FE-12 | 自定义 KPI 看板（定义构建器 + 多图表渲染器） | P0 | Not Started |
-| FE-13 | Schema 字段自动同步选择器 | P1 | Not Started |
+| FE-01 | 项目管理页（Project CRUD、里程碑视图） | P0 | Done |
+| FE-02 | 任务管理页（Task 列表、类型筛选、状态流转） | P0 | Done |
+| FE-03 | Run 监控页（实时车辆状态、里程累计、地图轨迹） | P0 | Done |
+| FE-04 | Issue 工作台（人工分诊、状态机可视化、详情面板） | P0 | Done |
+| FE-05 | KPI 看板（Dashboard-as-Code 渲染器、变量筛选、告警阈值） | P0 | Done |
+| FE-06 | 追溯分析页（正反向追溯链路可视化） | P1 | Done |
+| FE-07 | AutoTriage 占位页（规划中提示 + 接口桩） | P2 | Done |
+| FE-08 | Simulation 占位页（规划中提示 + 数据结构桩） | P2 | Done |
+| FE-09 | 全局导航、布局、主题、权限路由守卫 | P0 | Done |
+| FE-10 | Issue 详情页车辆动态快照展示 | P0 | Done |
+| FE-11 | Issue 详情页时序图表（多通道、多变量） | P0 | Done |
+| FE-12 | 自定义 KPI 看板（定义构建器 + 多图表渲染器） | P0 | Done |
+| FE-13 | Schema 字段自动同步选择器 | P1 | Done |
 | FE-14 | PTC 导航与路由（TopNav 新增 PTC 组、SecondaryTabs Binding/KPI、/ptc/* 路由） | P0 | Done |
 | FE-15 | PTC Binding 总览页骨架（PtcBindingPage 容器组件） | P0 | Done |
 | FE-16 | PTC 筛选栏组件（FilterBar：Project/Task/Car/Build/Tag/Drive 模糊搜索） | P0 | Done |
@@ -48,19 +48,19 @@
 
 | 任务 | 状态 |
 |------|------|
-| 初始化 Vite + React + TypeScript 项目 | Not Started |
-| 搭建路由与布局骨架（含预留导航入口） | Not Started |
-| 集成 typed API client（基于 OpenAPI codegen） | Not Started |
-| 实现 Project/Task/Run/Issue 各页面 | Not Started |
-| 实现 Dashboard-as-Code 渲染器 | Not Started |
-| 实现追溯可视化组件 | Not Started |
-| 创建 AutoTriage/Simulation 占位页 | Not Started |
-| 响应式适配与主题 | Not Started |
-| 实现自定义 KPI 组件拆分（定义构建器 + 多图表渲染器） | Not Started |
-| 实现车辆动态快照展示组件 | Not Started |
-| 实现时序图表组件（多通道、多变量） | Not Started |
-| 实现 Schema 字段自动同步选择器 | Not Started |
-| 更新 normalize 函数适配新数据结构 | Not Started |
+| 初始化 Vite + React + TypeScript 项目 | Done |
+| 搭建路由与布局骨架（含预留导航入口） | Done |
+| 集成 typed API client（基于 OpenAPI codegen） | Done |
+| 实现 Project/Task/Run/Issue 各页面 | Done |
+| 实现 Dashboard-as-Code 渲染器 | Done |
+| 实现追溯可视化组件 | Done |
+| 创建 AutoTriage/Simulation 占位页 | Done |
+| 响应式适配与主题 | Done |
+| 实现自定义 KPI 组件拆分（定义构建器 + 多图表渲染器） | Done |
+| 实现车辆动态快照展示组件 | Done |
+| 实现时序图表组件（多通道、多变量） | Done |
+| 实现 Schema 字段自动同步选择器 | Done |
+| 更新 normalize 函数适配新数据结构 | Done |
 | 新增 PTC 导航入口与路由配置 | Done |
 | 实现 PtcBindingPage 容器组件 | Done |
 | 实现 FilterBar 筛选栏组件 | Done |

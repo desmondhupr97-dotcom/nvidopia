@@ -13,15 +13,15 @@ Issue 缺陷生命周期管理微服务。消费缺陷上报事件，维护严�
 
 | ID | 功能 | 优先级 | 状态 |
 |----|------|--------|------|
-| IW-01 | 消费 `ad.testing.issue.reports` 自动创建 Issue | P0 | Not Started |
-| IW-02 | Issue 状态机引擎（严格前置条件校验） | P0 | Not Started |
-| IW-03 | Issue CRUD API（查询、更新、批量） | P0 | Not Started |
-| IW-04 | 人工分诊接口（Triage -> Assigned，指定责任人与模块） | P0 | Not Started |
-| IW-05 | 状态变更审计日志（issue_state_transitions 集合） | P0 | Not Started |
-| IW-06 | Issue 与 Code Commit 关联（fix_commit_id） | P1 | Not Started |
-| IW-07 | Auto-Triage Adapter 接口预留（桩实现） | P2 | Not Started |
-| IW-08 | 车辆动态快照上传/查询 API（VehicleDynamicsSnapshot） | P0 | Not Started |
-| IW-09 | 时序数据批量上传/查询 API（IssueTimeSeries） | P0 | Not Started |
+| IW-01 | 消费 `ad.testing.issue.reports` 自动创建 Issue | P0 | Done |
+| IW-02 | Issue 状态机引擎（严格前置条件校验） | P0 | Done |
+| IW-03 | Issue CRUD API（查询、更新、批量） | P0 | Done |
+| IW-04 | 人工分诊接口（Triage -> Assigned，指定责任人与模块） | P0 | Done |
+| IW-05 | 状态变更审计日志（issue_state_transitions 集合） | P0 | Done |
+| IW-06 | Issue 与 Code Commit 关联（fix_commit_id） | P1 | Done |
+| IW-07 | Auto-Triage Adapter 接口预留（桩实现） | P2 | Done |
+| IW-08 | 车辆动态快照上传/查询 API（VehicleDynamicsSnapshot） | P0 | Done |
+| IW-09 | 时序数据批量上传/查询 API（IssueTimeSeries） | P0 | Done |
 
 ## 数据与接口契约
 
@@ -33,16 +33,16 @@ Issue 缺陷生命周期管理微服务。消费缺陷上报事件，维护严�
 
 | 任务 | 状态 |
 |------|------|
-| 初始化 Node.js 微服务项目 | Not Started |
-| 实现 Kafka consumer（Issue 事件） | Not Started |
-| 实现 Issue 状态机引擎 | Not Started |
-| 实现 Issue CRUD API | Not Started |
-| 实现人工分诊流程 | Not Started |
-| 实现审计日志记录 | Not Started |
-| 实现 Commit 关联接口 | Not Started |
-| 实现 Auto-Triage Adapter 桩 | Not Started |
-| 实现车辆动态快照 CRUD API | Not Started |
-| 实现时序数据批量上传/查询 API | Not Started |
+| 初始化 Node.js 微服务项目 | Done |
+| 实现 Kafka consumer（Issue 事件） | Done |
+| 实现 Issue 状态机引擎 | Done |
+| 实现 Issue CRUD API | Done |
+| 实现人工分诊流程 | Done |
+| 实现审计日志记录 | Done |
+| 实现 Commit 关联接口 | Done |
+| 实现 Auto-Triage Adapter 桩 | Done |
+| 实现车辆动态快照 CRUD API | Done |
+| 实现时序数据批量上传/查询 API | Done |
 
 ## 测试策略与验收标准
 

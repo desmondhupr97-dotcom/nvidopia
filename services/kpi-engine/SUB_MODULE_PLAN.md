@@ -12,17 +12,17 @@ KPI 聚合消费与查询微服务。消费 Kafka 预聚合 KPI 流，结合 Mon
 
 | ID | 功能 | 优先级 | 状态 |
 |----|------|--------|------|
-| KPI-01 | 消费 `ad.testing.kpi.metrics` 写入指标存储 | P0 | Not Started |
-| KPI-02 | MPI（平均接管里程）查询 API（支持分层视图） | P0 | Not Started |
-| KPI-03 | MTTR（平均修复时间）查询 API | P0 | Not Started |
-| KPI-04 | 回归测试通过率查询 API | P0 | Not Started |
-| KPI-05 | 车队测试时间利用率查询 API | P1 | Not Started |
-| KPI-06 | 缺陷收敛趋势查询 API（时序数据） | P0 | Not Started |
+| KPI-01 | 消费 `ad.testing.kpi.metrics` 写入指标存储 | P0 | Done |
+| KPI-02 | MPI（平均接管里程）查询 API（支持分层视图） | P0 | Done |
+| KPI-03 | MTTR（平均修复时间）查询 API | P0 | Done |
+| KPI-04 | 回归测试通过率查询 API | P0 | Done |
+| KPI-05 | 车队测试时间利用率查询 API | P1 | Done |
+| KPI-06 | 缺陷收敛趋势查询 API（时序数据） | P0 | Done |
 | KPI-07 | 告警阈值评估与通知 | P2 | Not Started |
-| KPI-08 | Schema 注册表自省 API（字段元数据查询） | P0 | Not Started |
-| KPI-09 | KPI 定义 CRUD API（自定义指标管理） | P0 | Not Started |
-| KPI-10 | math.js 公式引擎（表达式解析与求值） | P0 | Not Started |
-| KPI-11 | 自定义 KPI 评估/预览端点 | P0 | Not Started |
+| KPI-08 | Schema 注册表自省 API（字段元数据查询） | P0 | Done |
+| KPI-09 | KPI 定义 CRUD API（自定义指标管理） | P0 | Done |
+| KPI-10 | math.js 公式引擎（表达式解析与求值） | P0 | Done |
+| KPI-11 | 自定义 KPI 评估/预览端点 | P0 | Done |
 
 ## 数据与接口契约
 
@@ -35,18 +35,18 @@ KPI 聚合消费与查询微服务。消费 Kafka 预聚合 KPI 流，结合 Mon
 
 | 任务 | 状态 |
 |------|------|
-| 初始化 Node.js 微服务项目 | Not Started |
-| 实现 Kafka consumer（KPI 指标流） | Not Started |
-| 实现 MPI 查询 API | Not Started |
-| 实现 MTTR 查询 API | Not Started |
-| 实现回归通过率查询 API | Not Started |
-| 实现利用率查询 API | Not Started |
-| 实现收敛趋势时序 API | Not Started |
+| 初始化 Node.js 微服务项目 | Done |
+| 实现 Kafka consumer（KPI 指标流） | Done |
+| 实现 MPI 查询 API | Done |
+| 实现 MTTR 查询 API | Done |
+| 实现回归通过率查询 API | Done |
+| 实现利用率查询 API | Done |
+| 实现收敛趋势时序 API | Done |
 | 实现告警阈值评估 | Not Started |
-| 实现 Schema 注册表自省 API | Not Started |
-| 实现 math.js 公式引擎 | Not Started |
-| 实现 KPI 定义 CRUD API | Not Started |
-| 实现自定义 KPI 评估/预览端点 | Not Started |
+| 实现 Schema 注册表自省 API | Done |
+| 实现 math.js 公式引擎 | Done |
+| 实现 KPI 定义 CRUD API | Done |
+| 实现自定义 KPI 评估/预览端点 | Done |
 
 ## 测试策略与验收标准
 

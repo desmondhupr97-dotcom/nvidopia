@@ -12,22 +12,22 @@ MongoDB 数据模型层。集中定义所有业务集合的 Schema（Mongoose/JS
 
 | ID | 功能 | 优先级 | 状态 |
 |----|------|--------|------|
-| DM-01 | Project 集合 Schema 与索引 | P0 | Not Started |
-| DM-02 | Task 集合 Schema 与索引 | P0 | Not Started |
-| DM-03 | Run 集合 Schema 与索引 | P0 | Not Started |
-| DM-04 | Issue 集合 Schema 与索引（含预留字段 triage_mode/hint/source） | P0 | Not Started |
-| DM-05 | issue_state_transitions 集合 Schema | P0 | Not Started |
-| DM-06 | requirements 集合 Schema（外部同步） | P1 | Not Started |
-| DM-07 | commits 集合 Schema | P1 | Not Started |
-| DM-08 | builds 集合 Schema | P1 | Not Started |
-| DM-09 | kpi_snapshots 集合 Schema | P1 | Not Started |
-| DM-10 | vehicles 集合 Schema（实时状态缓存） | P1 | Not Started |
-| DM-11 | 追溯用 $graphLookup 聚合管道模板 | P0 | Not Started |
-| DM-12 | 开发环境种子数据脚本 | P1 | Not Started |
-| DM-13 | 四模型 `strict: false` + `extra` 字段改造（Project/Task/Run/Issue） | P0 | Not Started |
-| DM-14 | IVehicleDynamicsSnapshot 子 Schema 定义 | P0 | Not Started |
-| DM-15 | IssueTimeSeries 集合 Schema 与索引 | P0 | Not Started |
-| DM-16 | KpiDefinition 集合 Schema 与索引 | P0 | Not Started |
+| DM-01 | Project 集合 Schema 与索引 | P0 | Done |
+| DM-02 | Task 集合 Schema 与索引 | P0 | Done |
+| DM-03 | Run 集合 Schema 与索引 | P0 | Done |
+| DM-04 | Issue 集合 Schema 与索引（含预留字段 triage_mode/hint/source） | P0 | Done |
+| DM-05 | issue_state_transitions 集合 Schema | P0 | Done |
+| DM-06 | requirements 集合 Schema（外部同步） | P1 | Done |
+| DM-07 | commits 集合 Schema | P1 | Done |
+| DM-08 | builds 集合 Schema | P1 | Done |
+| DM-09 | kpi_snapshots 集合 Schema | P1 | Done |
+| DM-10 | vehicles 集合 Schema（实时状态缓存） | P1 | Done |
+| DM-11 | 追溯用 $graphLookup 聚合管道模板 | P0 | Done |
+| DM-12 | 开发环境种子数据脚本 | P1 | Done |
+| DM-13 | 四模型 `strict: false` + `extra` 字段改造（Project/Task/Run/Issue） | P0 | Done |
+| DM-14 | IVehicleDynamicsSnapshot 子 Schema 定义 | P0 | Done |
+| DM-15 | IssueTimeSeries 集合 Schema 与索引 | P0 | Done |
+| DM-16 | KpiDefinition 集合 Schema 与索引 | P0 | Done |
 | DM-17 | PtcProject 集合 Schema 与索引（ptc_projects） | P0 | Done |
 | DM-18 | PtcTask 集合 Schema 与索引（ptc_tasks，含 project_id 外键与唯一约束） | P0 | Done |
 | DM-19 | PtcBinding 集合 Schema 与索引（ptc_bindings，含 task_id 唯一约束、嵌套 cars/drives 子文档） | P0 | Done |
@@ -46,18 +46,18 @@ MongoDB 数据模型层。集中定义所有业务集合的 Schema（Mongoose/JS
 
 | 任务 | 状态 |
 |------|------|
-| 初始化 npm 包（共享数据模型库） | Not Started |
-| 定义所有核心集合 Schema | Not Started |
-| 定义索引策略 | Not Started |
-| 实现 $graphLookup 聚合管道模板 | Not Started |
-| 编写种子数据脚本 | Not Started |
-| 编写数据迁移框架 | Not Started |
-| 改造 Project/Task/Run/Issue 四模型为 `strict: false` + `extra` 字段 | Not Started |
-| 创建 IVehicleDynamicsSnapshot 子 Schema | Not Started |
-| 创建 IssueTimeSeries 集合 Schema | Not Started |
-| 创建 KpiDefinition 集合 Schema | Not Started |
-| 更新索引策略（含新集合索引） | Not Started |
-| 更新种子数据脚本（覆盖新集合） | Not Started |
+| 初始化 npm 包（共享数据模型库） | Done |
+| 定义所有核心集合 Schema | Done |
+| 定义索引策略 | Done |
+| 实现 $graphLookup 聚合管道模板 | Done |
+| 编写种子数据脚本 | Done |
+| 编写数据迁移框架 | Done |
+| 改造 Project/Task/Run/Issue 四模型为 `strict: false` + `extra` 字段 | Done |
+| 创建 IVehicleDynamicsSnapshot 子 Schema | Done |
+| 创建 IssueTimeSeries 集合 Schema | Done |
+| 创建 KpiDefinition 集合 Schema | Done |
+| 更新索引策略（含新集合索引） | Done |
+| 更新种子数据脚本（覆盖新集合） | Done |
 | 创建 PtcProject 集合 Schema | Done |
 | 创建 PtcTask 集合 Schema（含 project_id 引用与唯一约束） | Done |
 | 创建 PtcBinding 集合 Schema（含嵌套 cars/drives 子文档与状态机） | Done |

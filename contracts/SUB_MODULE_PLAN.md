@@ -12,14 +12,14 @@ API 与事件契约统一管理。集中存放所有 OpenAPI（REST）与 AsyncA
 
 | ID | 功能 | 优先级 | 状态 |
 |----|------|--------|------|
-| CT-01 | Gateway OpenAPI spec | P0 | Not Started |
-| CT-02 | Release Manager OpenAPI spec | P0 | Not Started |
-| CT-03 | Fleet Manager OpenAPI spec | P0 | Not Started |
-| CT-04 | Issue Workflow OpenAPI spec | P0 | Not Started |
-| CT-05 | Traceability OpenAPI spec | P0 | Not Started |
-| CT-06 | KPI Engine OpenAPI spec | P0 | Not Started |
-| CT-07 | AsyncAPI 事件契约（4 大 Topic） | P0 | Not Started |
-| CT-08 | Dashboard JSON Schema | P0 | Not Started |
+| CT-01 | Gateway OpenAPI spec | P0 | Done |
+| CT-02 | Release Manager OpenAPI spec | P0 | Done |
+| CT-03 | Fleet Manager OpenAPI spec | P0 | Done |
+| CT-04 | Issue Workflow OpenAPI spec | P0 | Done |
+| CT-05 | Traceability OpenAPI spec | P0 | Done |
+| CT-06 | KPI Engine OpenAPI spec | P0 | Done |
+| CT-07 | AsyncAPI 事件契约（4 大 Topic） | P0 | Done |
+| CT-08 | Dashboard JSON Schema | P0 | Done |
 | CT-09 | Typed client 代码生成脚本 | P1 | Not Started |
 
 ## 数据与接口契约
@@ -34,11 +34,11 @@ API 与事件契约统一管理。集中存放所有 OpenAPI（REST）与 AsyncA
 
 | 任务 | 状态 |
 |------|------|
-| 创建 contracts 目录结构 | Not Started |
-| 编写 Gateway OpenAPI spec | Not Started |
-| 编写各微服务 OpenAPI spec | Not Started |
-| 编写 AsyncAPI 事件契约 | Not Started |
-| 编写 Dashboard JSON Schema | Not Started |
+| 创建 contracts 目录结构 | Done |
+| 编写 Gateway OpenAPI spec | Done |
+| 编写各微服务 OpenAPI spec | Done |
+| 编写 AsyncAPI 事件契约 | Done |
+| 编写 Dashboard JSON Schema | Done |
 | 配置代码生成脚本（openapi-generator） | Not Started |
 
 ## 测试策略与验收标准

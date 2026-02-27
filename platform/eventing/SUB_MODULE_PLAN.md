@@ -12,9 +12,9 @@ Kafka 事件平台层。定义所有 Topic 命名规范、分区策略、保留�
 
 | ID | 功能 | 优先级 | 状态 |
 |----|------|--------|------|
-| EV-01 | Topic 定义文件（4 大 topic + DLQ topic） | P0 | Not Started |
-| EV-02 | Kafka producer 工具库（序列化、分区键、重试） | P0 | Not Started |
-| EV-03 | Kafka consumer 基类（反序列化、幂等键、DLQ 路由、重试策略） | P0 | Not Started |
+| EV-01 | Topic 定义文件（4 大 topic + DLQ topic） | P0 | Done |
+| EV-02 | Kafka producer 工具库（序列化、分区键、重试） | P0 | Done |
+| EV-03 | Kafka consumer 基类（反序列化、幂等键、DLQ 路由、重试策略） | P0 | Done |
 | EV-04 | KPI 流聚合作业配置（窗口函数、输入输出 topic） | P1 | Not Started |
 | EV-05 | Topic 自动创建脚本（开发环境） | P1 | Not Started |
 
@@ -32,9 +32,9 @@ Kafka 事件平台层。定义所有 Topic 命名规范、分区策略、保留�
 
 | 任务 | 状态 |
 |------|------|
-| 编写 Topic 定义 JSON/YAML | Not Started |
-| 实现 Kafka producer 工具库 | Not Started |
-| 实现 Kafka consumer 基类（含 DLQ） | Not Started |
+| 编写 Topic 定义 JSON/YAML | Done |
+| 实现 Kafka producer 工具库 | Done |
+| 实现 Kafka consumer 基类（含 DLQ） | Done |
 | 编写 Topic 自动创建脚本 | Not Started |
 | 定义 KPI 聚合作业配置 | Not Started |
 

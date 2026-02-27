@@ -12,24 +12,24 @@
 
 | ID | 功能 | 优先级 | 状态 |
 |----|------|--------|------|
-| DOC-01 | 系统架构设计文档 | P0 | Not Started |
-| DOC-02 | 本地开发环境搭建指南 | P0 | Not Started |
+| DOC-01 | 系统架构设计文档 | P0 | Done |
+| DOC-02 | 本地开发环境搭建指南 | P0 | Done |
 | DOC-03 | API 使用手册（基于 OpenAPI 自动生成） | P1 | Not Started |
 | DOC-04 | 验收报告模板 | P1 | Not Started |
 | DOC-05 | 变更日志（CHANGELOG） | P1 | Not Started |
-| DOC-06 | 更新架构文档 `docs/architecture.md`：新增字段容错、数据快照、自定义 KPI 章节 | P0 | Not Started |
+| DOC-06 | 更新架构文档 `docs/architecture.md`：新增字段容错、数据快照、自定义 KPI 章节 | P0 | Done |
 
 ## 开发任务清单
 
 | 任务 | 状态 |
 |------|------|
-| 编写架构设计文档初版 | Not Started |
-| 编写本地开发指南 | Not Started |
+| 编写架构设计文档初版 | Done |
+| 编写本地开发指南 | Done |
 | 创建验收报告模板 | Not Started |
 | 初始化 CHANGELOG | Not Started |
-| 在 architecture.md 中补充字段容错（strict: false + extra）设计说明 | Not Started |
-| 在 architecture.md 中补充数据快照（VehicleDynamicsSnapshot）架构说明 | Not Started |
-| 在 architecture.md 中补充自定义 KPI（KpiDefinition + math.js 公式引擎）架构说明 | Not Started |
+| 在 architecture.md 中补充字段容错（strict: false + extra）设计说明 | Done |
+| 在 architecture.md 中补充数据快照（VehicleDynamicsSnapshot）架构说明 | Done |
+| 在 architecture.md 中补充自定义 KPI（KpiDefinition + math.js 公式引擎）架构说明 | Done |
 
 ## 测试策略与验收标准
 

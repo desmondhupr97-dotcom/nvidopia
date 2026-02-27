@@ -12,9 +12,9 @@
 
 | ID | 功能 | 优先级 | 状态 |
 |----|------|--------|------|
-| OB-01 | 结构化 JSON 日志工具库（winston/pino 封装） | P0 | Not Started |
-| OB-02 | OpenTelemetry Trace-ID 中间件 | P1 | Not Started |
-| OB-03 | Prometheus 指标暴露中间件（HTTP 请求/Kafka 消费） | P1 | Not Started |
+| OB-01 | 结构化 JSON 日志工具库（winston/pino 封装） | P0 | Done |
+| OB-02 | OpenTelemetry Trace-ID 中间件 | P1 | Done |
+| OB-03 | Prometheus 指标暴露中间件（HTTP 请求/Kafka 消费） | P1 | Done |
 | OB-04 | Grafana Dashboard 模板（服务可用性、延迟、DLQ） | P2 | Not Started |
 | OB-05 | 告警规则定义（Kafka 消费延迟、DLQ 堆积、错误率） | P2 | Not Started |
 
@@ -28,10 +28,10 @@
 
 | 任务 | 状态 |
 |------|------|
-| 初始化 npm 包（共享可观测性库） | Not Started |
-| 实现结构化日志工具 | Not Started |
-| 实现 Trace-ID 中间件 | Not Started |
-| 实现 Prometheus 指标中间件 | Not Started |
+| 初始化 npm 包（共享可观测性库） | Done |
+| 实现结构化日志工具 | Done |
+| 实现 Trace-ID 中间件 | Done |
+| 实现 Prometheus 指标中间件 | Done |
 | 编写 Grafana Dashboard JSON | Not Started |
 | 编写告警规则 | Not Started |
 

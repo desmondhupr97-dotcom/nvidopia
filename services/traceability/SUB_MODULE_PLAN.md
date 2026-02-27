@@ -12,10 +12,10 @@
 
 | ID | 功能 | 优先级 | 状态 |
 |----|------|--------|------|
-| TR-01 | 正向追溯 API（需求 -> 代码 -> 版本 -> Project -> Task -> Run -> 验证结果） | P0 | Not Started |
-| TR-02 | 反向追溯 API（Issue -> Run -> Task -> Project -> Commit -> 需求） | P0 | Not Started |
-| TR-03 | 影响范围扩散查询（Issue -> Commit -> 需求 -> 正向展开所有受影响 Task） | P1 | Not Started |
-| TR-04 | 追溯覆盖率统计（需求验证覆盖率百分比） | P1 | Not Started |
+| TR-01 | 正向追溯 API（需求 -> 代码 -> 版本 -> Project -> Task -> Run -> 验证结果） | P0 | Done |
+| TR-02 | 反向追溯 API（Issue -> Run -> Task -> Project -> Commit -> 需求） | P0 | Done |
+| TR-03 | 影响范围扩散查询（Issue -> Commit -> 需求 -> 正向展开所有受影响 Task） | P1 | Done |
+| TR-04 | 追溯覆盖率统计（需求验证覆盖率百分比） | P1 | Done |
 | TR-05 | 追溯报告导出 API | P2 | Not Started |
 
 ## 数据与接口契约
@@ -28,11 +28,11 @@
 
 | 任务 | 状态 |
 |------|------|
-| 初始化 Node.js 微服务项目 | Not Started |
-| 实现正向追溯聚合管道 | Not Started |
-| 实现反向追溯聚合管道 | Not Started |
-| 实现影响范围扩散查询 | Not Started |
-| 实现覆盖率统计接口 | Not Started |
+| 初始化 Node.js 微服务项目 | Done |
+| 实现正向追溯聚合管道 | Done |
+| 实现反向追溯聚合管道 | Done |
+| 实现影响范围扩散查询 | Done |
+| 实现覆盖率统计接口 | Done |
 | 实现追溯报告导出 | Not Started |
 
 ## 测试策略与验收标准

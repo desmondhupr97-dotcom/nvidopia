@@ -12,17 +12,17 @@ API 网关 / BFF（Backend-for-Frontend）层。统一接收前端请求与车�
 
 | ID | 功能 | 优先级 | 状态 |
 |----|------|--------|------|
-| GW-01 | JWT 鉴权与 RBAC 中间件 | P0 | Not Started |
-| GW-02 | 请求路由至各微服务（反向代理/转发） | P0 | Not Started |
-| GW-03 | 车端遥测数据接入 -> Kafka produce | P0 | Not Started |
-| GW-04 | 车端状态心跳接入 -> Kafka produce | P0 | Not Started |
-| GW-05 | Issue 事件上报接入 -> Kafka produce | P0 | Not Started |
-| GW-06 | 请求限流与熔断 | P1 | Not Started |
-| GW-07 | 统一错误码与结构化日志 | P0 | Not Started |
-| GW-08 | Trace-ID 传播（OpenTelemetry） | P1 | Not Started |
-| GW-09 | Schema 注册表代理路由（转发至 kpi-engine） | P0 | Not Started |
-| GW-10 | Issue 快照/时序数据代理路由（转发至 issue-workflow） | P0 | Not Started |
-| GW-11 | 自定义 KPI 代理路由（转发至 kpi-engine） | P0 | Not Started |
+| GW-01 | JWT 鉴权与 RBAC 中间件 | P0 | Done |
+| GW-02 | 请求路由至各微服务（反向代理/转发） | P0 | Done |
+| GW-03 | 车端遥测数据接入 -> Kafka produce | P0 | Done |
+| GW-04 | 车端状态心跳接入 -> Kafka produce | P0 | Done |
+| GW-05 | Issue 事件上报接入 -> Kafka produce | P0 | Done |
+| GW-06 | 请求限流与熔断 | P1 | Done |
+| GW-07 | 统一错误码与结构化日志 | P0 | Done |
+| GW-08 | Trace-ID 传播（OpenTelemetry） | P1 | Done |
+| GW-09 | Schema 注册表代理路由（转发至 kpi-engine） | P0 | Done |
+| GW-10 | Issue 快照/时序数据代理路由（转发至 issue-workflow） | P0 | Done |
+| GW-11 | 自定义 KPI 代理路由（转发至 kpi-engine） | P0 | Done |
 | GW-12 | PTC 代理路由（/api/ptc/* 转发至 ptc-service:3007） | P0 | Done |
 
 ## 数据与接口契约
@@ -35,16 +35,16 @@ API 网关 / BFF（Backend-for-Frontend）层。统一接收前端请求与车�
 
 | 任务 | 状态 |
 |------|------|
-| 初始化 Node.js/Express 或 Fastify 项目 | Not Started |
-| 实现 JWT 鉴权中间件 | Not Started |
-| 实现路由转发层 | Not Started |
-| 实现 Kafka producer（车端数据接入） | Not Started |
-| 实现限流与熔断中间件 | Not Started |
-| 统一错误处理与日志 | Not Started |
-| 集成 OpenTelemetry tracing | Not Started |
-| 配置 Schema 注册表代理路由转发 | Not Started |
-| 配置 Issue 快照/时序数据代理路由转发 | Not Started |
-| 配置自定义 KPI 代理路由转发 | Not Started |
+| 初始化 Node.js/Express 或 Fastify 项目 | Done |
+| 实现 JWT 鉴权中间件 | Done |
+| 实现路由转发层 | Done |
+| 实现 Kafka producer（车端数据接入） | Done |
+| 实现限流与熔断中间件 | Done |
+| 统一错误处理与日志 | Done |
+| 集成 OpenTelemetry tracing | Done |
+| 配置 Schema 注册表代理路由转发 | Done |
+| 配置 Issue 快照/时序数据代理路由转发 | Done |
+| 配置自定义 KPI 代理路由转发 | Done |
 | 配置 PTC 代理路由转发（/api/ptc/* -> ptc-service:3007） | Done |
 
 ## 测试策略与验收标准

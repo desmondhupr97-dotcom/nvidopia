@@ -12,12 +12,12 @@
 
 | ID | 功能 | 优先级 | 状态 |
 |----|------|--------|------|
-| RM-01 | Project CRUD（创建、查询、更新、归档） | P0 | Not Started |
-| RM-02 | Task CRUD（创建、查询、更新、关闭） | P0 | Not Started |
-| RM-03 | Task 类型管理（Daily/Smoke/Gray/Freeze/Retest） | P0 | Not Started |
-| RM-04 | 发布关卡状态机（Smoke通过->Gray->Freeze->Go-Live） | P0 | Not Started |
-| RM-05 | 版本冻结控制（Freeze 期间禁止新特性合入标记） | P1 | Not Started |
-| RM-06 | Retest Task 自动关联 Fixed Issue 列表 | P1 | Not Started |
+| RM-01 | Project CRUD（创建、查询、更新、归档） | P0 | Done |
+| RM-02 | Task CRUD（创建、查询、更新、关闭） | P0 | Done |
+| RM-03 | Task 类型管理（Daily/Smoke/Gray/Freeze/Retest） | P0 | Done |
+| RM-04 | 发布关卡状态机（Smoke通过->Gray->Freeze->Go-Live） | P0 | Done |
+| RM-05 | 版本冻结控制（Freeze 期间禁止新特性合入标记） | P1 | Done |
+| RM-06 | Retest Task 自动关联 Fixed Issue 列表 | P1 | Done |
 
 ## 数据与接口契约
 
@@ -29,12 +29,12 @@
 
 | 任务 | 状态 |
 |------|------|
-| 初始化 Node.js 微服务项目 | Not Started |
-| 实现 Project 数据模型与 CRUD API | Not Started |
-| 实现 Task 数据模型与 CRUD API | Not Started |
-| 实现发布关卡状态机 | Not Started |
-| 实现 Task 状态变更事件发布 | Not Started |
-| 实现 Retest Task 关联 Fixed Issue | Not Started |
+| 初始化 Node.js 微服务项目 | Done |
+| 实现 Project 数据模型与 CRUD API | Done |
+| 实现 Task 数据模型与 CRUD API | Done |
+| 实现发布关卡状态机 | Done |
+| 实现 Task 状态变更事件发布 | Done |
+| 实现 Retest Task 关联 Fixed Issue | Done |
 
 ## 测试策略与验收标准
 

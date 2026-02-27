@@ -12,10 +12,10 @@
 
 | ID | 功能 | 优先级 | 状态 |
 |----|------|--------|------|
-| IF-01 | Docker Compose 本地环境（Kafka + Zookeeper + MongoDB） | P0 | Not Started |
-| IF-02 | 各微服务 Dockerfile | P0 | Not Started |
-| IF-03 | Docker Compose 全栈编排（所有服务 + 基础设施） | P0 | Not Started |
-| IF-04 | 环境变量模板（.env.example） | P0 | Not Started |
+| IF-01 | Docker Compose 本地环境（Kafka + Zookeeper + MongoDB） | P0 | Done |
+| IF-02 | 各微服务 Dockerfile | P0 | Done |
+| IF-03 | Docker Compose 全栈编排（所有服务 + 基础设施） | P0 | Done |
+| IF-04 | 环境变量模板（.env.example） | P0 | Done |
 | IF-05 | CI 流水线配置（GitHub Actions：lint/test/build） | P1 | Not Started |
 | IF-06 | 镜像构建与推送脚本 | P2 | Not Started |
 | IF-07 | ptc-service 容器编排（Docker Compose + Dockerfile + Cloud Run 集成） | P0 | Done |
@@ -34,10 +34,10 @@
 
 | 任务 | 状态 |
 |------|------|
-| 编写基础设施 Docker Compose | Not Started |
-| 编写微服务 Dockerfile 模板 | Not Started |
-| 编写全栈 Docker Compose | Not Started |
-| 编写 .env.example | Not Started |
+| 编写基础设施 Docker Compose | Done |
+| 编写微服务 Dockerfile 模板 | Done |
+| 编写全栈 Docker Compose | Done |
+| 编写 .env.example | Done |
 | 编写 GitHub Actions CI 配置 | Not Started |
 | 添加 ptc-service 到 docker-compose.full.yml | Done |
 | 更新 Dockerfile 包含 ptc-service | Done |
