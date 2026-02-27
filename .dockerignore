@@ -1,21 +1,57 @@
-node_modules
-**/node_modules
-**/dist
-build
+# === Version control ===
 .git
 .gitignore
 .dockerignore
+
+# === Dependencies (rebuilt in container) ===
+node_modules
+**/node_modules
+
+# === Build artifacts ===
+**/dist
+build
+
+# === Secrets ===
 .env
 .env.*
-screenshots
-docs
+
+# === IDE / editor ===
 .cursor
 .vscode
+.idea
+
+# === Test & coverage ===
 coverage
 .nyc_output
-*.tgz
-.DS_Store
-FRONTEND_VERIFICATION_REPORT.md
+test_frontend.py
+**/*.test.ts
+**/*.spec.ts
+**/__tests__
+
+# === Documentation (not needed in image) ===
 *.md
 !README.md
+docs
+
+# === Media / screenshots ===
+screenshots
+*.png
+*.jpg
+*.jpeg
+*.gif
+*.svg
+
+# === Infrastructure (compose files not used in Cloud Run) ===
+infra
+
+# === Agent / automation artifacts ===
 agent-transcripts
+
+# === Build configs (not needed inside image) ===
+cloudbuild.yaml
+.gcloudignore
+
+# === Misc ===
+*.tgz
+.DS_Store
+Thumbs.db

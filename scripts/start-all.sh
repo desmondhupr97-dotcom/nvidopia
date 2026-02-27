@@ -60,11 +60,15 @@ if [ $TRIES -ge $MAX_TRIES ]; then
   echo "[start-all] WARNING: BFF gateway not ready after ${MAX_TRIES} attempts, starting Nginx anyway"
 fi
 
+echo "[start-all] Launching Nginx on port ${PORT}"
+
 if [ "${SEED_ON_STARTUP}" = "true" ]; then
-  echo "[start-all] SEED_ON_STARTUP=true — running seed script..."
-  $TSX platform/data-models/src/seed.ts 2>&1 || echo "[start-all] Seed script failed (non-fatal)"
-  echo "[start-all] Seed complete"
+  (
+    sleep 5
+    echo "[start-all] SEED_ON_STARTUP=true — running seed script..."
+    $TSX platform/data-models/src/seed.ts 2>&1 || echo "[start-all] Seed script failed (non-fatal)"
+    echo "[start-all] Seed complete"
+  ) &
 fi
 
-echo "[start-all] Launching Nginx on port ${PORT}"
 exec nginx -g "daemon off;"

@@ -5,7 +5,7 @@ alwaysApply: true
 
 # Google Cloud Run 部署规则（全项目生效）
 
-本项目所有服务统一通过 `gcloud run deploy nvitopia --source .` 部署到 Google Cloud Run。
+本项目所有服务部署到 Google Cloud Run，支持三种部署方式（本地构建 / Cloud Build kaniko / gcloud --source）。
 
 ## 架构约束
 
@@ -16,6 +16,29 @@ alwaysApply: true
 - 各服务 Dockerfile（`apps/*/Dockerfile`、`services/*/Dockerfile`）仅用于 Docker Compose 模式。
 
 ## 部署命令
+
+提供三种部署方式，按推荐程度排列：
+
+### 方式一：本地构建 + 推送（最快，推荐日常开发）
+
+利用本地 Docker 层缓存，仅代码变更时增量构建约 30 秒，全量构建约 2 分钟。
+
+```bash
+bash scripts/deploy-local.sh          # 默认 tag: latest
+bash scripts/deploy-local.sh v1.2.3   # 自定义 tag
+```
+
+### 方式二：Cloud Build + kaniko 缓存（推荐 CI/CD）
+
+使用 `cloudbuild.yaml`，通过 kaniko 实现远程层缓存 + E2_HIGHCPU_8 高规格构建机，首次约 5 分钟，后续增量约 2-3 分钟。
+
+```bash
+bash scripts/deploy-cloud.sh
+```
+
+### 方式三：gcloud run deploy --source（最简单，无缓存）
+
+零配置但每次全量构建，约 8-12 分钟。仅建议首次部署或紧急修复时使用。
 
 ```bash
 gcloud run deploy nvitopia \
@@ -42,6 +65,15 @@ gcloud run deploy nvitopia \
 3. **`apps/bff-gateway/src/routes/proxy.ts`**：添加新服务的代理路由。
 4. **`infra/docker-compose.full.yml`**：添加新服务的容器定义（Docker Compose 模式）。
 5. **`.dockerignore` / `.gcloudignore`**：确认新目录未被忽略。
+
+## Dockerfile 层缓存策略
+
+`Dockerfile` 已优化为两阶段拷贝：
+
+1. **Layer 1（依赖层）**：仅拷贝各 workspace 的 `package.json` → `npm ci`。依赖不变时此层命中缓存。
+2. **Layer 2（源码层）**：拷贝全部源码 → `npm run build`。只有代码变更时重建此层。
+
+新增 workspace 时，必须在 Dockerfile 的 Layer 1 区域添加对应的 `COPY <workspace>/package.json <workspace>/`。
 
 ## 验证检查清单
 
