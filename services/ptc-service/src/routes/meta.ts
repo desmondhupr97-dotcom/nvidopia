@@ -111,4 +111,107 @@ router.get('/drives/filter', asyncHandler(async (req: Request, res: Response) =>
   })));
 }));
 
+router.post('/seed', asyncHandler(async (_req: Request, res: Response) => {
+  const existingBuilds = await PtcBuild.countDocuments();
+  if (existingBuilds > 0) {
+    res.json({ message: 'Already seeded', builds: existingBuilds });
+    return;
+  }
+
+  function randomInt(min: number, max: number) {
+    return Math.floor(Math.random() * (max - min + 1)) + min;
+  }
+  function pick<T>(arr: T[]): T { return arr[Math.floor(Math.random() * arr.length)]; }
+  function randomDate(startDays: number, endDays: number): Date {
+    const now = Date.now();
+    return new Date(now - startDays * 86400000 + Math.random() * (startDays - endDays) * 86400000);
+  }
+
+  const TAG_NAMES = ['L2+ Stabilization','L2+ PMB','L3 Urban','L3 Highway','Smoke Test','Gray Release','Night Mode','Rain Test','Highway Merge','Parking Assist'];
+  const ROUTES: (string|null)[] = ['LA-SD Highway','Bay Area Loop','SF Downtown','LA Urban Grid','SD Coastal',null,null];
+  const TASK_TEMPLATES = ['PMB_Driving','L2_Highway','L2_Urban','L3_Highway','Stabilization','Regression','Smoke_Test'];
+
+  const builds = Array.from({ length: 20 }, (_, i) => ({
+    build_id: `${10000 + randomInt(0, 89999)}`,
+    version_tag: `v${randomInt(1,5)}.${randomInt(0,9)}.${randomInt(0,99)}`,
+    build_time: randomDate(90, 1),
+  }));
+  await PtcBuild.insertMany(builds);
+
+  const cars = Array.from({ length: 30 }, (_, i) => ({
+    car_id: `${200 + i}`,
+    name: `ATG-${String.fromCharCode(65 + (i % 4))} UX-${3600 + i}`,
+    vin: `W1K6G7GB${randomInt(10000000, 99999999)}`,
+  }));
+  await PtcCar.insertMany(cars);
+
+  const tags = TAG_NAMES.map((name, i) => ({ tag_id: `tag-${String(i+1).padStart(3,'0')}`, name }));
+  await PtcTag.insertMany(tags);
+
+  const { PtcProject, PtcTask, PtcBinding } = await import('@nvidopia/data-models');
+  const projects = await PtcProject.find().lean();
+
+  const allDrives: Array<Record<string,unknown>> = [];
+  let dc = 0;
+  for (const proj of projects) {
+    const taskCount = randomInt(5, 8);
+    const used = new Set<string>();
+    for (let ti = 0; ti < taskCount; ti++) {
+      let tmpl: string;
+      do { tmpl = pick(TASK_TEMPLATES); } while (used.has(tmpl));
+      used.add(tmpl);
+      const taskName = `${proj.name}_${tmpl}`;
+      let task = await PtcTask.findOne({ project_id: proj.project_id, name: taskName });
+      if (!task) {
+        task = await PtcTask.create({
+          task_id: `ptc-task-${String(dc++).padStart(4,'0')}`,
+          project_id: proj.project_id,
+          name: taskName,
+        });
+      }
+      const driveCount = randomInt(30, 60);
+      const tBuilds = [pick(builds), pick(builds)];
+      const tTags = [pick(tags), pick(tags)];
+      const tCars = Array.from({ length: randomInt(3, 6) }, () => pick(cars));
+      for (let di = 0; di < driveCount; di++) {
+        dc++;
+        const date = randomDate(30, 0);
+        const sH = randomInt(6, 18);
+        const st = new Date(date); st.setHours(sH, randomInt(0,59), 0, 0);
+        const et = new Date(st.getTime() + randomInt(1,5)*3600000);
+        allDrives.push({
+          drive_id: `drv-${String(dc).padStart(6,'0')}`,
+          car_id: pick(tCars).car_id, build_id: pick(tBuilds).build_id, tag_id: pick(tTags).tag_id,
+          date, start_time: st, end_time: et,
+          mileage_km: Math.round((randomInt(10,300)+Math.random())*100)/100,
+          xl_events: randomInt(0,5), l_events: randomInt(0,15), hotline_count: randomInt(0,4),
+          route: pick(ROUTES),
+        });
+      }
+      if (Math.random() < 0.6) {
+        const taskDrives = allDrives.slice(-driveCount);
+        const carMap = new Map<string, Array<{drive_id:string;selected:boolean;deselect_reason_preset?:string}>>();
+        for (const d of taskDrives) {
+          const arr = carMap.get(d.car_id as string) || [];
+          const sel = Math.random() > 0.1;
+          arr.push({ drive_id: d.drive_id as string, selected: sel, ...(!sel ? { deselect_reason_preset: pick(['数据异常','重复','不相关','设备故障','其他']) } : {}) });
+          carMap.set(d.car_id as string, arr);
+        }
+        await PtcBinding.create({
+          binding_id: `ptc-bind-${String(dc).padStart(4,'0')}`,
+          task_id: task.task_id,
+          status: Math.random() > 0.4 ? 'Published' : 'Draft',
+          filter_criteria: { builds: [pick(builds).build_id], cars: [], tags: [pick(tags).tag_id] },
+          cars: Array.from(carMap.entries()).map(([car_id, drives]) => ({ car_id, drives })),
+        });
+      }
+    }
+  }
+  for (let i = 0; i < allDrives.length; i += 500) {
+    await PtcDrive.insertMany(allDrives.slice(i, i + 500));
+  }
+
+  res.json({ message: 'Seed complete', projects: projects.length, drives: allDrives.length, builds: builds.length, cars: cars.length, tags: tags.length });
+}));
+
 export default router;
