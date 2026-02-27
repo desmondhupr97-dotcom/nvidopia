@@ -35,15 +35,18 @@
 }
 
 .ptc-project-collapse .ant-collapse-content-box {
-  display: flex;
-  flex-wrap: wrap;
+  display: flex !important;
+  flex-direction: row !important;
+  flex-wrap: wrap !important;
   gap: 16px;
   padding: 16px !important;
+  align-items: flex-start;
 }
 
 /* Task Card */
 .ptc-task-card {
   width: 320px;
+  flex: 0 0 320px;
   border-radius: 14px;
   background: #F6F6F8;
   border: 1px solid var(--border-secondary);
