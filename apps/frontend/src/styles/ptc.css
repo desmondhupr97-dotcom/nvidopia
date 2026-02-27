@@ -18,9 +18,9 @@
   flex-wrap: wrap;
   margin-bottom: 24px;
   padding: 16px;
-  background: rgba(255, 255, 255, 0.06);
+  background: var(--bg-surface);
   border-radius: 12px;
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  border: 1px solid var(--border-secondary);
 }
 
 .ptc-filter-bar .ant-select {
@@ -41,26 +41,28 @@
   padding: 16px !important;
 }
 
-/* Task Card - Glassmorphism */
+/* Task Card */
 .ptc-task-card {
   width: 340px;
   border-radius: 14px;
-  background: rgba(255, 255, 255, 0.08);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
-  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: #ECECEF;
+  border: 1px solid var(--border-secondary);
   cursor: pointer;
   transition: transform 0.2s, box-shadow 0.2s, border-color 0.2s;
 }
 
+.ptc-task-card.draft {
+  background: #DDDDE0;
+}
+
 .ptc-task-card:hover {
   transform: translateY(-2px);
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15);
-  border-color: rgba(255, 255, 255, 0.2);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.10);
+  border-color: var(--border-primary);
 }
 
 .ptc-task-card .ant-card-head {
-  border-bottom-color: rgba(255, 255, 255, 0.08);
+  border-bottom-color: var(--border-secondary);
   min-height: auto;
   padding: 12px 16px;
 }
@@ -76,11 +78,19 @@
 
 .ptc-task-card-timeline {
   height: 6px;
-  background: rgba(255, 255, 255, 0.06);
+  background: rgba(0, 0, 0, 0.06);
   border-radius: 3px;
-  margin-bottom: 12px;
+  margin-bottom: 4px;
   overflow: hidden;
   position: relative;
+}
+
+.ptc-task-card-dates {
+  display: flex;
+  justify-content: space-between;
+  font-size: 11px;
+  color: var(--text-muted);
+  margin-bottom: 8px;
 }
 
 .ptc-task-card-timeline-bar {
@@ -105,13 +115,13 @@
 
 .ptc-task-card-stats .stat-item {
   font-size: 12px;
-  opacity: 0.7;
+  color: var(--text-secondary);
 }
 
 .ptc-task-card-stats .stat-value {
   font-size: 16px;
   font-weight: 600;
-  opacity: 1;
+  color: var(--text-primary);
 }
 
 .ptc-task-card-footer {
@@ -119,28 +129,21 @@
   justify-content: space-between;
   align-items: center;
   font-size: 11px;
-  opacity: 0.5;
+  color: var(--text-muted);
   padding-top: 8px;
-  border-top: 1px solid rgba(255, 255, 255, 0.06);
+  border-top: 1px solid rgba(0, 0, 0, 0.06);
 }
 
-/* Task Detail Modal - Glassmorphism */
+/* Task Detail Modal */
 .ptc-task-modal .ant-modal-content {
-  background: rgba(30, 30, 40, 0.85);
-  backdrop-filter: blur(24px);
-  -webkit-backdrop-filter: blur(24px);
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: var(--bg-surface);
+  border: 1px solid var(--border-secondary);
   border-radius: 16px;
 }
 
 .ptc-task-modal .ant-modal-header {
   background: transparent;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
-}
-
-.ptc-task-modal .ant-modal-mask {
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
+  border-bottom: 1px solid var(--border-secondary);
 }
 
 /* Drive Selection Popup */
@@ -149,7 +152,7 @@
   align-items: center;
   gap: 12px;
   padding: 8px 0;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+  border-bottom: 1px solid var(--border-secondary);
 }
 
 .ptc-drive-popup .drive-item-info {
@@ -159,13 +162,13 @@
 
 .ptc-drive-popup .drive-item-meta {
   font-size: 11px;
-  opacity: 0.6;
+  color: var(--text-muted);
 }
 
 .ptc-drive-popup .deselect-reason {
   margin-top: 8px;
   padding: 8px 12px;
-  background: rgba(255, 80, 80, 0.08);
+  background: rgba(255, 59, 48, 0.06);
   border-radius: 8px;
   font-size: 12px;
 }
@@ -206,13 +209,13 @@
 
 .ptc-kpi-card {
   border-radius: 12px;
-  background: rgba(255, 255, 255, 0.06);
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: var(--bg-surface);
+  border: 1px solid var(--border-secondary);
 }
 
 .ptc-kpi-card .stat-label {
   font-size: 13px;
-  opacity: 0.6;
+  color: var(--text-secondary);
   margin-bottom: 4px;
 }
 

@@ -92,10 +92,20 @@ router.get('/drives/filter', asyncHandler(async (req: Request, res: Response) =>
         _id: '$car_id',
         drive_count: { $sum: 1 },
         total_mileage: { $sum: '$mileage_km' },
+        hotline_count: { $sum: '$hotline_count' },
         builds: { $addToSet: '$build_id' },
         tags: { $addToSet: '$tag_id' },
         min_date: { $min: '$date' },
         max_date: { $max: '$date' },
+        drives: {
+          $push: {
+            drive_id: '$drive_id',
+            date: '$date',
+            mileage_km: '$mileage_km',
+            start_time: '$start_time',
+            end_time: '$end_time',
+          },
+        },
       },
     },
     { $sort: { _id: 1 } },
@@ -105,9 +115,11 @@ router.get('/drives/filter', asyncHandler(async (req: Request, res: Response) =>
     car_id: r._id,
     drive_count: r.drive_count,
     total_mileage: r.total_mileage,
+    hotline_count: r.hotline_count,
     builds: r.builds,
     tags: r.tags,
     date_range: { start: r.min_date, end: r.max_date },
+    drives: r.drives,
   })));
 }));
 

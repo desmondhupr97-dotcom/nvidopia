@@ -998,13 +998,23 @@ export interface PtcOverviewProject extends PtcProject {
   tasks?: PtcTaskSummary[];
 }
 
+export interface PtcFilterResultDrive {
+  drive_id: string;
+  date: string;
+  mileage_km: number;
+  start_time: string;
+  end_time: string;
+}
+
 export interface PtcFilterResult {
   car_id: string;
   drive_count: number;
   total_mileage: number;
+  hotline_count: number;
   builds: string[];
   tags: string[];
   date_range: { start: string; end: string };
+  drives: PtcFilterResultDrive[];
 }
 
 export function getPtcProjects(q?: string) {

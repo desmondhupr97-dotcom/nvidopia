@@ -52,15 +52,17 @@ export default function ProjectCollapseList({
       activeKey={expandedKeys}
       onChange={(keys) => setExpandedKeys(Array.isArray(keys) ? keys : [keys])}
     >
-      {projects.map((p) => (
+      {projects.map((p) => {
+        const displayCount = filters?.task_id ? 1 : p.task_count;
+        return (
         <Collapse.Panel
           key={p.project_id}
           header={
             <span>
               {p.name}
-              {p.task_count != null && (
+              {displayCount != null && (
                 <span style={{ marginLeft: 8, opacity: 0.7, fontSize: 13 }}>
-                  ({p.task_count} tasks)
+                  ({displayCount} {displayCount === 1 ? 'task' : 'tasks'})
                 </span>
               )}
             </span>
@@ -73,7 +75,8 @@ export default function ProjectCollapseList({
             filters={filters}
           />
         </Collapse.Panel>
-      ))}
+        );
+      })}
     </Collapse>
   );
 }

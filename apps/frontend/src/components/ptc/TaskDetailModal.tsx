@@ -1,7 +1,15 @@
 import { useState } from 'react';
-import { Modal, Table, Tag, Spin, Empty, Button } from 'antd';
+import { Modal, Table, Tag, Spin, Empty, Button, Space, Popconfirm, message } from 'antd';
+import { DeleteOutlined } from '@ant-design/icons';
 import type { PtcBindingDrive } from '../../api/client';
-import { usePtcOverviewTask, useUpdatePtcBindingDrives } from '../../hooks/usePtcApi';
+import {
+  usePtcOverviewTask,
+  useUpdatePtcBindingDrives,
+  usePtcBuilds,
+  usePtcTags,
+  useUpdatePtcBinding,
+  useDeletePtcBinding,
+} from '../../hooks/usePtcApi';
 import DriveSelectionPopup from './DriveSelectionPopup';
 
 export interface TaskDetailModalProps {
@@ -18,7 +26,11 @@ export default function TaskDetailModal({
   editable = false,
 }: TaskDetailModalProps) {
   const { data, isLoading } = usePtcOverviewTask(taskId ?? '', open && !!taskId);
-  const updateDrives = useUpdatePtcBindingDrives();
+  const updateDrivesMutation = useUpdatePtcBindingDrives();
+  const updateBindingMutation = useUpdatePtcBinding();
+  const deleteBindingMutation = useDeletePtcBinding();
+  const { data: allBuilds = [] } = usePtcBuilds();
+  const { data: allTags = [] } = usePtcTags();
   const [drivePopup, setDrivePopup] = useState<{
     bindingId: string;
     carId: string;
@@ -28,9 +40,12 @@ export default function TaskDetailModal({
   const task = data?.task;
   const binding = data?.binding;
 
+  const buildNameMap = new Map(allBuilds.map((b) => [b.build_id, b.version_tag]));
+  const tagNameMap = new Map(allTags.map((t) => [t.tag_id, t.name]));
+
   const handleDriveSave = (updates: Array<{ drive_id: string; selected: boolean; deselect_reason_preset?: string; deselect_reason_text?: string }>) => {
     if (!drivePopup) return;
-    updateDrives.mutate(
+    updateDrivesMutation.mutate(
       {
         id: drivePopup.bindingId,
         data: { car_id: drivePopup.carId, drive_updates: updates },
@@ -43,6 +58,26 @@ export default function TaskDetailModal({
     );
   };
 
+  const handleRemoveCar = (carId: string) => {
+    if (!binding) return;
+    const updatedCars = binding.cars.filter((c) => c.car_id !== carId);
+    updateBindingMutation.mutate(
+      { id: binding.binding_id, data: { cars: updatedCars } },
+      { onSuccess: () => message.success(`Car ${carId} removed`) }
+    );
+  };
+
+  const handleDeleteBinding = () => {
+    if (!binding) return;
+    deleteBindingMutation.mutate(binding.binding_id, {
+      onSuccess: () => {
+        message.success('Binding deleted');
+        onClose();
+      },
+      onError: () => message.error('Failed to delete binding'),
+    });
+  };
+
   const tableData =
     binding?.cars?.map((car) => {
       const buildIds = [...new Set(car.drives.map((d) => d.detail?.build_id).filter(Boolean))] as string[];
@@ -52,8 +87,8 @@ export default function TaskDetailModal({
       return {
         key: car.car_id,
         car_id: car.car_id,
-        build_ids: buildIds.join(', ') || '—',
-        tag_ids: tagIds.join(', ') || '—',
+        build_names: buildIds.map((id) => buildNameMap.get(id) || id).join(', ') || '—',
+        tag_names: tagIds.map((id) => tagNameMap.get(id) || id).join(', ') || '—',
         driveCount: `${selectedCount} / ${totalCount}`,
         drives: car.drives,
         updated_at: binding.updated_at,
@@ -63,8 +98,8 @@ export default function TaskDetailModal({
   const columns = [
     {
       title: 'Build',
-      dataIndex: 'build_ids',
-      key: 'build_ids',
+      dataIndex: 'build_names',
+      key: 'build_names',
     },
     {
       title: 'Car',
@@ -73,8 +108,8 @@ export default function TaskDetailModal({
     },
     {
       title: 'Tag',
-      dataIndex: 'tag_ids',
-      key: 'tag_ids',
+      dataIndex: 'tag_names',
+      key: 'tag_names',
     },
     {
       title: 'Drive',
@@ -103,6 +138,25 @@ export default function TaskDetailModal({
       key: 'updated_at',
       render: (v: string) => (v ? new Date(v).toLocaleString() : '—'),
     },
+    ...(editable
+      ? [
+          {
+            title: '',
+            key: 'actions',
+            width: 60,
+            render: (_: unknown, record: { car_id: string }) => (
+              <Popconfirm
+                title={`Remove car ${record.car_id}?`}
+                onConfirm={() => handleRemoveCar(record.car_id)}
+                okText="Remove"
+                okButtonProps={{ danger: true }}
+              >
+                <Button type="text" danger icon={<DeleteOutlined />} size="small" />
+              </Popconfirm>
+            ),
+          },
+        ]
+      : []),
   ];
 
   const statusTag =
@@ -126,10 +180,22 @@ export default function TaskDetailModal({
           </span>
         }
         footer={
-          editable ? (
-            <Button type="primary" onClick={onClose}>
-              Save
-            </Button>
+          editable && binding ? (
+            <Space>
+              <Popconfirm
+                title="Delete this binding permanently?"
+                onConfirm={handleDeleteBinding}
+                okText="Delete"
+                okButtonProps={{ danger: true }}
+              >
+                <Button danger loading={deleteBindingMutation.isPending}>
+                  Delete Binding
+                </Button>
+              </Popconfirm>
+              <Button type="primary" onClick={onClose}>
+                Done
+              </Button>
+            </Space>
           ) : null
         }
       >

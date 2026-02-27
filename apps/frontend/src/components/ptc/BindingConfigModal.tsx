@@ -1,9 +1,8 @@
 import { useState } from 'react';
-import { Modal, Select, Button, Table, Spin } from 'antd';
-import type { PtcFilterResult } from '../../api/client';
+import { Modal, Select, Button, Table, Spin, message } from 'antd';
+import type { PtcFilterResult, PtcFilterResultDrive } from '../../api/client';
 import {
   usePtcBuilds,
-  usePtcCars,
   usePtcTags,
   usePtcDriveFilter,
   useCreatePtcBinding,
@@ -25,26 +24,18 @@ export default function BindingConfigModal({
   onSuccess,
 }: BindingConfigModalProps) {
   const [selectedBuilds, setSelectedBuilds] = useState<string[]>([]);
-  const [selectedCars, setSelectedCars] = useState<string[]>([]);
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
   const [searchTriggered, setSearchTriggered] = useState(false);
   const [selectedRowKeys, setSelectedRowKeys] = useState<string[]>([]);
+  const [expandedRowKeys, setExpandedRowKeys] = useState<string[]>([]);
 
   const filterParams = {
     builds: selectedBuilds.length ? selectedBuilds.join(',') : undefined,
-    cars: selectedCars.length ? selectedCars.join(',') : undefined,
     tags: selectedTags.length ? selectedTags.join(',') : undefined,
   };
-  const hasFilter =
-    selectedBuilds.length > 0 ||
-    selectedCars.length > 0 ||
-    selectedTags.length > 0;
+  const hasFilter = selectedBuilds.length > 0 || selectedTags.length > 0;
 
   const { data: builds = [] } = usePtcBuilds();
-  const { data: cars = [] } = usePtcCars({
-    build_id: selectedBuilds[0],
-    tag_id: selectedTags[0],
-  });
   const { data: tags = [] } = usePtcTags();
   const { data: filterResults, isLoading: filterLoading } = usePtcDriveFilter(
     filterParams,
@@ -56,16 +47,15 @@ export default function BindingConfigModal({
   const handleSearch = () => {
     if (!hasFilter) return;
     setSearchTriggered(true);
+    setExpandedRowKeys([]);
   };
 
   const handleSave = (status: 'Draft' | 'Published') => {
     if (!taskId) return;
-    const carIds = searchTriggered && filterResults
-      ? selectedRowKeys
-      : selectedCars;
+    const carIds = searchTriggered && filterResults ? selectedRowKeys : [];
     const filter_criteria = {
       builds: selectedBuilds,
-      cars: selectedCars,
+      cars: [] as string[],
       tags: selectedTags,
     };
     createBinding.mutate(
@@ -80,6 +70,15 @@ export default function BindingConfigModal({
           onSuccess?.();
           onClose();
         },
+        onError: (err: unknown) => {
+          const status = (err as { status?: number })?.status;
+          const msg = (err as { message?: string })?.message;
+          if (status === 409 || (msg && msg.includes('already exists'))) {
+            message.warning('Binding already exists for this task. Use Edit Binding instead.');
+          } else {
+            message.error(msg || 'Failed to create binding');
+          }
+        },
       }
     );
   };
@@ -91,10 +90,6 @@ export default function BindingConfigModal({
     value: b.build_id,
     label: b.version_tag,
   }));
-  const carOptions = cars.map((c) => ({
-    value: c.car_id,
-    label: c.name || c.vin || c.car_id,
-  }));
   const tagOptions = tags.map((t) => ({
     value: t.tag_id,
     label: t.name,
@@ -104,17 +99,62 @@ export default function BindingConfigModal({
     key: r.car_id,
     car_id: r.car_id,
     drive_count: r.drive_count,
-    total_mileage: r.total_mileage,
-    date_range: r.date_range
-      ? `${r.date_range.start} – ${r.date_range.end}`
-      : '—',
+    hotline_count: r.hotline_count ?? 0,
+    drives: r.drives ?? [],
   }));
 
   const columns = [
     { title: 'Car ID', dataIndex: 'car_id', key: 'car_id' },
-    { title: 'Drive Count', dataIndex: 'drive_count', key: 'drive_count' },
-    { title: 'Total Mileage', dataIndex: 'total_mileage', key: 'total_mileage' },
-    { title: 'Date Range', dataIndex: 'date_range', key: 'date_range' },
+    {
+      title: 'Drives',
+      dataIndex: 'drive_count',
+      key: 'drive_count',
+      render: (count: number, record: (typeof tableData)[0]) => (
+        <Button
+          type="link"
+          style={{ padding: 0 }}
+          onClick={(e) => {
+            e.stopPropagation();
+            setExpandedRowKeys((prev) =>
+              prev.includes(record.key)
+                ? prev.filter((k) => k !== record.key)
+                : [...prev, record.key]
+            );
+          }}
+        >
+          {count}
+        </Button>
+      ),
+    },
+    { title: 'Hotlines', dataIndex: 'hotline_count', key: 'hotline_count' },
+  ];
+
+  const driveColumns = [
+    { title: 'Drive ID', dataIndex: 'drive_id', key: 'drive_id' },
+    {
+      title: 'Date',
+      dataIndex: 'date',
+      key: 'date',
+      render: (v: string) => (v ? new Date(v).toLocaleDateString() : '—'),
+    },
+    {
+      title: 'Mileage (km)',
+      dataIndex: 'mileage_km',
+      key: 'mileage_km',
+      render: (v: number) => v?.toFixed(1) ?? '—',
+    },
+    {
+      title: 'Start',
+      dataIndex: 'start_time',
+      key: 'start_time',
+      render: (v: string) => (v ? new Date(v).toLocaleTimeString() : '—'),
+    },
+    {
+      title: 'End',
+      dataIndex: 'end_time',
+      key: 'end_time',
+      render: (v: string) => (v ? new Date(v).toLocaleTimeString() : '—'),
+    },
   ];
 
   const rowSelection = {
@@ -169,16 +209,6 @@ export default function BindingConfigModal({
           <Select
             mode="multiple"
             showSearch
-            placeholder="Cars"
-            value={selectedCars}
-            onChange={setSelectedCars}
-            options={carOptions}
-            filterOption={filterOption}
-            style={{ width: '100%', marginBottom: 12 }}
-          />
-          <Select
-            mode="multiple"
-            showSearch
             placeholder="Tags"
             value={selectedTags}
             onChange={setSelectedTags}
@@ -205,6 +235,21 @@ export default function BindingConfigModal({
                 rowSelection={rowSelection}
                 pagination={false}
                 size="small"
+                expandable={{
+                  expandedRowKeys,
+                  onExpandedRowsChange: (keys) =>
+                    setExpandedRowKeys(keys as string[]),
+                  expandedRowRender: (record) => (
+                    <Table
+                      columns={driveColumns}
+                      dataSource={(record.drives as PtcFilterResultDrive[]).map(
+                        (d) => ({ ...d, key: d.drive_id })
+                      )}
+                      pagination={false}
+                      size="small"
+                    />
+                  ),
+                }}
               />
             )}
           </div>

@@ -67,6 +67,14 @@ export function usePtcTags(q?: string) {
   return useQuery({ queryKey: KEYS.tags(q), queryFn: () => api.getPtcTags(q) });
 }
 
+export function usePtcDrives(params?: { car_id?: string; build_id?: string; tag_id?: string; q?: string; limit?: number }) {
+  return useQuery({
+    queryKey: KEYS.drives(params as Record<string, string>),
+    queryFn: () => api.getPtcDrives(params),
+    select: (data) => data.data,
+  });
+}
+
 export function usePtcDriveFilter(params: { builds?: string; cars?: string; tags?: string }, enabled = true) {
   return useQuery({
     queryKey: KEYS.driveFilter(params as Record<string, string>),

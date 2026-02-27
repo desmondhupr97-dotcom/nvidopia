@@ -164,11 +164,11 @@ input, select, textarea {
 /* ── Top Navigation ──────────────────────────────────── */
 .topnav {
   background: var(--bg-surface);
-  border-bottom: 1px solid var(--border-secondary);
+  box-shadow: var(--shadow-xs);
   height: var(--header-height);
   display: flex;
   align-items: center;
-  padding: 0 24px;
+  padding: 0 16px;
   position: sticky;
   top: 0;
   z-index: 100;
@@ -444,6 +444,10 @@ input, select, textarea {
 .ant-input-focused,
 .ant-select-focused .ant-select-selector {
   box-shadow: 0 0 0 3px var(--brand-green-soft) !important;
+}
+
+.ant-dropdown .ant-dropdown-menu {
+  background: #F5F5F7;
 }
 
 /* Scrollbar */

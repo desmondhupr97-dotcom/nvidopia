@@ -1,11 +1,12 @@
 import { useState, useEffect } from 'react';
-import { Select, Input } from 'antd';
+import { Select } from 'antd';
 import {
   usePtcProjects,
   usePtcTasks,
   usePtcBuilds,
   usePtcCars,
   usePtcTags,
+  usePtcDrives,
 } from '../../hooks/usePtcApi';
 
 export interface FilterBarFilters {
@@ -14,7 +15,7 @@ export interface FilterBarFilters {
   build_id?: string;
   car_id?: string;
   tag_id?: string;
-  drive_q?: string;
+  drive_id?: string;
 }
 
 interface FilterBarProps {
@@ -38,11 +39,13 @@ export default function FilterBar({ filters, onChange }: FilterBarProps) {
   const [buildSearch, setBuildSearch] = useState('');
   const [tagSearch, setTagSearch] = useState('');
   const [carSearch, setCarSearch] = useState('');
+  const [driveSearch, setDriveSearch] = useState('');
 
   const debouncedProjectQ = useDebouncedValue(projectSearch, DEBOUNCE_MS);
   const debouncedBuildQ = useDebouncedValue(buildSearch, DEBOUNCE_MS);
   const debouncedTagQ = useDebouncedValue(tagSearch, DEBOUNCE_MS);
   const debouncedCarQ = useDebouncedValue(carSearch, DEBOUNCE_MS);
+  const debouncedDriveQ = useDebouncedValue(driveSearch, DEBOUNCE_MS);
 
   const { data: projects = [] } = usePtcProjects(debouncedProjectQ);
   const { data: tasks = [] } = usePtcTasks({
@@ -55,6 +58,13 @@ export default function FilterBar({ filters, onChange }: FilterBarProps) {
     tag_id: filters.tag_id,
   });
   const { data: tags = [] } = usePtcTags(debouncedTagQ);
+  const { data: drives = [] } = usePtcDrives({
+    car_id: filters.car_id,
+    build_id: filters.build_id,
+    tag_id: filters.tag_id,
+    q: debouncedDriveQ,
+    limit: 50,
+  });
 
   const filterOption = (input: string, option?: { label?: string; value?: string }) =>
     (option?.label ?? '').toLowerCase().includes(input.toLowerCase());
@@ -122,14 +132,18 @@ export default function FilterBar({ filters, onChange }: FilterBarProps) {
         filterOption={filterOption}
         options={tags.map((t) => ({ value: t.tag_id, label: t.name }))}
       />
-      <Input
-        placeholder="Drive"
-        value={filters.drive_q ?? ''}
-        onChange={(e) =>
-          onChange({ ...filters, drive_q: e.target.value || undefined })
-        }
+      <Select
         allowClear
-        style={{ minWidth: 160 }}
+        showSearch
+        placeholder="Drive"
+        value={filters.drive_id || null}
+        onChange={(v) => onChange({ ...filters, drive_id: v ?? undefined })}
+        onSearch={setDriveSearch}
+        filterOption={filterOption}
+        options={drives.map((d) => ({
+          value: d.drive_id,
+          label: d.drive_id,
+        }))}
       />
     </div>
   );
