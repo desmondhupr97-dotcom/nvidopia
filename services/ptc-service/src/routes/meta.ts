@@ -180,27 +180,30 @@ router.post('/seed', asyncHandler(async (req: Request, res: Response) => {
   }
 
   const allDrives: Array<Record<string,unknown>> = [];
+  const allBindings: Array<Record<string,unknown>> = [];
   let dc = 0;
   for (const proj of projects) {
-    const taskCount = randomInt(5, 8);
+    const taskCount = randomInt(3, 5);
     const used = new Set<string>();
+    const tasksToInsert: Array<{ task_id: string; project_id: string; name: string }> = [];
     for (let ti = 0; ti < taskCount; ti++) {
       let tmpl: string;
       do { tmpl = pick(TASK_TEMPLATES); } while (used.has(tmpl));
       used.add(tmpl);
       const taskName = `${proj.name}_${tmpl}`;
-      let task = await PtcTask.findOne({ project_id: proj.project_id, name: taskName });
-      if (!task) {
-        task = await PtcTask.create({
-          task_id: `ptc-task-${String(dc++).padStart(4,'0')}`,
-          project_id: proj.project_id,
-          name: taskName,
-        });
-      }
-      const driveCount = randomInt(15, 30);
+      tasksToInsert.push({
+        task_id: `ptc-task-${String(dc++).padStart(4,'0')}`,
+        project_id: proj.project_id,
+        name: taskName,
+      });
+    }
+    await PtcTask.insertMany(tasksToInsert, { ordered: false }).catch(() => {});
+    const projTasks = await PtcTask.find({ project_id: proj.project_id }).lean();
+    for (const task of projTasks) {
+      const driveCount = randomInt(5, 12);
       const tBuilds = [pick(builds), pick(builds)];
       const tTags = [pick(tags), pick(tags)];
-      const tCars = Array.from({ length: randomInt(3, 6) }, () => pick(cars));
+      const tCars = Array.from({ length: randomInt(2, 4) }, () => pick(cars));
       for (let di = 0; di < driveCount; di++) {
         dc++;
         const date = randomDate(30, 0);
@@ -225,7 +228,7 @@ router.post('/seed', asyncHandler(async (req: Request, res: Response) => {
           arr.push({ drive_id: d.drive_id as string, selected: sel, ...(!sel ? { deselect_reason_preset: pick(['数据异常','重复','不相关','设备故障','其他']) } : {}) });
           carMap.set(d.car_id as string, arr);
         }
-        await PtcBinding.create({
+        allBindings.push({
           binding_id: `ptc-bind-${String(dc).padStart(4,'0')}`,
           task_id: task.task_id,
           status: Math.random() > 0.4 ? 'Published' : 'Draft',
@@ -235,8 +238,11 @@ router.post('/seed', asyncHandler(async (req: Request, res: Response) => {
       }
     }
   }
-  for (let i = 0; i < allDrives.length; i += 500) {
-    await PtcDrive.insertMany(allDrives.slice(i, i + 500));
+  if (allBindings.length > 0) {
+    await PtcBinding.insertMany(allBindings);
+  }
+  if (allDrives.length > 0) {
+    await PtcDrive.insertMany(allDrives);
   }
 
   res.json({ message: 'Seed complete', projects: projects.length, drives: allDrives.length, builds: builds.length, cars: cars.length, tags: tags.length });
