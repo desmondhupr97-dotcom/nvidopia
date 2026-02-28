@@ -95,6 +95,22 @@ export default function TaskDetailModal({
   const handleAddCars = () => {
     if (!binding || selectedNewCars.length === 0) return;
     const existingCarIds = new Set(binding.cars.map((c) => c.car_id));
+    const filterDriveMap = new Map(
+      (filterResults ?? []).map((r) => [r.car_id, new Set(r.drives.map((d) => d.drive_id))])
+    );
+
+    const updatedExisting = binding.cars.map((car) => {
+      if (!selectedNewCars.includes(car.car_id)) return car;
+      const validIds = filterDriveMap.get(car.car_id);
+      if (!validIds) return car;
+      const existingDriveIds = new Set(car.drives.map((d) => d.drive_id));
+      const kept = car.drives.filter((d) => validIds.has(d.drive_id));
+      const added = [...validIds]
+        .filter((id) => !existingDriveIds.has(id))
+        .map((drive_id) => ({ drive_id, selected: true }));
+      return { ...car, drives: [...kept, ...added] as PtcBindingDrive[] };
+    });
+
     const newCars = selectedNewCars
       .filter((id) => !existingCarIds.has(id))
       .map((car_id) => {
@@ -105,13 +121,27 @@ export default function TaskDetailModal({
         })) as PtcBindingDrive[];
         return { car_id, drives };
       });
-    if (newCars.length === 0) {
-      message.info('Selected cars already in binding');
-      return;
-    }
+
+    const mergedCars = [...updatedExisting, ...newCars];
     updateBindingMutation.mutate(
-      { id: binding.binding_id, data: { cars: [...binding.cars, ...newCars] } },
-      { onSuccess: () => { message.success(`${newCars.length} car(s) added`); setSelectedNewCars([]); } }
+      {
+        id: binding.binding_id,
+        data: {
+          cars: mergedCars,
+          filter_criteria: { builds: editBuilds, cars: editCars, tags: editTags },
+        },
+      },
+      {
+        onSuccess: () => {
+          const addedCount = newCars.length;
+          const updatedCount = selectedNewCars.filter((id) => existingCarIds.has(id)).length;
+          const parts = [];
+          if (addedCount) parts.push(`${addedCount} car(s) added`);
+          if (updatedCount) parts.push(`${updatedCount} car(s) updated`);
+          message.success(parts.join(', ') || 'Cars updated');
+          setSelectedNewCars([]);
+        },
+      }
     );
   };
 
