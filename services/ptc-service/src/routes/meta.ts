@@ -87,6 +87,7 @@ router.get('/drives/filter', asyncHandler(async (req: Request, res: Response) =>
 
   const result = await PtcDrive.aggregate([
     { $match: filter },
+    { $sort: { date: -1 } },
     {
       $group: {
         _id: '$car_id',

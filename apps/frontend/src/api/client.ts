@@ -1066,7 +1066,13 @@ export function getPtcBinding(id: string) {
   return fetchJson<PtcBinding>(`/ptc/bindings/${id}`);
 }
 
-export function createPtcBinding(data: { task_id: string; filter_criteria?: PtcBinding['filter_criteria']; car_ids?: string[]; status?: string }) {
+export function createPtcBinding(data: {
+  task_id: string;
+  filter_criteria?: PtcBinding['filter_criteria'];
+  car_ids?: string[];
+  cars?: Array<{ car_id: string; drives: Array<{ drive_id: string; selected: boolean }> }>;
+  status?: string;
+}) {
   return fetchJson<PtcBinding>('/ptc/bindings', { method: 'POST', body: JSON.stringify(data) });
 }
 

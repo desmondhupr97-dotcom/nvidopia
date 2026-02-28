@@ -50,7 +50,7 @@ router.get('/bindings/:id', asyncHandler(async (req: Request, res: Response) => 
 }));
 
 router.post('/bindings', asyncHandler(async (req: Request, res: Response) => {
-  const { task_id, filter_criteria, car_ids, status } = req.body;
+  const { task_id, filter_criteria, car_ids, cars: providedCars, status } = req.body;
 
   if (!task_id) {
     res.status(400).json({ error: 'task_id is required' });
@@ -70,28 +70,34 @@ router.post('/bindings', asyncHandler(async (req: Request, res: Response) => {
   }
 
   const criteria = filter_criteria || { builds: [], cars: [], tags: [] };
-  const driveFilter: Record<string, unknown> = {};
-  if (criteria.builds?.length) driveFilter.build_id = { $in: criteria.builds };
-  if (criteria.cars?.length) driveFilter.car_id = { $in: criteria.cars };
-  if (criteria.tags?.length) driveFilter.tag_id = { $in: criteria.tags };
+  let cars;
 
-  let drives = await PtcDrive.find(driveFilter).lean();
+  if (Array.isArray(providedCars) && providedCars.length > 0) {
+    cars = providedCars;
+  } else {
+    const driveFilter: Record<string, unknown> = {};
+    if (criteria.builds?.length) driveFilter.build_id = { $in: criteria.builds };
+    if (criteria.cars?.length) driveFilter.car_id = { $in: criteria.cars };
+    if (criteria.tags?.length) driveFilter.tag_id = { $in: criteria.tags };
 
-  if (car_ids?.length) {
-    drives = drives.filter((d) => car_ids.includes(d.car_id));
+    let drives = await PtcDrive.find(driveFilter).lean();
+
+    if (car_ids?.length) {
+      drives = drives.filter((d) => car_ids.includes(d.car_id));
+    }
+
+    const carDriveMap = new Map<string, string[]>();
+    for (const d of drives) {
+      const arr = carDriveMap.get(d.car_id) || [];
+      arr.push(d.drive_id);
+      carDriveMap.set(d.car_id, arr);
+    }
+
+    cars = Array.from(carDriveMap.entries()).map(([car_id, driveIds]) => ({
+      car_id,
+      drives: driveIds.map((drive_id) => ({ drive_id, selected: true })),
+    }));
   }
-
-  const carDriveMap = new Map<string, string[]>();
-  for (const d of drives) {
-    const arr = carDriveMap.get(d.car_id) || [];
-    arr.push(d.drive_id);
-    carDriveMap.set(d.car_id, arr);
-  }
-
-  const cars = Array.from(carDriveMap.entries()).map(([car_id, driveIds]) => ({
-    car_id,
-    drives: driveIds.map((drive_id) => ({ drive_id, selected: true })),
-  }));
 
   const binding = new PtcBinding({
     binding_id: `ptc-bind-${crypto.randomUUID().slice(0, 8)}`,

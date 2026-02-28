@@ -81,7 +81,14 @@ export default function TaskDetailModal({
     const existingCarIds = new Set(binding.cars.map((c) => c.car_id));
     const newCars = selectedNewCars
       .filter((id) => !existingCarIds.has(id))
-      .map((car_id) => ({ car_id, drives: [] as PtcBindingDrive[] }));
+      .map((car_id) => {
+        const result = filterResults?.find((r) => r.car_id === car_id);
+        const drives = (result?.drives ?? []).map((d) => ({
+          drive_id: d.drive_id,
+          selected: true,
+        })) as PtcBindingDrive[];
+        return { car_id, drives };
+      });
     if (newCars.length === 0) {
       message.info('Selected cars already in binding');
       return;

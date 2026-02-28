@@ -2,22 +2,23 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import * as api from '../api/client';
 
 const KEYS = {
-  projects: ['ptc-projects'] as const,
-  tasks: (projectId?: string) => ['ptc-tasks', projectId] as const,
-  overview: ['ptc-overview'] as const,
-  overviewProject: (id: string) => ['ptc-overview', id] as const,
-  overviewTask: (id: string) => ['ptc-overview-task', id] as const,
-  bindings: (params?: Record<string, string>) => ['ptc-bindings', params] as const,
-  binding: (id: string) => ['ptc-binding', id] as const,
-  builds: (q?: string) => ['ptc-builds', q] as const,
-  cars: (params?: Record<string, string>) => ['ptc-cars', params] as const,
-  tags: (q?: string) => ['ptc-tags', q] as const,
-  drives: (params?: Record<string, string>) => ['ptc-drives', params] as const,
-  driveFilter: (params?: Record<string, string>) => ['ptc-drive-filter', params] as const,
+  all: ['ptc'] as const,
+  projects: ['ptc', 'projects'] as const,
+  tasks: (projectId?: string) => ['ptc', 'tasks', projectId] as const,
+  overview: ['ptc', 'overview'] as const,
+  overviewProject: (id: string) => ['ptc', 'overview', 'project', id] as const,
+  overviewTask: (id: string) => ['ptc', 'overview', 'task', id] as const,
+  bindings: (params?: Record<string, string>) => ['ptc', 'bindings', params] as const,
+  binding: (id: string) => ['ptc', 'binding', id] as const,
+  builds: (q?: string) => ['ptc', 'builds', q] as const,
+  cars: (params?: Record<string, string>) => ['ptc', 'cars', params] as const,
+  tags: (q?: string) => ['ptc', 'tags', q] as const,
+  drives: (params?: Record<string, string>) => ['ptc', 'drives', params] as const,
+  driveFilter: (params?: Record<string, string>) => ['ptc', 'drive-filter', params] as const,
 };
 
 export function usePtcProjects(q?: string) {
-  return useQuery({ queryKey: [...KEYS.projects, q], queryFn: () => api.getPtcProjects(q) });
+  return useQuery({ queryKey: [...KEYS.projects, q], queryFn: () => api.getPtcProjects(q), staleTime: 30_000 });
 }
 
 export function usePtcTasks(params?: { q?: string; project_id?: string }) {
@@ -56,7 +57,7 @@ export function usePtcBindings(params?: { project_id?: string; task_id?: string;
 }
 
 export function usePtcBuilds(q?: string) {
-  return useQuery({ queryKey: KEYS.builds(q), queryFn: () => api.getPtcBuilds(q) });
+  return useQuery({ queryKey: KEYS.builds(q), queryFn: () => api.getPtcBuilds(q), staleTime: 5 * 60_000 });
 }
 
 export function usePtcCars(params?: { q?: string; build_id?: string; tag_id?: string }) {
@@ -64,7 +65,7 @@ export function usePtcCars(params?: { q?: string; build_id?: string; tag_id?: st
 }
 
 export function usePtcTags(q?: string) {
-  return useQuery({ queryKey: KEYS.tags(q), queryFn: () => api.getPtcTags(q) });
+  return useQuery({ queryKey: KEYS.tags(q), queryFn: () => api.getPtcTags(q), staleTime: 5 * 60_000 });
 }
 
 export function usePtcDrives(params?: { car_id?: string; build_id?: string; tag_id?: string; q?: string; limit?: number }) {
@@ -80,6 +81,7 @@ export function usePtcDriveFilter(params: { builds?: string; cars?: string; tags
     queryKey: KEYS.driveFilter(params as Record<string, string>),
     queryFn: () => api.filterPtcDrives(params),
     enabled,
+    staleTime: 60_000,
   });
 }
 
