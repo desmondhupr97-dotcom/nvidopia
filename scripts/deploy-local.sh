@@ -42,9 +42,9 @@ if [ "${DOCKER_MEM_MB:-0}" -lt 4000 ]; then
 fi
 
 # ── Step 3: Build locally (with full layer cache) ────────────────
-echo "▸ Building Docker image locally..."
+echo "▸ Building Docker image locally (linux/amd64)..."
 SECONDS=0
-docker build -t "${IMAGE}:${TAG}" .
+docker buildx build --platform linux/amd64 -t "${IMAGE}:${TAG}" --load .
 echo "  ✓ Build completed in ${SECONDS}s"
 
 # ── Step 4: Push to Artifact Registry ────────────────────────────
