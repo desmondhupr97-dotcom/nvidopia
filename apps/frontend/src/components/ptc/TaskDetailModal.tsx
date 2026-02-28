@@ -139,10 +139,36 @@ export default function TaskDetailModal({
     });
   };
 
+  const handleSaveBinding = () => {
+    if (!binding) return;
+    updateBindingMutation.mutate(
+      {
+        id: binding.binding_id,
+        data: {
+          filter_criteria: { builds: editBuilds, cars: editCars, tags: editTags },
+        },
+      },
+      {
+        onSuccess: () => {
+          message.success('Binding saved');
+        },
+        onError: (err: unknown) => {
+          message.error((err as { message?: string })?.message || 'Failed to save binding');
+        },
+      }
+    );
+  };
+
   const handlePublish = () => {
     if (!binding) return;
     updateBindingMutation.mutate(
-      { id: binding.binding_id, data: { status: 'Published' } },
+      {
+        id: binding.binding_id,
+        data: {
+          status: 'Published',
+          filter_criteria: { builds: editBuilds, cars: editCars, tags: editTags },
+        },
+      },
       {
         onSuccess: () => {
           message.success('Binding published');
@@ -307,6 +333,9 @@ export default function TaskDetailModal({
               <Popconfirm title="Delete this binding permanently?" onConfirm={handleDeleteBinding} okText="Delete" okButtonProps={{ danger: true }}>
                 <Button danger loading={deleteBindingMutation.isPending}>Delete Binding</Button>
               </Popconfirm>
+              <Button onClick={handleSaveBinding} loading={updateBindingMutation.isPending}>
+                {isDraft ? 'Save Draft' : 'Save'}
+              </Button>
               {isDraft && (
                 <Popconfirm title="Publish this binding? Build and filter validation will be performed." onConfirm={handlePublish} okText="Publish">
                   <Button type="primary" style={{ background: '#52c41a', borderColor: '#52c41a' }} loading={updateBindingMutation.isPending}>
@@ -314,7 +343,7 @@ export default function TaskDetailModal({
                   </Button>
                 </Popconfirm>
               )}
-              <Button type="primary" onClick={() => { setIsEditing(false); onClose(); }}>Done</Button>
+              <Button onClick={() => { setIsEditing(false); onClose(); }}>Done</Button>
             </Space>
           ) : null
         }
