@@ -18,14 +18,15 @@ echo ""
 
 # ── Step 0: Ensure Artifact Registry repo exists ─────────────────
 echo "▸ Ensuring Artifact Registry repository exists..."
-gcloud artifacts repositories describe "${AR_REPO}" \
+if ! gcloud artifacts repositories describe "${AR_REPO}" \
   --project="${PROJECT_ID}" \
-  --location="${REGION}" >/dev/null 2>&1 || \
-gcloud artifacts repositories create "${AR_REPO}" \
-  --project="${PROJECT_ID}" \
-  --location="${REGION}" \
-  --repository-format=docker \
-  --description="Nvidopia container images"
+  --location="${REGION}" >/dev/null 2>&1; then
+  gcloud artifacts repositories create "${AR_REPO}" \
+    --project="${PROJECT_ID}" \
+    --location="${REGION}" \
+    --repository-format=docker \
+    --description="Nvidopia container images"
+fi
 
 # ── Step 1: Submit build with kaniko cache ───────────────────────
 echo "▸ Submitting build to Cloud Build (kaniko + cache)..."
