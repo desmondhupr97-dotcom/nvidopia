@@ -1,5 +1,5 @@
 import { useState, useMemo } from 'react';
-import { Modal, Table, Tag, Spin, Empty, Button, Space, Popconfirm, message, Select } from 'antd';
+import { Modal, Table, Tag, Spin, Empty, Button, Space, Popconfirm, message, Select, Tooltip } from 'antd';
 import { DeleteOutlined, EditOutlined, PlusOutlined } from '@ant-design/icons';
 import type { PtcBindingDrive } from '../../api/client';
 import {
@@ -411,20 +411,32 @@ export default function TaskDetailModal({
                     return (
                       <div key={carId} style={{ position: 'relative', height: 18, marginBottom: 2 }} title={`Car ${carId}`}>
                         {bars.map((b) => (
-                          <div
+                          <Tooltip
                             key={b.drive_id}
-                            style={{
-                              position: 'absolute',
-                              left: `${b.startPct}%`,
-                              width: `${b.widthPct}%`,
-                              height: 14,
-                              top: 2,
-                              borderRadius: 3,
-                              background: b.color,
-                              opacity: 0.75,
-                            }}
-                            title={`${b.drive_id}: ${new Date(b.start).toLocaleString()} – ${new Date(b.end).toLocaleString()}`}
-                          />
+                            title={
+                              <div style={{ fontSize: 12, lineHeight: 1.6 }}>
+                                <div style={{ fontWeight: 600, marginBottom: 2 }}>{b.drive_id}</div>
+                                <div>Date: {new Date(b.start).toLocaleDateString()}</div>
+                                <div>Time: {new Date(b.start).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} – {new Date(b.end).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</div>
+                              </div>
+                            }
+                            placement="top"
+                            mouseEnterDelay={0.15}
+                          >
+                            <div
+                              style={{
+                                position: 'absolute',
+                                left: `${b.startPct}%`,
+                                width: `${b.widthPct}%`,
+                                height: 14,
+                                top: 2,
+                                borderRadius: 3,
+                                background: b.color,
+                                opacity: 0.75,
+                                cursor: 'pointer',
+                              }}
+                            />
+                          </Tooltip>
                         ))}
                       </div>
                     );

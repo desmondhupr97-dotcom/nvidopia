@@ -253,13 +253,65 @@ router.post('/seed', asyncHandler(async (req: Request, res: Response) => {
         const sH = randomInt(6, 18);
         const st = new Date(date); st.setHours(sH, randomInt(0,59), 0, 0);
         const et = new Date(st.getTime() + randomInt(1,5)*3600000);
+        const mileage_km = Math.round((randomInt(10,300)+Math.random())*100)/100;
+        const ROAD_TYPES = ['Highway','Urban','Ramp','Rural'] as const;
+        const roadType = pick([...ROAD_TYPES]);
+        const isHighway = roadType === 'Highway';
+        const isUrban = roadType === 'Urban';
+        const isRamp = roadType === 'Ramp';
+        const r2 = (v: number) => Math.round(v * 100) / 100;
+
+        const hwFrac = isHighway ? 0.85 + Math.random() * 0.1 : isUrban ? 0.05 : isRamp ? 0.35 : 0.15;
+        const cityFrac = isUrban ? 0.8 : isHighway ? 0.03 : 0.15;
+        const rampFrac = isRamp ? 0.55 : 0.03;
+        const ruralFrac = Math.max(0, 1 - hwFrac - cityFrac - rampFrac);
+        const l2pFrac = 0.5 + Math.random() * 0.3;
+        const accLkFrac = 0.1 + Math.random() * 0.15;
+        const accFrac = 0.05 + Math.random() * 0.1;
+
         allDrives.push({
           drive_id: `drv-${String(dc).padStart(6,'0')}`,
           car_id: pick(tCars).car_id, build_id: pick(tBuilds).build_id, tag_id: pick(tTags).tag_id,
           date, start_time: st, end_time: et,
-          mileage_km: Math.round((randomInt(10,300)+Math.random())*100)/100,
+          mileage_km,
           xl_events: randomInt(0,5), l_events: randomInt(0,15), hotline_count: randomInt(0,4),
           route: pick(ROUTES),
+          road_type: roadType,
+          l2pp_mileage: r2(mileage_km * l2pFrac * 0.9),
+          l2p_mileage: r2(mileage_km * l2pFrac),
+          acc_lk_mileage: r2(mileage_km * accLkFrac),
+          acc_mileage: r2(mileage_km * accFrac),
+          manual_mileage: r2(Math.max(0, mileage_km * (1 - l2pFrac - accLkFrac - accFrac))),
+          city_mileage: r2(mileage_km * cityFrac),
+          highway_mileage: r2(mileage_km * hwFrac),
+          ramp_mileage: r2(mileage_km * rampFrac),
+          rural_road_mileage: r2(mileage_km * ruralFrac),
+          toll_station_count: isHighway ? randomInt(0,2) : 0,
+          intersection_count: isUrban ? randomInt(2,10) : randomInt(0,3),
+          tfl_count: isUrban ? randomInt(1,8) : randomInt(0,2),
+          left_turn_count: randomInt(0, isUrban ? 10 : 3),
+          right_turn_count: randomInt(0, isUrban ? 10 : 3),
+          safety_takeover_count: Math.random() < 0.15 ? randomInt(1,2) : 0,
+          silc_miss_route_count: Math.random() < 0.08 ? 1 : 0,
+          wobble_count: Math.random() < 0.1 ? randomInt(1,2) : 0,
+          ghost_brake_count: Math.random() < 0.12 ? randomInt(1,2) : 0,
+          gb_harsh_count: Math.random() < 0.06 ? 1 : 0,
+          dangerous_lc_count: Math.random() < 0.05 ? 1 : 0,
+          lane_drift_count: Math.random() < 0.08 ? randomInt(1,2) : 0,
+          lateral_position_count: Math.random() < 0.12 ? randomInt(1,3) : 0,
+          atca_fn_count: Math.random() < 0.04 ? 1 : 0,
+          atca_fp_count: Math.random() < 0.03 ? 1 : 0,
+          xl_longitudinal_count: Math.random() < 0.08 ? randomInt(1,2) : 0,
+          l_longitudinal_count: Math.random() < 0.12 ? randomInt(1,3) : 0,
+          ml_longitudinal_count: Math.random() < 0.15 ? randomInt(1,3) : 0,
+          m_longitudinal_count: Math.random() < 0.18 ? randomInt(1,4) : 0,
+          xl_lateral_count: Math.random() < 0.06 ? 1 : 0,
+          l_lateral_count: Math.random() < 0.1 ? randomInt(1,2) : 0,
+          ml_lateral_count: Math.random() < 0.12 ? randomInt(1,3) : 0,
+          entry_ramp_attempts: isHighway || isRamp ? randomInt(1,3) : 0,
+          entry_ramp_successes: isHighway || isRamp ? randomInt(0,3) : 0,
+          exit_ramp_attempts: isHighway || isRamp ? randomInt(1,3) : 0,
+          exit_ramp_successes: isHighway || isRamp ? randomInt(0,3) : 0,
         });
       }
       if (Math.random() < 0.6) {

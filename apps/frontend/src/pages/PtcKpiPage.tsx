@@ -1,12 +1,15 @@
 import { useState, useMemo } from 'react';
 import { Card, Select, Spin, Table, Empty } from 'antd';
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts';
 import { usePtcOverview, usePtcOverviewProject } from '../hooks/usePtcApi';
 import type { PtcTaskSummary } from '../api/client';
+import PtcKpiChart from '../components/ptc/PtcKpiChart';
+import TaskKpiDetailModal from '../components/ptc/TaskKpiDetailModal';
 import '../styles/ptc.css';
 
 export default function PtcKpiPage() {
   const [selectedProject, setSelectedProject] = useState<string | undefined>();
+  const [kpiTaskId, setKpiTaskId] = useState<string | null>(null);
+  const [kpiTaskName, setKpiTaskName] = useState<string>('');
   const { data: overview, isLoading: overviewLoading } = usePtcOverview();
   const { data: projectDetail, isLoading: detailLoading } = usePtcOverviewProject(
     selectedProject || '',
@@ -35,6 +38,9 @@ export default function PtcKpiPage() {
       mileage: Math.round(t.total_mileage),
       cars: t.car_count,
       hotlines: t.hotline_count,
+      builds: t.build_count,
+      tags: t.tag_count,
+      avgMileage: t.car_count > 0 ? Math.round(t.total_mileage / t.car_count) : 0,
     })),
   [publishedTasks]);
 
@@ -114,20 +120,7 @@ export default function PtcKpiPage() {
           </div>
 
           {chartData.length > 0 && (
-            <Card style={{ marginBottom: 24 }}>
-              <ResponsiveContainer width="100%" height={320}>
-                <BarChart data={chartData} margin={{ top: 10, right: 20, left: 0, bottom: 40 }}>
-                  <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="name" angle={-30} textAnchor="end" height={80} />
-                  <YAxis />
-                  <Tooltip />
-                  <Legend />
-                  <Bar dataKey="mileage" fill="#76b900" name="Mileage (km)" />
-                  <Bar dataKey="cars" fill="#1890ff" name="Cars" />
-                  <Bar dataKey="hotlines" fill="#ff4d4f" name="Hotlines" />
-                </BarChart>
-              </ResponsiveContainer>
-            </Card>
+            <PtcKpiChart data={chartData} />
           )}
 
           <Card title="Published Tasks Detail">
@@ -137,8 +130,22 @@ export default function PtcKpiPage() {
               rowKey="task_id"
               pagination={{ pageSize: 20 }}
               size="small"
+              onRow={(record) => ({
+                onClick: () => {
+                  setKpiTaskId(record.task_id);
+                  setKpiTaskName(record.name);
+                },
+                style: { cursor: 'pointer' },
+              })}
             />
           </Card>
+
+          <TaskKpiDetailModal
+            taskId={kpiTaskId}
+            taskName={kpiTaskName}
+            open={!!kpiTaskId}
+            onClose={() => setKpiTaskId(null)}
+          />
         </>
       )}
     </div>

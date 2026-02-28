@@ -24,6 +24,95 @@ const ROUTES = [
   null, null,
 ];
 
+const ROAD_TYPES = ['Highway', 'Urban', 'Ramp', 'Rural'] as const;
+const ROAD_TYPE_WEIGHTS = [0.45, 0.30, 0.10, 0.15];
+
+function pickWeighted<T>(items: readonly T[], weights: number[]): T {
+  const r = Math.random();
+  let cum = 0;
+  for (let i = 0; i < items.length; i++) {
+    cum += weights[i];
+    if (r <= cum) return items[i];
+  }
+  return items[items.length - 1];
+}
+
+function round2(v: number): number {
+  return Math.round(v * 100) / 100;
+}
+
+function generateDriveKpiFields(mileageKm: number, roadType: string) {
+  const isHighway = roadType === 'Highway';
+  const isUrban = roadType === 'Urban';
+  const isRamp = roadType === 'Ramp';
+
+  const hwFrac = isHighway ? 0.85 + Math.random() * 0.1 : isUrban ? 0.05 + Math.random() * 0.05 : isRamp ? 0.3 + Math.random() * 0.2 : 0.1 + Math.random() * 0.1;
+  const cityFrac = isUrban ? 0.75 + Math.random() * 0.1 : isHighway ? 0.02 + Math.random() * 0.03 : 0.15 + Math.random() * 0.15;
+  const rampFrac = isRamp ? 0.5 + Math.random() * 0.2 : 0.02 + Math.random() * 0.03;
+  const ruralFrac = Math.max(0, 1 - hwFrac - cityFrac - rampFrac);
+
+  const highway_mileage = round2(mileageKm * hwFrac);
+  const city_mileage = round2(mileageKm * cityFrac);
+  const ramp_mileage = round2(mileageKm * rampFrac);
+  const rural_road_mileage = round2(Math.max(0, mileageKm - highway_mileage - city_mileage - ramp_mileage));
+
+  const l2pFrac = 0.5 + Math.random() * 0.3;
+  const accLkFrac = 0.1 + Math.random() * 0.2;
+  const accFrac = 0.05 + Math.random() * 0.1;
+  const manualFrac = Math.max(0, 1 - l2pFrac - accLkFrac - accFrac);
+
+  const l2p_mileage = round2(mileageKm * l2pFrac);
+  const l2pp_mileage = round2(l2p_mileage * (0.8 + Math.random() * 0.2));
+  const acc_lk_mileage = round2(mileageKm * accLkFrac);
+  const acc_mileage = round2(mileageKm * accFrac);
+  const manual_mileage = round2(Math.max(0, mileageKm - l2p_mileage - acc_lk_mileage - acc_mileage));
+
+  const perKm = mileageKm / 100;
+
+  return {
+    road_type: roadType,
+    l2pp_mileage,
+    l2p_mileage,
+    acc_lk_mileage,
+    acc_mileage,
+    manual_mileage,
+    city_mileage,
+    highway_mileage,
+    ramp_mileage,
+    rural_road_mileage,
+
+    toll_station_count: isHighway ? randomInt(0, 3) : 0,
+    intersection_count: isUrban ? randomInt(2, 15) : isHighway ? randomInt(0, 2) : randomInt(0, 5),
+    tfl_count: isUrban ? randomInt(1, 10) : randomInt(0, 3),
+    left_turn_count: randomInt(0, isUrban ? 12 : 4),
+    right_turn_count: randomInt(0, isUrban ? 12 : 4),
+
+    safety_takeover_count: Math.random() < 0.15 ? randomInt(1, 3) : 0,
+    silc_miss_route_count: Math.random() < 0.08 ? 1 : 0,
+    wobble_count: Math.random() < 0.1 ? randomInt(1, 2) : 0,
+    ghost_brake_count: Math.random() < 0.12 ? randomInt(1, 2) : 0,
+    gb_harsh_count: Math.random() < 0.06 ? 1 : 0,
+    dangerous_lc_count: Math.random() < 0.05 ? 1 : 0,
+    lane_drift_count: Math.random() < 0.08 ? randomInt(1, 2) : 0,
+    lateral_position_count: Math.random() < 0.12 ? randomInt(1, 3) : 0,
+    atca_fn_count: Math.random() < 0.04 ? 1 : 0,
+    atca_fp_count: Math.random() < 0.03 ? 1 : 0,
+
+    xl_longitudinal_count: Math.random() < 0.08 ? randomInt(1, 2) : 0,
+    l_longitudinal_count: Math.random() < 0.12 ? randomInt(1, 3) : 0,
+    ml_longitudinal_count: Math.random() < 0.15 ? randomInt(1, 3) : 0,
+    m_longitudinal_count: Math.random() < 0.18 ? randomInt(1, 4) : 0,
+    xl_lateral_count: Math.random() < 0.06 ? 1 : 0,
+    l_lateral_count: Math.random() < 0.1 ? randomInt(1, 2) : 0,
+    ml_lateral_count: Math.random() < 0.12 ? randomInt(1, 3) : 0,
+
+    entry_ramp_attempts: isHighway || isRamp ? randomInt(1, 4) : 0,
+    entry_ramp_successes: 0,
+    exit_ramp_attempts: isHighway || isRamp ? randomInt(1, 4) : 0,
+    exit_ramp_successes: 0,
+  };
+}
+
 function randomInt(min: number, max: number): number {
   return Math.floor(Math.random() * (max - min + 1)) + min;
 }
@@ -118,11 +207,7 @@ async function seed() {
   console.log(`  Inserted ${allProjects.length} projects, ${allTasks.length} tasks`);
 
   // --- Drives ---
-  const allDrives: Array<{
-    drive_id: string; car_id: string; build_id: string; tag_id: string;
-    date: Date; start_time: Date; end_time: Date; mileage_km: number;
-    xl_events: number; l_events: number; hotline_count: number; route: string | null;
-  }> = [];
+  const allDrives: Array<Record<string, unknown>> = [];
   let driveCounter = 0;
 
   for (const task of allTasks) {
@@ -139,6 +224,25 @@ async function seed() {
       const startTime = new Date(date);
       startTime.setHours(startHour, randomInt(0, 59), 0, 0);
       const endTime = new Date(startTime.getTime() + durationHours * 3600000);
+      const mileage_km = round2(randomInt(10, 300) + Math.random());
+      const roadType = pickWeighted(ROAD_TYPES, ROAD_TYPE_WEIGHTS);
+      const kpiFields = generateDriveKpiFields(mileage_km, roadType);
+
+      // Fill ramp successes based on attempts (70-95% success rate)
+      if (kpiFields.entry_ramp_attempts > 0) {
+        const rate = 0.7 + Math.random() * 0.25;
+        kpiFields.entry_ramp_successes = Math.min(
+          kpiFields.entry_ramp_attempts,
+          Math.round(kpiFields.entry_ramp_attempts * rate),
+        );
+      }
+      if (kpiFields.exit_ramp_attempts > 0) {
+        const rate = 0.7 + Math.random() * 0.25;
+        kpiFields.exit_ramp_successes = Math.min(
+          kpiFields.exit_ramp_attempts,
+          Math.round(kpiFields.exit_ramp_attempts * rate),
+        );
+      }
 
       allDrives.push({
         drive_id: `drv-${String(driveCounter).padStart(6, '0')}`,
@@ -148,11 +252,12 @@ async function seed() {
         date,
         start_time: startTime,
         end_time: endTime,
-        mileage_km: Math.round((randomInt(10, 300) + Math.random()) * 100) / 100,
+        mileage_km,
         xl_events: randomInt(0, 5),
         l_events: randomInt(0, 15),
         hotline_count: randomInt(0, 4),
         route: pick(ROUTES),
+        ...kpiFields,
       });
     }
   }
@@ -170,9 +275,6 @@ async function seed() {
     if (Math.random() < 0.5) continue;
 
     const task = allTasks[i];
-    const taskDrives = allDrives.filter(
-      (d) => allDrives.some((ad) => ad.drive_id === d.drive_id),
-    );
     const relevantDrives = allDrives.slice(
       allDrives.findIndex((d) => d.drive_id === `drv-${String(i * 75 + 1).padStart(6, '0')}`),
     ).slice(0, randomInt(20, 60));
@@ -180,17 +282,19 @@ async function seed() {
     const carDriveMap = new Map<string, { drive_id: string; selected: boolean; deselect_reason_preset?: string; deselect_reason_text?: string }[]>();
     for (const d of relevantDrives) {
       if (!d) continue;
-      const arr = carDriveMap.get(d.car_id) || [];
+      const carId = d.car_id as string;
+      const driveId = d.drive_id as string;
+      const arr = carDriveMap.get(carId) || [];
       const selected = Math.random() > 0.1;
       arr.push({
-        drive_id: d.drive_id,
+        drive_id: driveId,
         selected,
         ...(!selected ? {
           deselect_reason_preset: pick(['数据异常', '重复', '不相关', '设备故障', '其他']),
           deselect_reason_text: Math.random() > 0.5 ? 'Auto-generated reason for testing' : undefined,
         } : {}),
       });
-      carDriveMap.set(d.car_id, arr);
+      carDriveMap.set(carId, arr);
     }
 
     allBindings.push({

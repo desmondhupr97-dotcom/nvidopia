@@ -8,6 +8,7 @@ const KEYS = {
   overview: ['ptc', 'overview'] as const,
   overviewProject: (id: string) => ['ptc', 'overview', 'project', id] as const,
   overviewTask: (id: string) => ['ptc', 'overview', 'task', id] as const,
+  taskKpi: (id: string) => ['ptc', 'task-kpi', id] as const,
   bindings: (params?: Record<string, string>) => ['ptc', 'bindings', params] as const,
   binding: (id: string) => ['ptc', 'binding', id] as const,
   builds: (q?: string) => ['ptc', 'builds', q] as const,
@@ -163,5 +164,14 @@ export function useDeletePtcTask() {
   return useMutation({
     mutationFn: (id: string) => api.deletePtcTask(id),
     onSuccess: () => { qc.invalidateQueries({ queryKey: ['ptc'] }); },
+  });
+}
+
+export function usePtcTaskKpi(taskId: string, enabled = true) {
+  return useQuery({
+    queryKey: KEYS.taskKpi(taskId),
+    queryFn: () => api.getPtcTaskKpi(taskId),
+    enabled: enabled && !!taskId,
+    staleTime: 60_000,
   });
 }

@@ -977,6 +977,48 @@ export interface PtcDrive {
   l_events: number;
   hotline_count: number;
   route?: string;
+
+  road_type?: 'Highway' | 'Urban' | 'Ramp' | 'Rural';
+
+  l2pp_mileage?: number;
+  l2p_mileage?: number;
+  acc_lk_mileage?: number;
+  acc_mileage?: number;
+  manual_mileage?: number;
+  city_mileage?: number;
+  highway_mileage?: number;
+  ramp_mileage?: number;
+  rural_road_mileage?: number;
+
+  toll_station_count?: number;
+  intersection_count?: number;
+  tfl_count?: number;
+  left_turn_count?: number;
+  right_turn_count?: number;
+
+  safety_takeover_count?: number;
+  silc_miss_route_count?: number;
+  wobble_count?: number;
+  ghost_brake_count?: number;
+  gb_harsh_count?: number;
+  dangerous_lc_count?: number;
+  lane_drift_count?: number;
+  lateral_position_count?: number;
+  atca_fn_count?: number;
+  atca_fp_count?: number;
+
+  xl_longitudinal_count?: number;
+  l_longitudinal_count?: number;
+  ml_longitudinal_count?: number;
+  m_longitudinal_count?: number;
+  xl_lateral_count?: number;
+  l_lateral_count?: number;
+  ml_lateral_count?: number;
+
+  entry_ramp_attempts?: number;
+  entry_ramp_successes?: number;
+  exit_ramp_attempts?: number;
+  exit_ramp_successes?: number;
 }
 
 export interface PtcTaskSummary {
@@ -1149,4 +1191,40 @@ export function getPtcOverview(project_id?: string) {
 
 export function getPtcTaskOverview(taskId: string) {
   return fetchJson<{ task: PtcTask; binding: PtcBinding | null; drives: PtcDrive[] }>(`/ptc/overview/${taskId}`);
+}
+
+export interface KpiByAttributeRow {
+  kpi_category: string;
+  attribute?: string;
+  kpi_item: string;
+  unit: string;
+  target: string;
+  define_baseline: string;
+  kpi_normalized: string;
+  gvs_group_normalized: string;
+  total: string;
+  gvs_group: string;
+}
+
+export interface KpiByOddRow {
+  odd: string;
+  kpi_item: string;
+  unit: string;
+  target: string;
+  define: string;
+  baseline: string;
+  kpi_normalized: string;
+  gvs_group_normalized: string;
+  total: string;
+  gvs_group: string;
+}
+
+export interface TaskKpiResult {
+  task: PtcTask;
+  byAttribute: KpiByAttributeRow[];
+  byODD: KpiByOddRow[];
+}
+
+export function getPtcTaskKpi(taskId: string) {
+  return fetchJson<TaskKpiResult>(`/ptc/overview/${taskId}/kpi`);
 }
