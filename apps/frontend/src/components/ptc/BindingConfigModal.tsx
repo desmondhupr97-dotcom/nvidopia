@@ -1,11 +1,10 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { Modal, Select, Button, Table, Spin, message, Checkbox } from 'antd';
 import type { PtcFilterResult, PtcFilterResultDrive } from '../../api/client';
 import {
-  usePtcBuilds,
-  usePtcTags,
   usePtcDriveFilter,
   useCreatePtcBinding,
+  usePtcMetaOptions,
 } from '../../hooks/usePtcApi';
 
 export interface BindingConfigModalProps {
@@ -25,19 +24,26 @@ export default function BindingConfigModal({
 }: BindingConfigModalProps) {
   const [selectedBuilds, setSelectedBuilds] = useState<string[]>([]);
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
+  const [selectedCars, setSelectedCars] = useState<string[]>([]);
   const [searchTriggered, setSearchTriggered] = useState(false);
   const [selectedRowKeys, setSelectedRowKeys] = useState<string[]>([]);
   const [expandedRowKeys, setExpandedRowKeys] = useState<string[]>([]);
   const [driveSelection, setDriveSelection] = useState<Record<string, Record<string, boolean>>>({});
 
+  const metaParams = useMemo(() => ({
+    builds: selectedBuilds.length ? selectedBuilds.join(',') : undefined,
+    tags: selectedTags.length ? selectedTags.join(',') : undefined,
+    cars: selectedCars.length ? selectedCars.join(',') : undefined,
+  }), [selectedBuilds, selectedTags, selectedCars]);
+  const { data: metaOptions } = usePtcMetaOptions(metaParams);
+
   const filterParams = {
     builds: selectedBuilds.length ? selectedBuilds.join(',') : undefined,
     tags: selectedTags.length ? selectedTags.join(',') : undefined,
+    cars: selectedCars.length ? selectedCars.join(',') : undefined,
   };
-  const hasFilter = selectedBuilds.length > 0 || selectedTags.length > 0;
+  const hasFilter = selectedBuilds.length > 0 || selectedTags.length > 0 || selectedCars.length > 0;
 
-  const { data: builds = [] } = usePtcBuilds();
-  const { data: tags = [] } = usePtcTags();
   const { data: filterResults, isLoading: filterLoading } = usePtcDriveFilter(
     filterParams,
     searchTriggered && !!hasFilter
@@ -100,7 +106,7 @@ export default function BindingConfigModal({
         task_id: taskId,
         filter_criteria: {
           builds: selectedBuilds,
-          cars: [] as string[],
+          cars: selectedCars,
           tags: selectedTags,
         },
         cars,
@@ -114,8 +120,11 @@ export default function BindingConfigModal({
         onError: (err: unknown) => {
           const st = (err as { status?: number })?.status;
           const msg = (err as { message?: string })?.message;
+          const details = (err as { details?: string[] })?.details;
           if (st === 409 || (msg && msg.includes('already exists'))) {
             message.warning('Binding already exists for this task. Use Edit Binding instead.');
+          } else if (details?.length) {
+            message.error(`Validation failed: ${details.join('; ')}`);
           } else {
             message.error(msg || 'Failed to create binding');
           }
@@ -127,13 +136,17 @@ export default function BindingConfigModal({
   const filterOption = (input: string, option?: { label?: string; value?: string }) =>
     (option?.label ?? '').toLowerCase().includes(input.toLowerCase());
 
-  const buildOptions = builds.map((b) => ({
+  const buildOptions = (metaOptions?.builds ?? []).map((b) => ({
     value: b.build_id,
     label: b.version_tag,
   }));
-  const tagOptions = tags.map((t) => ({
+  const tagOptions = (metaOptions?.tags ?? []).map((t) => ({
     value: t.tag_id,
     label: t.name,
+  }));
+  const carOptions = (metaOptions?.cars ?? []).map((c) => ({
+    value: c.car_id,
+    label: `${c.car_id} (${c.name})`,
   }));
 
   const tableData = (filterResults ?? []).map((r: PtcFilterResult) => ({
@@ -174,11 +187,7 @@ export default function BindingConfigModal({
   ];
 
   const driveColumns = [
-    {
-      title: 'Drive ID',
-      dataIndex: 'drive_id',
-      key: 'drive_id',
-    },
+    { title: 'Drive ID', dataIndex: 'drive_id', key: 'drive_id' },
     {
       title: 'Date',
       dataIndex: 'date',
@@ -245,9 +254,9 @@ export default function BindingConfigModal({
       <div className="ptc-binding-config">
         <div className="filter-section">
           <Select
-            mode="multiple"
+            mode="tags"
             showSearch
-            placeholder="Builds"
+            placeholder="Builds (select or type custom)"
             value={selectedBuilds}
             onChange={setSelectedBuilds}
             options={buildOptions}
@@ -261,6 +270,16 @@ export default function BindingConfigModal({
             value={selectedTags}
             onChange={setSelectedTags}
             options={tagOptions}
+            filterOption={filterOption}
+            style={{ width: '100%', marginBottom: 12 }}
+          />
+          <Select
+            mode="multiple"
+            showSearch
+            placeholder="Cars"
+            value={selectedCars}
+            onChange={setSelectedCars}
+            options={carOptions}
             filterOption={filterOption}
             style={{ width: '100%', marginBottom: 12 }}
           />

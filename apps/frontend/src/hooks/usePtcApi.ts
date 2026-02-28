@@ -15,6 +15,7 @@ const KEYS = {
   tags: (q?: string) => ['ptc', 'tags', q] as const,
   drives: (params?: Record<string, string>) => ['ptc', 'drives', params] as const,
   driveFilter: (params?: Record<string, string>) => ['ptc', 'drive-filter', params] as const,
+  metaOptions: (params?: Record<string, string>) => ['ptc', 'meta-options', params] as const,
 };
 
 export function usePtcProjects(q?: string) {
@@ -73,6 +74,14 @@ export function usePtcDrives(params?: { car_id?: string; build_id?: string; tag_
     queryKey: KEYS.drives(params as Record<string, string>),
     queryFn: () => api.getPtcDrives(params),
     select: (data) => data.data,
+  });
+}
+
+export function usePtcMetaOptions(params?: { builds?: string; tags?: string; cars?: string }) {
+  return useQuery({
+    queryKey: KEYS.metaOptions(params as Record<string, string>),
+    queryFn: () => api.getMetaOptions(params),
+    staleTime: 30_000,
   });
 }
 

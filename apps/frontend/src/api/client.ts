@@ -1125,6 +1125,21 @@ export function filterPtcDrives(params: { builds?: string; cars?: string; tags?:
   return fetchJson<PtcFilterResult[]>(`/ptc/drives/filter?${qs.toString()}`);
 }
 
+export interface MetaOptionsResult {
+  builds: PtcBuild[];
+  tags: PtcTag[];
+  cars: PtcCar[];
+}
+
+export function getMetaOptions(params?: { builds?: string; tags?: string; cars?: string }) {
+  const qs = new URLSearchParams();
+  if (params?.builds) qs.set('builds', params.builds);
+  if (params?.tags) qs.set('tags', params.tags);
+  if (params?.cars) qs.set('cars', params.cars);
+  const s = qs.toString();
+  return fetchJson<MetaOptionsResult>(`/ptc/meta/options${s ? `?${s}` : ''}`);
+}
+
 export function getPtcOverview(project_id?: string) {
   if (project_id) {
     return fetchJson<{ project: PtcProject; tasks: PtcTaskSummary[] }>(`/ptc/overview?project_id=${project_id}`);

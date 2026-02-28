@@ -1,7 +1,63 @@
 import { Router, type Request, type Response } from 'express';
-import { PtcBinding, PtcTask, PtcDrive } from '@nvidopia/data-models';
+import { PtcBinding, PtcBuild, PtcTask, PtcDrive } from '@nvidopia/data-models';
 import { asyncHandler } from '@nvidopia/service-toolkit';
 import crypto from 'crypto';
+
+interface BindingCar {
+  car_id: string;
+  drives: Array<{ drive_id: string; selected: boolean }>;
+}
+
+async function validatePublish(
+  filterCriteria: { builds?: string[]; cars?: string[]; tags?: string[] },
+  cars: BindingCar[],
+): Promise<string[]> {
+  const errors: string[] = [];
+
+  if (filterCriteria.builds?.length) {
+    const existingBuilds = await PtcBuild.find({
+      $or: [
+        { build_id: { $in: filterCriteria.builds } },
+        { version_tag: { $in: filterCriteria.builds } },
+      ],
+    }).lean();
+    const found = new Set([
+      ...existingBuilds.map((b) => b.build_id),
+      ...existingBuilds.map((b) => b.version_tag),
+    ]);
+    const invalid = filterCriteria.builds.filter((b) => !found.has(b));
+    if (invalid.length) errors.push(`Builds not found: ${invalid.join(', ')}`);
+  }
+
+  if (cars.length && errors.length === 0) {
+    const driveFilter: Record<string, unknown> = {};
+    if (filterCriteria.builds?.length) {
+      const buildDocs = await PtcBuild.find({
+        $or: [
+          { build_id: { $in: filterCriteria.builds } },
+          { version_tag: { $in: filterCriteria.builds } },
+        ],
+      }).lean();
+      driveFilter.build_id = { $in: buildDocs.map((b) => b.build_id) };
+    }
+    if (filterCriteria.tags?.length) driveFilter.tag_id = { $in: filterCriteria.tags };
+    if (filterCriteria.cars?.length) driveFilter.car_id = { $in: filterCriteria.cars };
+
+    if (Object.keys(driveFilter).length) {
+      const validDriveIds = new Set(
+        (await PtcDrive.find(driveFilter).select('drive_id').lean()).map((d) => d.drive_id),
+      );
+      for (const car of cars) {
+        const invalidDrives = car.drives.filter((d) => d.selected && !validDriveIds.has(d.drive_id));
+        if (invalidDrives.length) {
+          errors.push(`Car ${car.car_id}: ${invalidDrives.length} drive(s) not matching filter`);
+        }
+      }
+    }
+  }
+
+  return errors;
+}
 
 const router = Router();
 
@@ -99,10 +155,20 @@ router.post('/bindings', asyncHandler(async (req: Request, res: Response) => {
     }));
   }
 
+  const finalStatus = status || 'Draft';
+
+  if (finalStatus === 'Published') {
+    const errors = await validatePublish(criteria, cars);
+    if (errors.length) {
+      res.status(400).json({ error: 'Publish validation failed', details: errors });
+      return;
+    }
+  }
+
   const binding = new PtcBinding({
     binding_id: `ptc-bind-${crypto.randomUUID().slice(0, 8)}`,
     task_id,
-    status: status || 'Draft',
+    status: finalStatus,
     filter_criteria: criteria,
     cars,
   });
@@ -112,6 +178,22 @@ router.post('/bindings', asyncHandler(async (req: Request, res: Response) => {
 
 router.put('/bindings/:id', asyncHandler(async (req: Request, res: Response) => {
   const { status, filter_criteria, cars } = req.body;
+
+  if (status === 'Published') {
+    const existing = await PtcBinding.findOne({ binding_id: req.params.id }).lean();
+    if (!existing) {
+      res.status(404).json({ error: 'Binding not found' });
+      return;
+    }
+    const criteria = filter_criteria || existing.filter_criteria || { builds: [], cars: [], tags: [] };
+    const bindingCars = cars || existing.cars || [];
+    const errors = await validatePublish(criteria, bindingCars);
+    if (errors.length) {
+      res.status(400).json({ error: 'Publish validation failed', details: errors });
+      return;
+    }
+  }
+
   const updates: Record<string, unknown> = {};
   if (status) updates.status = status;
   if (filter_criteria) updates.filter_criteria = filter_criteria;

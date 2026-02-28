@@ -96,6 +96,7 @@ export default function DriveSelectionPopup({
       open={open}
       onClose={onClose}
       className="ptc-drive-popup"
+      zIndex={1100}
       footer={
         <Button type="primary" onClick={handleSave}>
           Save

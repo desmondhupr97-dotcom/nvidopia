@@ -1,15 +1,14 @@
 import { useState, useMemo } from 'react';
 import { Modal, Table, Tag, Spin, Empty, Button, Space, Popconfirm, message, Select } from 'antd';
-import { DeleteOutlined, EditOutlined } from '@ant-design/icons';
+import { DeleteOutlined, EditOutlined, PlusOutlined } from '@ant-design/icons';
 import type { PtcBindingDrive } from '../../api/client';
 import {
   usePtcOverviewTask,
   useUpdatePtcBindingDrives,
-  usePtcBuilds,
-  usePtcTags,
   useUpdatePtcBinding,
   useDeletePtcBinding,
   usePtcDriveFilter,
+  usePtcMetaOptions,
 } from '../../hooks/usePtcApi';
 import DriveSelectionPopup from './DriveSelectionPopup';
 
@@ -18,6 +17,7 @@ export interface TaskDetailModalProps {
   open: boolean;
   onClose: () => void;
   editable?: boolean;
+  onAddBinding?: (taskId: string) => void;
 }
 
 const CAR_COLORS: string[] = [
@@ -30,13 +30,12 @@ export default function TaskDetailModal({
   open,
   onClose,
   editable: initialEditable = false,
+  onAddBinding,
 }: TaskDetailModalProps) {
   const { data, isLoading } = usePtcOverviewTask(taskId ?? '', open && !!taskId);
   const updateDrivesMutation = useUpdatePtcBindingDrives();
   const updateBindingMutation = useUpdatePtcBinding();
   const deleteBindingMutation = useDeletePtcBinding();
-  const { data: allBuilds = [] } = usePtcBuilds();
-  const { data: allTags = [] } = usePtcTags();
   const [drivePopup, setDrivePopup] = useState<{
     bindingId: string;
     carId: string;
@@ -46,14 +45,23 @@ export default function TaskDetailModal({
 
   const [editBuilds, setEditBuilds] = useState<string[]>([]);
   const [editTags, setEditTags] = useState<string[]>([]);
+  const [editCars, setEditCars] = useState<string[]>([]);
   const [searchTriggered, setSearchTriggered] = useState(false);
   const [selectedNewCars, setSelectedNewCars] = useState<string[]>([]);
+
+  const metaParams = useMemo(() => ({
+    builds: editBuilds.length ? editBuilds.join(',') : undefined,
+    tags: editTags.length ? editTags.join(',') : undefined,
+    cars: editCars.length ? editCars.join(',') : undefined,
+  }), [editBuilds, editTags, editCars]);
+  const { data: metaOptions } = usePtcMetaOptions(metaParams);
 
   const filterParams = {
     builds: editBuilds.length ? editBuilds.join(',') : undefined,
     tags: editTags.length ? editTags.join(',') : undefined,
+    cars: editCars.length ? editCars.join(',') : undefined,
   };
-  const hasEditFilter = editBuilds.length > 0 || editTags.length > 0;
+  const hasEditFilter = editBuilds.length > 0 || editTags.length > 0 || editCars.length > 0;
   const { data: filterResults } = usePtcDriveFilter(
     filterParams,
     searchTriggered && hasEditFilter
@@ -63,13 +71,21 @@ export default function TaskDetailModal({
   const binding = data?.binding;
   const editable = initialEditable || isEditing;
 
-  const buildNameMap = new Map(allBuilds.map((b) => [b.build_id, b.version_tag]));
-  const tagNameMap = new Map(allTags.map((t) => [t.tag_id, t.name]));
+  const buildNameMap = useMemo(() => {
+    if (!metaOptions?.builds) return new Map<string, string>();
+    return new Map(metaOptions.builds.map((b) => [b.build_id, b.version_tag]));
+  }, [metaOptions?.builds]);
+
+  const tagNameMap = useMemo(() => {
+    if (!metaOptions?.tags) return new Map<string, string>();
+    return new Map(metaOptions.tags.map((t) => [t.tag_id, t.name]));
+  }, [metaOptions?.tags]);
 
   const handleStartEdit = () => {
     if (binding) {
       setEditBuilds(binding.filter_criteria?.builds ?? []);
       setEditTags(binding.filter_criteria?.tags ?? []);
+      setEditCars(binding.filter_criteria?.cars ?? []);
     }
     setSearchTriggered(false);
     setSelectedNewCars([]);
@@ -121,6 +137,28 @@ export default function TaskDetailModal({
       onSuccess: () => { message.success('Binding deleted'); onClose(); },
       onError: () => message.error('Failed to delete binding'),
     });
+  };
+
+  const handlePublish = () => {
+    if (!binding) return;
+    updateBindingMutation.mutate(
+      { id: binding.binding_id, data: { status: 'Published' } },
+      {
+        onSuccess: () => {
+          message.success('Binding published');
+          setIsEditing(false);
+        },
+        onError: (err: unknown) => {
+          const details = (err as { details?: string[] })?.details;
+          const msg = (err as { message?: string })?.message;
+          if (details?.length) {
+            message.error(`Publish failed: ${details.join('; ')}`);
+          } else {
+            message.error(msg || 'Failed to publish binding');
+          }
+        },
+      }
+    );
   };
 
   const timelineData = useMemo(() => {
@@ -243,6 +281,12 @@ export default function TaskDetailModal({
   const filterOption = (input: string, option?: { label?: unknown }) =>
     String(option?.label ?? '').toLowerCase().includes(input.toLowerCase());
 
+  const isDraft = binding?.status === 'Draft';
+
+  const buildOptions = (metaOptions?.builds ?? []).map((b) => ({ value: b.build_id, label: b.version_tag }));
+  const tagOptions = (metaOptions?.tags ?? []).map((t) => ({ value: t.tag_id, label: t.name }));
+  const carOptions = (metaOptions?.cars ?? []).map((c) => ({ value: c.car_id, label: `${c.car_id} (${c.name})` }));
+
   return (
     <>
       <Modal
@@ -263,6 +307,13 @@ export default function TaskDetailModal({
               <Popconfirm title="Delete this binding permanently?" onConfirm={handleDeleteBinding} okText="Delete" okButtonProps={{ danger: true }}>
                 <Button danger loading={deleteBindingMutation.isPending}>Delete Binding</Button>
               </Popconfirm>
+              {isDraft && (
+                <Popconfirm title="Publish this binding? Build and filter validation will be performed." onConfirm={handlePublish} okText="Publish">
+                  <Button type="primary" style={{ background: '#52c41a', borderColor: '#52c41a' }} loading={updateBindingMutation.isPending}>
+                    Publish
+                  </Button>
+                </Popconfirm>
+              )}
               <Button type="primary" onClick={() => { setIsEditing(false); onClose(); }}>Done</Button>
             </Space>
           ) : null
@@ -271,17 +322,21 @@ export default function TaskDetailModal({
         {isLoading ? (
           <div style={{ textAlign: 'center', padding: 48 }}><Spin /></div>
         ) : !binding ? (
-          <Empty description="No binding" />
+          <Empty description="No binding">
+            {onAddBinding && taskId && (
+              <Button type="primary" icon={<PlusOutlined />} onClick={() => onAddBinding(taskId)}>
+                Add Binding
+              </Button>
+            )}
+          </Empty>
         ) : (
           <div>
-            {/* Edit button */}
             {!editable && (
               <div style={{ textAlign: 'right', marginBottom: 12 }}>
                 <Button icon={<EditOutlined />} onClick={handleStartEdit}>Edit</Button>
               </div>
             )}
 
-            {/* Timeline Gantt */}
             {ganttData.carIds.length > 0 && (
               <div style={{ marginBottom: 20 }}>
                 <div style={{ fontSize: 12, color: 'var(--text-muted)', marginBottom: 6, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.04em' }}>
@@ -327,17 +382,16 @@ export default function TaskDetailModal({
               </div>
             )}
 
-            {/* Edit mode: filter dropdowns */}
             {editable && (
               <div style={{ marginBottom: 16, padding: 12, background: 'var(--bg-deep)', borderRadius: 10, border: '1px solid var(--border-secondary)' }}>
                 <div style={{ fontSize: 12, fontWeight: 600, marginBottom: 8, color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.04em' }}>Add Cars by Filter</div>
                 <Select
-                  mode="multiple"
+                  mode={isDraft ? 'tags' : 'multiple'}
                   showSearch
                   placeholder="Builds"
                   value={editBuilds}
                   onChange={setEditBuilds}
-                  options={allBuilds.map((b) => ({ value: b.build_id, label: b.version_tag }))}
+                  options={buildOptions}
                   filterOption={filterOption}
                   style={{ width: '100%', marginBottom: 8 }}
                 />
@@ -347,7 +401,17 @@ export default function TaskDetailModal({
                   placeholder="Tags"
                   value={editTags}
                   onChange={setEditTags}
-                  options={allTags.map((t) => ({ value: t.tag_id, label: t.name }))}
+                  options={tagOptions}
+                  filterOption={filterOption}
+                  style={{ width: '100%', marginBottom: 8 }}
+                />
+                <Select
+                  mode="multiple"
+                  showSearch
+                  placeholder="Cars"
+                  value={editCars}
+                  onChange={setEditCars}
+                  options={carOptions}
                   filterOption={filterOption}
                   style={{ width: '100%', marginBottom: 8 }}
                 />

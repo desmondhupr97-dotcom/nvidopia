@@ -47,6 +47,48 @@ router.get('/tags', asyncHandler(async (req: Request, res: Response) => {
   res.json(tags);
 }));
 
+router.get('/meta/options', asyncHandler(async (req: Request, res: Response) => {
+  const { builds, tags, cars } = req.query;
+  const buildIds = (builds && typeof builds === 'string') ? builds.split(',') : [];
+  const tagIds = (tags && typeof tags === 'string') ? tags.split(',') : [];
+  const carIds = (cars && typeof cars === 'string') ? cars.split(',') : [];
+
+  const buildFilter: Record<string, unknown> = {};
+  if (tagIds.length) buildFilter.tag_id = { $in: tagIds };
+  if (carIds.length) buildFilter.car_id = { $in: carIds };
+  const availBuildIds = Object.keys(buildFilter).length
+    ? await PtcDrive.distinct('build_id', buildFilter)
+    : null;
+
+  const tagFilter: Record<string, unknown> = {};
+  if (buildIds.length) tagFilter.build_id = { $in: buildIds };
+  if (carIds.length) tagFilter.car_id = { $in: carIds };
+  const availTagIds = Object.keys(tagFilter).length
+    ? await PtcDrive.distinct('tag_id', tagFilter)
+    : null;
+
+  const carFilter: Record<string, unknown> = {};
+  if (buildIds.length) carFilter.build_id = { $in: buildIds };
+  if (tagIds.length) carFilter.tag_id = { $in: tagIds };
+  const availCarIds = Object.keys(carFilter).length
+    ? await PtcDrive.distinct('car_id', carFilter)
+    : null;
+
+  const [availBuilds, availTags, availCars] = await Promise.all([
+    availBuildIds
+      ? PtcBuild.find({ build_id: { $in: availBuildIds } }).sort({ build_time: -1 }).lean()
+      : PtcBuild.find().sort({ build_time: -1 }).lean(),
+    availTagIds
+      ? PtcTag.find({ tag_id: { $in: availTagIds } }).sort({ name: 1 }).lean()
+      : PtcTag.find().sort({ name: 1 }).lean(),
+    availCarIds
+      ? PtcCar.find({ car_id: { $in: availCarIds } }).sort({ car_id: 1 }).lean()
+      : PtcCar.find().sort({ car_id: 1 }).lean(),
+  ]);
+
+  res.json({ builds: availBuilds, tags: availTags, cars: availCars });
+}));
+
 router.get('/drives', asyncHandler(async (req: Request, res: Response) => {
   const { car_id, build_id, tag_id, q, page, limit: limitParam } = req.query;
   const filter: Record<string, unknown> = {};

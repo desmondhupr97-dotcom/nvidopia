@@ -102,6 +102,14 @@ export default function PtcBindingPage() {
         open={taskModalOpen}
         onClose={() => setTaskModalOpen(false)}
         editable={taskModalEditable}
+        onAddBinding={(tid) => {
+          setTaskModalOpen(false);
+          const allTasks = projects.flatMap((p) => p.tasks ?? []);
+          const t = allTasks.find((tt) => tt.task_id === tid);
+          setBindingTaskId(tid);
+          setBindingTaskName(t?.name);
+          setBindingModalOpen(true);
+        }}
       />
 
       <AddProjectTaskModal
