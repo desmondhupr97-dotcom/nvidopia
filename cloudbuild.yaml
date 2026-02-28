@@ -12,6 +12,7 @@ steps:
 options:
   machineType: 'E2_HIGHCPU_8'
   logging: CLOUD_LOGGING_ONLY
+  # If E2_HIGHCPU_8 quota is unavailable, fall back: E2_HIGHCPU_4 → E2_HIGHCPU_2 → remove machineType
 
 substitutions:
   _AR_REGION: us-central1
