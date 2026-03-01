@@ -409,64 +409,110 @@ PtcDrive (独立集合，被 Binding 引用)
 
 目前 PTC 的所有数据（Drive 里程、KPI 指标、Hotline 计数等）全部存在 `ptc_drives` 单一集合中。这些数据通过 `/ptc/seed` 接口生成的模拟数据。
 
-### 5.2 外部数据库联调方向
+### 5.2 Drive 的标识体系
 
-后续需要将 PTC 的 Project/Task/Binding 与**外部数据源**对接，主要场景：
+在真实系统中，每个 Drive（对应一次 run）有**两个标识**：
 
-| 外部数据源 | 关联字段 | 联调用途 |
-|-----------|---------|---------|
-| **Drive 数据库** | `drive_id` / `car_id` / `build_id` | 真实 Drive 记录替换模拟数据；Binding 后通过 drive 信息查询更多维度 |
-| **里程数据库** | 通过 `drive_id` 或 `car_id + date` | 获取真实里程数据（各模式/场景细分里程）|
-| **Hotline 数据库** | 通过 `drive_id` 或 `car_id + time_range` | 获取真实 Hotline 记录与计数 |
-| **安全事件数据库** | 通过 `drive_id` | 获取真实的安全接管、Ghost Brake 等事件数据 |
-| **匝道/ODD 数据库** | 通过 `drive_id` 或 `road_type + location` | 获取匝道进出成功率等真实指标 |
+| 标识 | 格式 | 用途 |
+|------|------|------|
+| `drive_id` | 数字串（如 `"123456"`） | 业务可读的 ID，用于日常引用和显示 |
+| `uuid` | UUID v4 | 确保全局唯一性 |
 
-### 5.3 联调的关键接口
+两者指向同一个 run（一次驾驶记录），均可作为外部 API 的查询键。
 
-**需要改造或新增的后端接口：**
+### 5.3 联调方式：实时 API 聚合
 
-1. **`GET /overview?project_id=`**
-   - 当前：直接查 `ptc_drives` 获取里程和 hotline 数据
-   - 联调后：需从外部 DB 查询真实里程/hotline，再聚合
+采用**实时查询 + 聚合**方式（非 ETL 同步）：ptc-service 在请求时实时调用多个外部 API，获取数据后在内存中组合成需要的结构。
 
-2. **`GET /overview/:taskId/kpi`**
-   - 当前：`PtcDrive.find()` 获取全部 KPI 字段
-   - 联调后：需从多个外部 DB 拉取各维度指标，再用 `buildByAttributeTable` / `buildByOddTable` 聚合
+**优点：** 数据始终最新，无需维护同步任务。
+**代价：** 请求延迟取决于外部 API 响应速度，可能需要并发调用和缓存策略。
 
-3. **`GET /drives/filter`**
-   - 当前：聚合管道直接查 `ptc_drives`
-   - 联调后：可能需要联查外部 Drive DB 以获得真实可绑定的 Drive 列表
+### 5.4 外部 API 联调方向
 
-### 5.4 建议的联调架构
+后续需要将 PTC 的 Project/Task/Binding 与**外部 API** 对接，主要场景：
+
+| 外部 API | 查询参数 | 获取数据 |
+|----------|---------|---------|
+| **Drive API** | `drive_id` 或 `uuid` | 真实 Drive 基础信息（car、build、时间、路线等）|
+| **里程 API** | `drive_id` 或 `uuid` | 各模式/场景细分里程（L2PP、Highway、City 等）|
+| **Hotline API** | `drive_id` 或 `uuid` | Hotline 记录与计数 |
+| **安全事件 API** | `drive_id` 或 `uuid` | Safety Takeover、Ghost Brake 等事件数据 |
+| **匝道/ODD API** | `drive_id` 或 `uuid` | 匝道进出成功率等指标 |
+
+### 5.5 联调的关键接口（需改造）
+
+**ptc-service 中需要改造的后端接口：**
+
+1. **`GET /overview?project_id=`**（任务摘要列表）
+   - 当前：`PtcDrive.find()` 直接查本地 MongoDB
+   - 联调后：从 Binding 拿到 selected `drive_id` 列表 → 并发调用外部 API（里程/Hotline）→ 聚合结果
+
+2. **`GET /overview/:taskId/kpi`**（KPI 详情表）
+   - 当前：`PtcDrive.find()` 获取全部 KPI 字段，内存聚合
+   - 联调后：`drive_id` 列表 → 并发调用多个外部 API → 合并成统一 drive 对象 → `buildByAttributeTable` / `buildByOddTable` 聚合
+
+3. **`GET /drives/filter`**（Binding 创建时筛选 Drives）
+   - 当前：`PtcDrive.aggregate()` 聚合管道
+   - 联调后：调用外部 Drive API 获取可绑定的 Drive 列表，再按 car 分组
+
+### 5.6 确定的联调架构
 
 ```
-                          ┌──────────────────────┐
-                          │    ptc-service        │
-                          │   (聚合调度层)          │
-                          └──────┬───────────────-┘
-                     ┌───────────┼───────────────────┐
-                     ▼           ▼                   ▼
-              ┌─────────┐ ┌──────────┐        ┌──────────┐
-              │  PTC DB  │ │ Drive DB │  ...   │Hotline DB│
-              │(MongoDB) │ │(外部源)   │        │(外部源)   │
-              └─────────┘ └──────────┘        └──────────┘
+用户请求
+  │
+  ▼
+┌─────────────────────────────────────────────────────────────┐
+│  ptc-service (聚合调度层)                                      │
+│                                                              │
+│  1. 查 MongoDB → 获取 Binding (selected drive_ids/uuids)      │
+│  2. 用 drive_id/uuid 并发调用外部 API                           │
+│  3. 合并多个 API 响应 → 统一 drive 数据对象                       │
+│  4. 内存聚合 → 计算 KPI / 生成摘要                               │
+│  5. 返回给前端                                                 │
+└────────┬──────────┬──────────┬──────────┬──────────────────-─┘
+         │          │          │          │
+    ┌────▼───┐ ┌────▼───┐ ┌───▼────┐ ┌───▼────┐
+    │ PTC DB │ │里程 API │ │Hotline │ │安全事件 │ ...
+    │MongoDB │ │        │ │  API   │ │  API   │
+    └────────┘ └────────┘ └────────┘ └────────┘
 
-Project / Task / Binding 关系 → PTC DB (保持不变)
-Drive 原始数据 + KPI 字段     → 外部 Drive DB (替换 ptc_drives 中的 KPI 字段)
-Hotline 数据                 → 外部 Hotline DB
+PTC DB (MongoDB) 保持不变，存储:
+  - Project / Task / Binding 关系
+  - Binding.cars[].drives[].drive_id → 联查外部 API 的主键
+
+外部 API 提供:
+  - 里程细分（各模式/场景）
+  - Hotline 记录
+  - 安全/质量事件
+  - 匝道/ODD 指标
 ```
 
-### 5.5 Binding 作为数据联调的枢纽
+### 5.7 Binding 作为数据联调的枢纽
 
-**核心思路：** Binding 建立后，`cars[].drives[].drive_id` 就是联查外部数据的 **主键桥梁**。
+**核心数据流：** Binding 建立后，`cars[].drives[].drive_id`（或对应的 UUID）就是联查所有外部 API 的 **主键桥梁**。
 
 ```
 Task → Binding → selected drive_ids
-  → 用 drive_ids 查 Drive DB → 获取里程/时间/路线等基础信息
-  → 用 drive_ids 查 Hotline DB → 获取 hotline_count
-  → 用 drive_ids 查 安全事件 DB → 获取 safety_takeover 等事件
-  → 合并所有数据 → 聚合计算 KPI
+  → 并发调用:
+     ├── 里程 API(drive_ids)    → { drive_id: 里程数据 }
+     ├── Hotline API(drive_ids) → { drive_id: hotline_count }
+     ├── 安全事件 API(drive_ids) → { drive_id: 各事件计数 }
+     └── ...
+  → 按 drive_id 合并所有 API 响应
+  → 组装成统一的 drive 对象（等价于当前 PtcDrive 的结构）
+  → 传入 buildByAttributeTable / buildByOddTable → KPI 结果
 ```
+
+### 5.8 联调注意事项
+
+| 关注点 | 说明 |
+|-------|------|
+| **并发控制** | 多个外部 API 应使用 `Promise.all` 并发调用，减少总延迟 |
+| **缓存策略** | 频繁访问的 KPI 数据可在 ptc-service 层加短期缓存（如 Redis 或内存 TTL） |
+| **降级处理** | 某个外部 API 不可用时，对应字段返回 null/0，不阻塞整体 KPI 展示 |
+| **批量查询** | 外部 API 最好支持批量 `drive_ids` 查询，避免逐个请求（N+1 问题） |
+| **数据映射** | 外部 API 的字段名可能与 `PtcDrive` 不同，需要在 ptc-service 中做字段映射层 |
+| **drive_id vs uuid** | 统一选定一种标识作为联调主键，建议优先使用 `drive_id`（可读性强），UUID 作为备选 |
 
 ---
 
